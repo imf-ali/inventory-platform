@@ -1,6 +1,6 @@
 import { apiClient } from './client';
 import { API_ENDPOINTS } from './endpoints';
-import type { ApiResponse, SalesAnalytics } from './types';
+import type { ApiResponse, SalesAnalytics } from '@inventory-platform/types';
 
 export const analyticsApi = {
   getSales: async (params?: {

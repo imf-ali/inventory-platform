@@ -1,11 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-
-type Theme = 'light' | 'dark';
-
-interface ThemeContextType {
-  theme: Theme;
-  toggleTheme: () => void;
-}
+import type { Theme, ThemeContextType } from '@inventory-platform/types';
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 

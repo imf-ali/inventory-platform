@@ -1,33 +1,6 @@
 import { create } from 'zustand';
 import { productsApi } from '@inventory-platform/api';
-import type { Product, CreateProductDto, UpdateProductDto } from '@inventory-platform/api';
-
-interface ProductState {
-  products: Product[];
-  selectedProduct: Product | null;
-  isLoading: boolean;
-  error: string | null;
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-  fetchProducts: (params?: {
-    page?: number;
-    limit?: number;
-    category?: string;
-    search?: string;
-  }) => Promise<void>;
-  fetchProductById: (id: string) => Promise<void>;
-  createProduct: (data: CreateProductDto) => Promise<void>;
-  updateProduct: (id: string, data: UpdateProductDto) => Promise<void>;
-  deleteProduct: (id: string) => Promise<void>;
-  searchProducts: (query: string) => Promise<void>;
-  fetchLowStock: () => Promise<void>;
-  setSelectedProduct: (product: Product | null) => void;
-  clearError: () => void;
-}
+import type { ProductState, Product, CreateProductDto, UpdateProductDto } from '@inventory-platform/types';
 
 export const useProductStore = create<ProductState>((set) => ({
   products: [],

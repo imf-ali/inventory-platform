@@ -9,12 +9,9 @@
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "forceConsistentCasingInFileNames": true,
-    "types": ["node"]
+    "types": ["node"],
+    "jsx": "react-jsx"
   },
   "include": ["src/**/*.ts"],
-  "references": [
-    {
-      "path": "../api/tsconfig.lib.json"
-    }
-  ]
+  "references": []
 }

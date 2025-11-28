@@ -2,11 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { useAuthStore } from '@inventory-platform/store';
 import { ThemeToggle } from './ThemeToggle';
+import type { DashboardLayoutProps } from '@inventory-platform/types';
 import styles from './DashboardLayout.module.css';
-
-interface DashboardLayoutProps {
-  children: React.ReactNode;
-}
 
 const menuItems = [
   { path: '/dashboard', label: 'Dashboard', icon: '📊' },

@@ -9,8 +9,21 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "forceConsistentCasingInFileNames": true,
-    "types": ["node"]
+    "lib": ["es2022", "dom"],
+    "types": ["node"],
+    "paths": {
+      "@inventory-platform/types": ["../types/src/index.ts"]
+    }
   },
-  "include": ["src/**/*.ts"],
-  "references": []
+  "include": ["src/**/*.ts", "src/**/*.d.ts"],
+  "exclude": [
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts",
+    "src/lib/types.ts"
+  ],
+  "references": [
+    {
+      "path": "../types/tsconfig.lib.json"
+    }
+  ]
 }

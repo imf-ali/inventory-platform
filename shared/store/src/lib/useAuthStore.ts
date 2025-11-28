@@ -1,20 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { authApi, apiClient } from '@inventory-platform/api';
-import type { User, LoginDto, SignupDto } from '@inventory-platform/api';
-
-interface AuthState {
-  user: User | null;
-  token: string | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  error: string | null;
-  login: (credentials: LoginDto) => Promise<void>;
-  signup: (data: SignupDto) => Promise<void>;
-  logout: () => Promise<void>;
-  fetchCurrentUser: () => Promise<void>;
-  clearError: () => void;
-}
+import type { LoginDto, SignupDto } from '@inventory-platform/types';
+import type { AuthState } from '@inventory-platform/types';
 
 export const useAuthStore = create<AuthState>()(
   persist(

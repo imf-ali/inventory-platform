@@ -1,29 +1,6 @@
 import { create } from 'zustand';
 import { ordersApi } from '@inventory-platform/api';
-import type { Order, CreateOrderDto } from '@inventory-platform/api';
-
-interface OrderState {
-  orders: Order[];
-  selectedOrder: Order | null;
-  isLoading: boolean;
-  error: string | null;
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-  fetchOrders: (params?: {
-    page?: number;
-    limit?: number;
-    status?: string;
-  }) => Promise<void>;
-  fetchOrderById: (id: string) => Promise<void>;
-  createOrder: (data: CreateOrderDto) => Promise<Order>;
-  updateOrderStatus: (id: string, status: Order['status']) => Promise<void>;
-  setSelectedOrder: (order: Order | null) => void;
-  clearError: () => void;
-}
+import type { OrderState, Order, CreateOrderDto } from '@inventory-platform/types';
 
 export const useOrderStore = create<OrderState>((set) => ({
   orders: [],

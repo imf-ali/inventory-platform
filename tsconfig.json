@@ -23,6 +23,15 @@
     },
     {
       "path": "./shared/store"
+    },
+    {
+      "path": "./features/dashboard"
+    },
+    {
+      "path": "./features/onboarding"
+    },
+    {
+      "path": "./features/auth"
     }
   ]
 }

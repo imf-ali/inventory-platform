@@ -1,6 +1,6 @@
 import { apiClient } from './client';
 import { API_ENDPOINTS } from './endpoints';
-import type { RegisterShopDto, RegisterShopResponse } from './types';
+import type { RegisterShopDto, RegisterShopResponse } from '@inventory-platform/types';
 
 export const shopsApi = {
   register: async (data: RegisterShopDto): Promise<RegisterShopResponse> => {

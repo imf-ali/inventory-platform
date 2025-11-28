@@ -1,10 +1,5 @@
+import type { Feature } from '@inventory-platform/types';
 import styles from './Features.module.css';
-
-interface Feature {
-  icon: string;
-  title: string;
-  description: string;
-}
 
 export function Features() {
   const mainFeatures: Feature[] = [

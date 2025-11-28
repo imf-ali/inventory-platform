@@ -10,7 +10,7 @@ import type {
   LogoutDto,
   LogoutResponse,
   User,
-} from './types';
+} from '@inventory-platform/types';
 
 export const authApi = {
   login: async (credentials: LoginDto): Promise<AuthResponse> => {

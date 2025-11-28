@@ -184,6 +184,12 @@ importers:
 
   features/analytics: {}
 
+  features/auth: {}
+
+  features/dashboard: {}
+
+  features/onboarding: {}
+
   features/product: {}
 
   shared/api:
@@ -218,12 +224,6 @@ importers:
       react-dom:
         specifier: ^19.0.0
         version: 19.2.0(react@19.2.0)
-
-  shared/utils:
-    dependencies:
-      tslib:
-        specifier: ^2.3.0
-        version: 2.8.1
 
 packages:
 

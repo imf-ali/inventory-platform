@@ -1,6 +1,6 @@
 import { apiClient } from './client';
 import { API_ENDPOINTS } from './endpoints';
-import type { ApiResponse, InventoryAlert } from './types';
+import type { ApiResponse, InventoryAlert } from '@inventory-platform/types';
 
 export const alertsApi = {
   getAll: async (): Promise<InventoryAlert[]> => {

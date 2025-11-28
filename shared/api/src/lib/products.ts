@@ -6,7 +6,7 @@ import type {
   PaginatedResponse,
   Product,
   UpdateProductDto,
-} from './types';
+} from '@inventory-platform/types';
 
 export const productsApi = {
   getAll: async (params?: {

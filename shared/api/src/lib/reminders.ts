@@ -1,6 +1,6 @@
 import { apiClient } from './client';
 import { API_ENDPOINTS } from './endpoints';
-import type { ApiResponse, Reminder } from './types';
+import type { ApiResponse, Reminder } from '@inventory-platform/types';
 
 export const remindersApi = {
   getAll: async (params?: {

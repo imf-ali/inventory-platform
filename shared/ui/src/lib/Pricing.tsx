@@ -1,14 +1,5 @@
+import type { Plan } from '@inventory-platform/types';
 import styles from './Pricing.module.css';
-
-type Plan = {
-  name: string;
-  label?: string;
-  description: string;
-  price: string;
-  priceSuffix?: string;
-  highlight?: boolean;
-  features: string[];
-};
 
 export function Pricing() {
   const plans: Plan[] = [

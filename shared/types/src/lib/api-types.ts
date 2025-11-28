@@ -1,5 +1,6 @@
-// Common API types
+// API Types - All interfaces related to API requests/responses
 
+// Common API types
 export interface ApiResponse<T> {
   success: boolean;
   data: T;

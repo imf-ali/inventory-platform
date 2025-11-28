@@ -12,8 +12,6 @@ export function LoginForm() {
   });
   const [localError, setLocalError] = useState<string | null>(null);
 
-  console.log('LoginForm render', { isLoading, isAuthenticated });
-
   useEffect(() => {
     if (isAuthenticated) {
       navigate('/dashboard');
@@ -27,12 +25,10 @@ export function LoginForm() {
   }, [clearError]);
 
   const handleSubmit = async () => {
-    console.log('handleSubmit called', { isLoading, formData });
     setLocalError(null);
     clearError();
 
     if (isLoading) {
-      console.log('Already loading, returning early');
       return;
     }
 
@@ -124,7 +120,6 @@ export function LoginForm() {
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('Button clicked!', { isLoading, formData });
             handleSubmit();
           }}
           disabled={isLoading}

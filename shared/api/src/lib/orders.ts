@@ -5,7 +5,7 @@ import type {
   CreateOrderDto,
   Order,
   PaginatedResponse,
-} from './types';
+} from '@inventory-platform/types';
 
 export const ordersApi = {
   getAll: async (params?: {
