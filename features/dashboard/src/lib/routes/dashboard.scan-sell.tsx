@@ -1,3 +1,7 @@
+import { useState, FormEvent, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router';
+import { inventoryApi, checkoutApi, cartApi } from '@inventory-platform/api';
+import type { InventoryItem, CartResponse, CheckoutItemResponse } from '@inventory-platform/types';
 import styles from './dashboard.scan-sell.module.css';
 
 export function meta() {
@@ -7,61 +11,677 @@ export function meta() {
   ];
 }
 
+interface CartItem {
+  inventoryItem: InventoryItem;
+  quantity: number;
+  price: number; // Selling price per unit
+}
+
 export default function ScanSellPage() {
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<InventoryItem[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [cartData, setCartData] = useState<CartResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isLoadingCart, setIsLoadingCart] = useState(true);
+  const [isUpdatingCart, setIsUpdatingCart] = useState(false);
+  const cartLoadedRef = useRef(false);
+  const isUpdatingRef = useRef(false);
+
+  // Load cart on mount (only once, even in StrictMode)
+  useEffect(() => {
+    if (!cartLoadedRef.current) {
+      cartLoadedRef.current = true;
+      loadCart();
+    }
+  }, []);
+
+  // Auto-dismiss error message after 5 seconds
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError(null);
+      }, 5000); // 5 seconds
+
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [error]);
+
+  const loadCart = async (): Promise<void> => {
+    // Prevent duplicate calls
+    if (isUpdatingRef.current) {
+      return;
+    }
+    
+    setIsLoadingCart(true);
+    setError(null);
+    try {
+      const cart = await cartApi.get();
+      setCartData(cart);
+      // Convert cart items to local format
+      // We need to fetch inventory items for the lotIds to get full details
+      await convertCartToLocalItems(cart);
+    } catch (err) {
+      // Cart might be empty, which is fine
+      console.log('No existing cart or error loading cart:', err);
+      setCartData(null);
+      setCartItems([]);
+    } finally {
+      setIsLoadingCart(false);
+    }
+  };
+
+  const convertCartToLocalItems = async (cart: CartResponse) => {
+    try {
+      // Create minimal inventory items from cart data
+      // We'll try to fetch full details, but use cart data as fallback
+      const localItems: CartItem[] = [];
+      
+      for (const cartItem of cart.items) {
+        // Try to fetch full inventory details to get accurate stock count
+        let inventoryItem: InventoryItem | null = null;
+        try {
+          const searchResult = await inventoryApi.search(cartItem.inventoryId);
+          inventoryItem = searchResult.data?.find(
+            (inv) => inv.lotId === cartItem.inventoryId
+          ) || null;
+        } catch {
+          // If search fails, we'll create a minimal item
+        }
+        
+        if (inventoryItem) {
+          // Use the actual inventory item with correct stock count
+          localItems.push({
+            inventoryItem,
+            quantity: cartItem.quantity,
+            price: cartItem.sellingPrice,
+          });
+        } else {
+          // Create minimal inventory item from cart data
+          // Note: We don't know the actual stock, so we'll set a high value to avoid false errors
+          // The API will handle stock validation
+          const minimalItem: InventoryItem = {
+            lotId: cartItem.inventoryId,
+            barcode: null,
+            name: cartItem.name,
+            description: null,
+            companyName: null,
+            maximumRetailPrice: cartItem.maximumRetailPrice,
+            costPrice: 0,
+            sellingPrice: cartItem.sellingPrice,
+            receivedCount: 0,
+            soldCount: 0,
+            currentCount: 999999, // Set high to avoid false stock errors - API will validate
+            location: '',
+            expiryDate: '',
+            shopId: cart.shopId,
+          };
+          localItems.push({
+            inventoryItem: minimalItem,
+            quantity: cartItem.quantity,
+            price: cartItem.sellingPrice,
+          });
+        }
+      }
+      setCartItems(localItems);
+    } catch (err) {
+      console.error('Error converting cart items:', err);
+    }
+  };
+
+  const syncCartToAPI = async (items: CartItem[], changedItemLotId?: string, quantityDelta?: number, originalItem?: CartItem) => {
+    // Prevent duplicate calls
+    if (isUpdatingRef.current) {
+      return;
+    }
+    
+    isUpdatingRef.current = true;
+    setIsUpdatingCart(true);
+    try {
+      // If a specific item changed, only send that item with quantity: 1 (the increment)
+      // Otherwise, send all items (for initial load or bulk updates)
+      let itemsToSend: Array<{ lotId: string; quantity: number; sellingPrice: number }>;
+      
+      if (changedItemLotId && quantityDelta !== undefined) {
+        // Only send the changed item with the delta quantity (1 for increment, -1 for decrement)
+        const changedItem = items.find((item) => item.inventoryItem.lotId === changedItemLotId);
+        if (changedItem) {
+          // Send the actual delta value (1 for +, -1 for -)
+          itemsToSend = [{
+            lotId: changedItem.inventoryItem.lotId,
+            quantity: quantityDelta, // Send the actual delta: 1 for increment, -1 for decrement
+            sellingPrice: changedItem.price,
+          }];
+        } else {
+          // Item was removed from local state (quantity became 0)
+          // We still need to send it to API with -1 to remove it from cart
+          // Use the originalItem passed as parameter, or find it from cartData
+          const itemToRemove = originalItem || (() => {
+            const cartItem = cartData?.items.find((cartItem: CheckoutItemResponse) => cartItem.inventoryId === changedItemLotId);
+            return cartItem ? {
+              inventoryItem: {
+                lotId: changedItemLotId,
+                barcode: null,
+                name: cartItem.name,
+                description: null,
+                companyName: null,
+                maximumRetailPrice: cartItem.maximumRetailPrice,
+                costPrice: 0,
+                sellingPrice: cartItem.sellingPrice,
+                receivedCount: 0,
+                soldCount: 0,
+                currentCount: 0,
+                location: '',
+                expiryDate: '',
+                shopId: '',
+              },
+              quantity: 0,
+              price: cartItem.sellingPrice,
+            } : null;
+          })();
+          
+          if (itemToRemove) {
+            itemsToSend = [{
+              lotId: changedItemLotId,
+              quantity: quantityDelta, // Send -1 to remove the item
+              sellingPrice: itemToRemove.price,
+            }];
+          } else {
+            // Fallback: send all remaining items
+            itemsToSend = items.map((item) => ({
+              lotId: item.inventoryItem.lotId,
+              quantity: item.quantity,
+              sellingPrice: item.price,
+            }));
+          }
+        }
+      } else {
+        // Send all items (for initial load or bulk operations)
+        itemsToSend = items.map((item) => ({
+          lotId: item.inventoryItem.lotId,
+          quantity: item.quantity,
+          sellingPrice: item.price,
+        }));
+      }
+
+      const cartPayload = {
+        businessType: 'pharmacy',
+        items: itemsToSend,
+      };
+
+      const updatedCart = await cartApi.add(cartPayload);
+      setCartData(updatedCart);
+      // Update local items with latest data from API
+      await convertCartToLocalItems(updatedCart);
+      // Clear any previous errors on successful update
+      setError(null);
+    } catch (err) {
+      // Handle API errors - might include stock validation errors
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update cart';
+      setError(errorMessage);
+      // Revert to previous cart state on error by reloading cart
+      try {
+        const currentCart = await cartApi.get();
+        await convertCartToLocalItems(currentCart);
+        setCartData(currentCart);
+      } catch {
+        // If reload fails, just show the error
+      }
+    } finally {
+      setIsUpdatingCart(false);
+      isUpdatingRef.current = false;
+    }
+  };
+
+  const handleSearch = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+    setError(null);
+    try {
+      const response = await inventoryApi.search(searchQuery.trim());
+      setSearchResults(response.data || []);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to search products';
+      setError(errorMessage);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleAddToCart = async (item: InventoryItem, price?: number) => {
+    // Use sellingPrice as default, or override with provided price
+    const finalPrice = price !== undefined ? price : item.sellingPrice;
+    
+    if (finalPrice <= 0) {
+      setError('Please enter a valid price');
+      return;
+    }
+
+    if (item.currentCount <= 0) {
+      setError('Product is out of stock');
+      return;
+    }
+
+    setCartItems((prev) => {
+      const existingItem = prev.find((cartItem) => cartItem.inventoryItem.lotId === item.lotId);
+      
+      let updatedItems: CartItem[];
+      if (existingItem) {
+        // Update quantity if item already in cart
+        const newQuantity = existingItem.quantity + 1;
+        // Validate stock only if we have accurate inventory data
+        if (item.currentCount > 0 && newQuantity > item.currentCount) {
+          setError(`Only ${item.currentCount} items available in stock`);
+          return prev;
+        }
+        updatedItems = prev.map((cartItem) =>
+          cartItem.inventoryItem.lotId === item.lotId
+            ? { ...cartItem, quantity: newQuantity }
+            : cartItem
+        );
+      } else {
+        // Add new item to cart
+        // Validate stock only if we have accurate inventory data
+        if (item.currentCount > 0 && item.currentCount < 1) {
+          setError('Product is out of stock');
+          return prev;
+        }
+        updatedItems = [...prev, { inventoryItem: item, quantity: 1, price: finalPrice }];
+      }
+
+      // Sync to API - only send the changed item with quantity: 1
+      syncCartToAPI(updatedItems, item.lotId, 1);
+      return updatedItems;
+    });
+    setError(null);
+  };
+
+  const handleUpdateQuantity = (lotId: string, delta: number) => {
+    setCartItems((prev) => {
+      // Find the item before updating to track if it will be removed
+      const originalItem = prev.find((item) => item.inventoryItem.lotId === lotId);
+      if (!originalItem) {
+        return prev;
+      }
+
+      const newQuantity = originalItem.quantity + delta;
+      
+      // If quantity would become 0 or less, we still need to send -1 to API for removal
+      // But we'll filter it out from local state
+      if (newQuantity <= 0) {
+        // Item will be removed - send -1 to API with original item info, then filter out from local state
+        const remainingItems = prev.filter((item) => item.inventoryItem.lotId !== lotId);
+        syncCartToAPI(remainingItems, lotId, delta, originalItem);
+        return remainingItems;
+      }
+
+      // Only validate stock if we have accurate inventory data (not a minimal item)
+      // Minimal items have currentCount set to 999999, so skip validation for those
+      if (originalItem.inventoryItem.currentCount < 999999 && newQuantity > originalItem.inventoryItem.currentCount) {
+        setError(`Only ${originalItem.inventoryItem.currentCount} items available in stock`);
+        return prev;
+      }
+
+      const updatedItems = prev.map((item) => {
+        if (item.inventoryItem.lotId === lotId) {
+          return { ...item, quantity: newQuantity };
+        }
+        return item;
+      });
+
+      // Sync to API - only send the changed item with the delta quantity
+      syncCartToAPI(updatedItems, lotId, delta);
+      return updatedItems;
+    });
+    setError(null);
+  };
+
+  const handleRemoveItem = (lotId: string) => {
+    setCartItems((prev) => {
+      // Find the item being removed to get its quantity and price
+      const itemToRemove = prev.find((item) => item.inventoryItem.lotId === lotId);
+      if (!itemToRemove) {
+        return prev;
+      }
+
+      // Remove from local state
+      const updatedItems = prev.filter((item) => item.inventoryItem.lotId !== lotId);
+      
+      // Sync to API - send the item with negative quantity (remove all)
+      syncCartToAPI(updatedItems, lotId, -itemToRemove.quantity, itemToRemove);
+      return updatedItems;
+    });
+  };
+
+  const handleClearCart = async () => {
+    // Get current cart items before clearing
+    const currentItems = [...cartItems];
+    
+    // Clear local state
+    setCartItems([]);
+    setError(null);
+    
+    // Send all items with negative quantities to remove them from cart
+    if (currentItems.length > 0) {
+      setIsUpdatingCart(true);
+      try {
+        const itemsToSend = currentItems.map((item) => ({
+          lotId: item.inventoryItem.lotId,
+          quantity: -item.quantity, // Negative quantity to remove all
+          sellingPrice: item.price,
+        }));
+
+        const cartPayload = {
+          businessType: 'pharmacy',
+          items: itemsToSend,
+        };
+
+        const updatedCart = await cartApi.add(cartPayload);
+        setCartData(updatedCart);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to clear cart';
+        setError(errorMessage);
+        // Reload cart on error to restore state
+        try {
+          await loadCart();
+        } catch {
+          // If reload fails, just show the error
+        }
+      } finally {
+        setIsUpdatingCart(false);
+      }
+    } else {
+      // If cart is already empty, just clear the data
+      setCartData(null);
+    }
+  };
+
+  const calculateSubtotal = () => {
+    return cartData?.subTotal ?? cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+  };
+
+  const calculateTax = () => {
+    return cartData?.taxTotal ?? calculateSubtotal() * 0.08; // 8% tax
+  };
+
+  const calculateTotal = () => {
+    return cartData?.grandTotal ?? calculateSubtotal() + calculateTax();
+  };
+
+  const handleProcessPayment = async () => {
+    if (cartItems.length === 0) {
+      setError('Cart is empty');
+      return;
+    }
+
+    setIsProcessing(true);
+    setError(null);
+
+    try {
+      const checkoutData = {
+        businessType: 'pharmacy',
+        paymentMethod: 'CASH', // Default to CASH, can be changed on checkout page
+        items: cartItems.map((item) => ({
+          lotId: item.inventoryItem.lotId,
+          quantity: item.quantity,
+          sellingPrice: item.price,
+        })),
+      };
+
+      const response = await checkoutApi.create(checkoutData);
+      
+      // Navigate to checkout page with invoice data
+      navigate('/dashboard/checkout', { 
+        state: { checkoutData: response } 
+      });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to process checkout';
+      setError(errorMessage);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
         <h2 className={styles.title}>Scan and Sell</h2>
         <p className={styles.subtitle}>Speed up sales with barcode scanning</p>
       </div>
+      {error && (
+        <div className={styles.errorMessage}>
+          {error}
+        </div>
+      )}
       <div className={styles.container}>
-        <div className={styles.scannerSection}>
-          <div className={styles.scannerBox}>
-            <span className={styles.scannerIcon} role="img" aria-label="Scanner">📱</span>
-            <p className={styles.scannerText}>Scan barcode or enter product code</p>
-            <input
-              type="text"
-              className={styles.scanInput}
-              placeholder="Scan or enter barcode..."
-              autoFocus
-            />
+        {/* Product Search Section */}
+        <div className={styles.searchSection}>
+          <h3 className={styles.sectionTitle}>Product Search</h3>
+          <form onSubmit={handleSearch} className={styles.searchForm}>
+            <div className={styles.searchInputWrapper}>
+              <span className={styles.searchIcon} role="img" aria-label="Search">🔍</span>
+              <input
+                type="text"
+                className={styles.searchInput}
+                placeholder="Search by product name, company, or barcode..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                disabled={isSearching}
+                autoFocus
+              />
+              <button type="submit" className={styles.searchBtn} disabled={isSearching}>
+                {isSearching ? 'Searching...' : 'Search'}
+              </button>
+            </div>
+          </form>
+          
+          <div className={styles.resultsContainer}>
+            {isSearching ? (
+              <div className={styles.loading}>Searching...</div>
+            ) : searchResults.length === 0 && searchQuery ? (
+              <div className={styles.emptyState}>No products found</div>
+            ) : searchResults.length > 0 ? (
+              <div className={styles.resultsList}>
+                {searchResults.map((item) => (
+                  <ProductResultItem
+                    key={item.lotId}
+                    item={item}
+                    onAddToCart={handleAddToCart}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className={styles.emptyState}>Enter a search query to find products</div>
+            )}
           </div>
         </div>
+
+        {/* Cart and Total Section */}
         <div className={styles.cartSection}>
           <h3 className={styles.cartTitle}>Shopping Cart</h3>
           <div className={styles.cartItems}>
-            <div className={styles.cartItem}>
-              <div className={styles.itemInfo}>
-                <span className={styles.itemName}>Product Name</span>
-                <span className={styles.itemPrice}>$99.99</span>
-              </div>
-              <div className={styles.itemActions}>
-                <button className={styles.qtyBtn}>-</button>
-                <span className={styles.qty}>1</span>
-                <button className={styles.qtyBtn}>+</button>
-                <button className={styles.removeBtn}>×</button>
-              </div>
-            </div>
+            {isLoadingCart ? (
+              <div className={styles.loading}>Loading cart...</div>
+            ) : cartItems.length === 0 ? (
+              <div className={styles.emptyCart}>Cart is empty</div>
+            ) : (
+              cartItems.map((cartItem) => (
+                <div key={cartItem.inventoryItem.lotId} className={styles.cartItem}>
+                  <div className={styles.itemInfo}>
+                    <span className={styles.itemName}>
+                      {cartItem.inventoryItem.name || 'Unnamed Product'}
+                    </span>
+                    {cartItem.inventoryItem.companyName && (
+                      <span className={styles.itemCompany}>{cartItem.inventoryItem.companyName}</span>
+                    )}
+                    <div className={styles.itemPriceInfo}>
+                      <span className={styles.itemPrice}>${cartItem.price.toFixed(2)} each</span>
+                      {cartItem.inventoryItem.maximumRetailPrice > cartItem.price && (
+                        <span className={styles.itemDiscount}>
+                          {((cartItem.inventoryItem.maximumRetailPrice - cartItem.price) / cartItem.inventoryItem.maximumRetailPrice * 100).toFixed(1)}% off MRP
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className={styles.itemActions}>
+                    <button
+                      className={styles.qtyBtn}
+                      onClick={() => handleUpdateQuantity(cartItem.inventoryItem.lotId, -1)}
+                      disabled={isUpdatingCart}
+                    >
+                      -
+                    </button>
+                    <span className={styles.qty}>{cartItem.quantity}</span>
+                    <button
+                      className={styles.qtyBtn}
+                      onClick={() => handleUpdateQuantity(cartItem.inventoryItem.lotId, 1)}
+                      disabled={isUpdatingCart}
+                    >
+                      +
+                    </button>
+                    <button
+                      className={styles.removeBtn}
+                      onClick={() => handleRemoveItem(cartItem.inventoryItem.lotId)}
+                      disabled={isUpdatingCart}
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
           <div className={styles.cartSummary}>
-            <div className={styles.summaryRow}>
-              <span>Subtotal</span>
-              <span>$99.99</span>
-            </div>
-            <div className={styles.summaryRow}>
-              <span>Tax</span>
-              <span>$8.00</span>
-            </div>
-            <div className={styles.summaryRowTotal}>
-              <span>Total</span>
-              <span>$107.99</span>
-            </div>
+            {isLoadingCart ? (
+              <div className={styles.loading}>Loading cart...</div>
+            ) : (
+              <>
+                <div className={styles.summaryRow}>
+                  <span>Subtotal</span>
+                  <span>${calculateSubtotal().toFixed(2)}</span>
+                </div>
+                {cartData && cartData.discountTotal > 0 && (
+                  <div className={styles.summaryRow}>
+                    <span>Discount</span>
+                    <span>-${cartData.discountTotal.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className={styles.summaryRow}>
+                  <span>Tax ({cartData ? ((cartData.taxTotal / cartData.subTotal) * 100).toFixed(1) : '8.0'}%)</span>
+                  <span>${calculateTax().toFixed(2)}</span>
+                </div>
+                <div className={styles.summaryRowTotal}>
+                  <span>Total</span>
+                  <span>${calculateTotal().toFixed(2)}</span>
+                </div>
+              </>
+            )}
           </div>
           <div className={styles.cartActions}>
-            <button className={styles.clearBtn}>Clear Cart</button>
-            <button className={styles.checkoutBtn}>Process Payment</button>
+            <button className={styles.clearBtn} onClick={handleClearCart}>
+              Clear Cart
+            </button>
+            <button
+              className={styles.checkoutBtn}
+              onClick={handleProcessPayment}
+              disabled={cartItems.length === 0 || isProcessing || isUpdatingCart || isLoadingCart}
+            >
+              {isProcessing ? 'Processing...' : isUpdatingCart ? 'Updating...' : 'Process Payment'}
+            </button>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// Product Result Item Component
+interface ProductResultItemProps {
+  item: InventoryItem;
+  onAddToCart: (item: InventoryItem, price?: number) => void;
+}
+
+function ProductResultItem({ item, onAddToCart }: ProductResultItemProps) {
+  const [price, setPrice] = useState(item.sellingPrice.toString());
+
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
+  const handleAdd = () => {
+    const priceValue = parseFloat(price);
+    if (isNaN(priceValue) || priceValue <= 0) {
+      return;
+    }
+    // Use the price from input (defaults to sellingPrice if not changed)
+    if (priceValue !== item.sellingPrice) {
+      onAddToCart(item, priceValue);
+    } else {
+      onAddToCart(item); // Use default sellingPrice
+    }
+    // Reset to sellingPrice after adding
+    setPrice(item.sellingPrice.toString());
+  };
+
+  return (
+    <div className={styles.resultItem}>
+      <div className={styles.resultItemInfo}>
+        <h4 className={styles.resultItemName}>{item.name || 'Unnamed Product'}</h4>
+        {item.companyName && (
+          <p className={styles.resultItemCompany}>Company: {item.companyName}</p>
+        )}
+        {item.barcode && (
+          <p className={styles.resultItemBarcode}>Barcode: {item.barcode}</p>
+        )}
+        <p className={styles.resultItemStock}>
+          Stock: {item.currentCount} | Lot: {item.lotId}
+        </p>
+        <p className={styles.resultItemMRP}>
+          MRP: ${item.maximumRetailPrice.toFixed(2)}
+        </p>
+        <p className={styles.resultItemExpiry}>
+          Expires: {formatDate(item.expiryDate)}
+        </p>
+      </div>
+      <div className={styles.resultItemActions}>
+        <div className={styles.priceInputGroup}>
+          <label className={styles.priceLabel}>Price:</label>
+          <input
+            type="number"
+            className={styles.priceInput}
+            placeholder={item.sellingPrice.toString()}
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            step="0.01"
+            min="0"
+          />
+        </div>
+        <button
+          className={styles.addBtn}
+          onClick={handleAdd}
+          disabled={!price || parseFloat(price) <= 0 || item.currentCount <= 0}
+        >
+          Add
+        </button>
       </div>
     </div>
   );

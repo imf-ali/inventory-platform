@@ -113,6 +113,32 @@
   opacity: 0.9;
 }
 
+.submitBtn:disabled,
+.cancelBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.errorMessage {
+  padding: 1rem;
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  color: #dc2626;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.successMessage {
+  padding: 1rem;
+  background: #d1fae5;
+  border: 1px solid #86efac;
+  border-radius: 8px;
+  color: #059669;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
 @media (max-width: 768px) {
   .formRow {
     grid-template-columns: 1fr;

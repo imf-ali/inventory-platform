@@ -1,3 +1,6 @@
+import { useState, useEffect, FormEvent } from 'react';
+import { inventoryApi } from '@inventory-platform/api';
+import type { InventoryItem } from '@inventory-platform/types';
 import styles from './dashboard.product-search.module.css';
 
 export function meta() {
@@ -8,56 +11,186 @@ export function meta() {
 }
 
 export default function ProductSearchPage() {
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Fetch all inventory on mount
+  useEffect(() => {
+    fetchAllInventory();
+  }, []);
+
+  const fetchAllInventory = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await inventoryApi.getAll();
+      setInventory(response.data || []);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch inventory';
+      setError(errorMessage);
+      setInventory([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSearch = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) {
+      fetchAllInventory();
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await inventoryApi.search(searchQuery.trim());
+      setInventory(response.data || []);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to search inventory';
+      setError(errorMessage);
+      setInventory([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    fetchAllInventory();
+  };
+
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
         <h2 className={styles.title}>Product Search</h2>
-        <p className={styles.subtitle}>Quickly find products with powerful search and filtering</p>
+        <p className={styles.subtitle}>Search products by name, company, or barcode</p>
       </div>
       <div className={styles.searchContainer}>
-        <div className={styles.searchBar}>
+        <form className={styles.searchBar} onSubmit={handleSearch}>
           <span className={styles.searchIcon} role="img" aria-label="Search">🔍</span>
           <input
             type="text"
             className={styles.searchInput}
-            placeholder="Search by name, SKU, barcode, or category..."
+            placeholder="Search by product name, company, or barcode..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            disabled={isLoading}
           />
-          <button className={styles.searchBtn}>Search</button>
-        </div>
-        <div className={styles.filters}>
-          <select className={styles.filterSelect}>
-            <option value="">All Categories</option>
-            <option value="electronics">Electronics</option>
-            <option value="clothing">Clothing</option>
-            <option value="food">Food & Beverages</option>
-          </select>
-          <select className={styles.filterSelect}>
-            <option value="">All Status</option>
-            <option value="in-stock">In Stock</option>
-            <option value="low-stock">Low Stock</option>
-            <option value="out-of-stock">Out of Stock</option>
-          </select>
-        </div>
+          <button type="submit" className={styles.searchBtn} disabled={isLoading}>
+            {isLoading ? 'Searching...' : 'Search'}
+          </button>
+          {searchQuery && (
+            <button 
+              type="button" 
+              className={styles.clearBtn} 
+              onClick={handleClearSearch}
+              disabled={isLoading}
+            >
+              Clear
+            </button>
+          )}
+        </form>
       </div>
+      {error && (
+        <div className={styles.errorMessage}>
+          {error}
+        </div>
+      )}
       <div className={styles.results}>
         <div className={styles.resultsHeader}>
-          <span className={styles.resultsCount}>Showing 12 results</span>
+          <span className={styles.resultsCount}>
+            {isLoading 
+              ? 'Loading...' 
+              : `Showing ${inventory.length} ${inventory.length === 1 ? 'result' : 'results'}`}
+          </span>
         </div>
-        <div className={styles.productsGrid}>
-          {[1, 2, 3, 4, 5, 6].map((item) => (
-            <div key={item} className={styles.productCard}>
-              <div className={styles.productImage} role="img" aria-label="Product">📦</div>
-              <div className={styles.productInfo}>
-                <h3 className={styles.productName}>Product Name {item}</h3>
-                <p className={styles.productSku}>SKU: PROD-{item.toString().padStart(4, '0')}</p>
-                <div className={styles.productDetails}>
-                  <span className={styles.productPrice}>$99.99</span>
-                  <span className={styles.productStock}>Stock: 45</span>
+        {isLoading && inventory.length === 0 ? (
+          <div className={styles.loading}>Loading inventory...</div>
+        ) : inventory.length === 0 ? (
+          <div className={styles.emptyState}>
+            <p>No inventory items found.</p>
+            {searchQuery && (
+              <button onClick={handleClearSearch} className={styles.clearBtn}>
+                Clear search to see all items
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className={styles.productsGrid}>
+            {inventory.map((item) => (
+              <div key={item.lotId} className={styles.productCard}>
+                <div className={styles.productImage} role="img" aria-label="Product">📦</div>
+                <div className={styles.productInfo}>
+                  <h3 className={styles.productName}>
+                    {item.name || 'Unnamed Product'}
+                  </h3>
+                  <p className={styles.productSku}>
+                    Lot ID: {item.lotId}
+                  </p>
+                  {item.companyName && (
+                    <p className={styles.productCompany}>
+                      Company: {item.companyName}
+                    </p>
+                  )}
+                  {item.barcode && (
+                    <p className={styles.productBarcode}>
+                      Barcode: {item.barcode}
+                    </p>
+                  )}
+                  {item.location && (
+                    <p className={styles.productLocation}>
+                      Location: {item.location}
+                    </p>
+                  )}
+                  <div className={styles.productDetails}>
+                    <div className={styles.stockInfo}>
+                      <span className={styles.productStock}>
+                        Current: {item.currentCount}
+                      </span>
+                      <span className={styles.productStock}>
+                        Received: {item.receivedCount} | Sold: {item.soldCount}
+                      </span>
+                    </div>
+                    <div className={styles.priceInfo}>
+                      <span className={styles.productPrice}>
+                        Selling: ${item.sellingPrice.toFixed(2)}
+                      </span>
+                      <span className={styles.productPrice}>
+                        MRP: ${item.maximumRetailPrice.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className={styles.expiryInfo}>
+                      <span className={styles.expiryDate}>
+                        Expires: {formatDate(item.expiryDate)}
+                      </span>
+                    </div>
+                  </div>
+                  {item.description && (
+                    <p className={styles.productDescription}>
+                      {item.description}
+                    </p>
+                  )}
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
