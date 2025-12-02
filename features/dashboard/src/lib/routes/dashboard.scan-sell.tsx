@@ -1,4 +1,4 @@
-import { useState, FormEvent, useEffect, useRef } from 'react';
+import { useState, FormEvent, useEffect, useRef, ChangeEvent } from 'react';
 import { useNavigate } from 'react-router';
 import { inventoryApi, checkoutApi, cartApi } from '@inventory-platform/api';
 import type { InventoryItem, CartResponse, CheckoutItemResponse } from '@inventory-platform/types';
@@ -475,7 +475,7 @@ export default function ScanSellPage() {
                 className={styles.searchInput}
                 placeholder="Search by product name, company, or barcode..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchQuery(e.currentTarget.value)}
                 disabled={isSearching}
                 autoFocus
               />
@@ -670,7 +670,7 @@ function ProductResultItem({ item, onAddToCart }: ProductResultItemProps) {
             className={styles.priceInput}
             placeholder={item.sellingPrice.toString()}
             value={price}
-            onChange={(e) => setPrice(e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setPrice(e.currentTarget.value)}
             step="0.01"
             min="0"
           />

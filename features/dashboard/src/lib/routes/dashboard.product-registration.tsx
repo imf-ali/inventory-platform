@@ -21,6 +21,7 @@ export default function ProductRegistrationPage() {
     barcode: '',
     name: '',
     companyName: '',
+    price: 0,
     maximumRetailPrice: 0,
     costPrice: 0,
     sellingPrice: 0,
@@ -71,12 +72,19 @@ export default function ProductRegistrationPage() {
         return;
       }
 
-      const response = await inventoryApi.create(formData);
+      // Ensure price is set to sellingPrice (they should be the same)
+      const submitData: CreateInventoryDto = {
+        ...formData,
+        price: formData.sellingPrice,
+      };
+
+      const response = await inventoryApi.create(submitData);
       setSuccess(`Product registered successfully! Lot ID: ${response.lotId}`);
       
       // Clear form and success message after 5 seconds
       setTimeout(() => {
         setFormData({
+          price: 0,
           barcode: '',
           name: '',
           companyName: '',
