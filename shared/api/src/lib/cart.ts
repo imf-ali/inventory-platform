@@ -4,6 +4,7 @@ import type {
   ApiResponse,
   CartResponse,
   AddToCartDto,
+  UpdateCartStatusDto,
 } from '@inventory-platform/types';
 
 export const cartApi = {
@@ -17,6 +18,14 @@ export const cartApi = {
   add: async (data: AddToCartDto): Promise<CartResponse> => {
     const response = await apiClient.post<ApiResponse<CartResponse>>(
       API_ENDPOINTS.CART.ADD,
+      data
+    );
+    return response.data;
+  },
+
+  updateStatus: async (data: UpdateCartStatusDto): Promise<CartResponse> => {
+    const response = await apiClient.put<ApiResponse<CartResponse>>(
+      API_ENDPOINTS.CART.STATUS,
       data
     );
     return response.data;

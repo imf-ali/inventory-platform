@@ -1,6 +1,6 @@
 import { useState, FormEvent, useEffect, useRef, ChangeEvent } from 'react';
 import { useNavigate } from 'react-router';
-import { inventoryApi, checkoutApi, cartApi } from '@inventory-platform/api';
+import { inventoryApi, cartApi } from '@inventory-platform/api';
 import type { InventoryItem, CartResponse, CheckoutItemResponse } from '@inventory-platform/types';
 import styles from './dashboard.scan-sell.module.css';
 
@@ -30,6 +30,9 @@ export default function ScanSellPage() {
   const [isUpdatingCart, setIsUpdatingCart] = useState(false);
   const cartLoadedRef = useRef(false);
   const isUpdatingRef = useRef(false);
+  const [customerName, setCustomerName] = useState('');
+  const [customerAddress, setCustomerAddress] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
 
   // Load cart on mount (only once, even in StrictMode)
   useEffect(() => {
@@ -61,7 +64,18 @@ export default function ScanSellPage() {
     setError(null);
     try {
       const cart = await cartApi.get();
+      
+      // If status is PENDING, redirect to checkout page
+      if (cart.status === 'PENDING') {
+        navigate('/dashboard/checkout');
+        return;
+      }
+      
       setCartData(cart);
+      // Load customer fields from cart
+      setCustomerName(cart.customerName || '');
+      setCustomerAddress(cart.customerAddress || '');
+      setCustomerPhone(cart.customerPhone || '');
       // Convert cart items to local format
       // We need to fetch inventory items for the lotIds to get full details
       await convertCartToLocalItems(cart);
@@ -70,6 +84,10 @@ export default function ScanSellPage() {
       console.log('No existing cart or error loading cart:', err);
       setCartData(null);
       setCartItems([]);
+      // Reset customer fields if cart is empty
+      setCustomerName('');
+      setCustomerAddress('');
+      setCustomerPhone('');
     } finally {
       setIsLoadingCart(false);
     }
@@ -211,6 +229,9 @@ export default function ScanSellPage() {
       const cartPayload = {
         businessType: 'pharmacy',
         items: itemsToSend,
+        ...(customerName && { customerName }),
+        ...(customerAddress && { customerAddress }),
+        ...(customerPhone && { customerPhone }),
       };
 
       const updatedCart = await cartApi.add(cartPayload);
@@ -384,6 +405,9 @@ export default function ScanSellPage() {
         const cartPayload = {
           businessType: 'pharmacy',
           items: itemsToSend,
+          ...(customerName && { customerName }),
+          ...(customerAddress && { customerAddress }),
+          ...(customerPhone && { customerPhone }),
         };
 
         const updatedCart = await cartApi.add(cartPayload);
@@ -428,24 +452,37 @@ export default function ScanSellPage() {
     setError(null);
 
     try {
-      const checkoutData = {
+      // Step 1: Call upsert API with only customer info (no items)
+      const upsertPayload = {
         businessType: 'pharmacy',
-        paymentMethod: 'CASH', // Default to CASH, can be changed on checkout page
-        items: cartItems.map((item) => ({
-          lotId: item.inventoryItem.lotId,
-          quantity: item.quantity,
-          sellingPrice: item.price,
-        })),
+        items: [], // Empty items array - only updating customer info
+        ...(customerName && { customerName }),
+        ...(customerAddress && { customerAddress }),
+        ...(customerPhone && { customerPhone }),
       };
 
-      const response = await checkoutApi.create(checkoutData);
+      const upsertResponse = await cartApi.add(upsertPayload);
+
+      // Get purchaseId from upsert response or cartData
+      const purchaseId = upsertResponse.purchaseId || cartData?.purchaseId;
       
-      // Navigate to checkout page with invoice data
-      navigate('/dashboard/checkout', { 
-        state: { checkoutData: response } 
-      });
+      if (!purchaseId) {
+        throw new Error('Purchase ID not found');
+      }
+
+      // Step 2: Call update status API with PENDING status and CASH payment method
+      const statusPayload = {
+        purchaseId,
+        status: 'PENDING',
+        paymentMethod: 'CASH',
+      };
+
+      await cartApi.updateStatus(statusPayload);
+      
+      // Navigate to checkout page (it will load data via GET cart API)
+      navigate('/dashboard/checkout');
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to process checkout';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to process payment';
       setError(errorMessage);
     } finally {
       setIsProcessing(false);
@@ -463,6 +500,57 @@ export default function ScanSellPage() {
           {error}
         </div>
       )}
+      {/* Customer Information Section */}
+      <div className={styles.customerSection}>
+        <h4 className={styles.customerTitle}>Customer Information (Optional)</h4>
+        <div className={styles.customerFields}>
+          <div className={styles.customerField}>
+            <label htmlFor="customerName" className={styles.customerLabel}>
+              Customer Name
+            </label>
+            <input
+              id="customerName"
+              type="text"
+              className={styles.customerInput}
+              placeholder="Enter customer name"
+              value={customerName}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                setCustomerName(e.currentTarget.value);
+              }}
+            />
+          </div>
+          <div className={styles.customerField}>
+            <label htmlFor="customerAddress" className={styles.customerLabel}>
+              Address
+            </label>
+            <input
+              id="customerAddress"
+              type="text"
+              className={styles.customerInput}
+              placeholder="Enter customer address"
+              value={customerAddress}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                setCustomerAddress(e.currentTarget.value);
+              }}
+            />
+          </div>
+          <div className={styles.customerField}>
+            <label htmlFor="customerPhone" className={styles.customerLabel}>
+              Phone
+            </label>
+            <input
+              id="customerPhone"
+              type="tel"
+              className={styles.customerInput}
+              placeholder="Enter customer phone"
+              value={customerPhone}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                setCustomerPhone(e.currentTarget.value);
+              }}
+            />
+          </div>
+        </div>
+      </div>
       <div className={styles.container}>
         {/* Product Search Section */}
         <div className={styles.searchSection}>

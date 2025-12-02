@@ -289,10 +289,23 @@ export interface CartResponse {
   discountTotal: number;
   grandTotal: number;
   status: string;
+  customerName?: string;
+  customerAddress?: string;
+  customerPhone?: string;
+  paymentMethod?: string;
 }
 
 export interface AddToCartDto {
   businessType: string;
   items: CheckoutItem[];
+  customerName?: string;
+  customerAddress?: string;
+  customerPhone?: string;
+}
+
+export interface UpdateCartStatusDto {
+  purchaseId: string;
+  status: string;
+  paymentMethod: string;
 }
 
