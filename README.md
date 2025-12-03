@@ -6,6 +6,26 @@
 
 [Learn more about this workspace setup and its capabilities](https://nx.dev/getting-started/tutorials/react-monorepo-tutorial?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `pnpm nx graph` to visually explore what was created. Now, let's get you up to speed!
 
+## Quick Start
+
+**Option 1: Run with Docker (Recommended for first-time setup)**
+
+```sh
+cp .env-example .env
+docker-compose up
+```
+
+See the [Docker Setup](#docker-setup) section below for detailed instructions.
+
+**Option 2: Run locally**
+
+Install dependencies and run the dev server:
+
+```sh
+pnpm install
+pnpm nx dev inventory
+```
+
 ## Finish your CI setup
 
 [Click here to finish setting up your workspace!](https://cloud.nx.app/connect/rh86xW12uX)
@@ -40,6 +60,135 @@ pnpm nx show project inventory
 These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
 
 [More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+
+## Docker Setup
+
+This project includes Docker configuration for easy development and deployment. The setup includes three containers:
+- **MongoDB** - Database service
+- **Inventory Server** - Backend API (using `myntrack/inventory-backend` image)
+- **Inventory Platform** - Frontend application
+
+### Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/) installed on your system
+- [Docker Compose](https://docs.docker.com/compose/install/) installed (usually comes with Docker Desktop)
+
+### Quick Start
+
+1. **Set up environment variables:**
+
+   ```sh
+   cp .env-example .env
+   ```
+
+   Edit `.env` file with your configuration values. The `.env` file contains:
+   - MongoDB credentials
+   - Server ports
+   - API URLs
+   - Environment settings
+
+2. **Start all services:**
+
+   ```sh
+   docker-compose up
+   ```
+
+   Or run in detached mode (background):
+
+   ```sh
+   docker-compose up -d
+   ```
+
+3. **Access the application:**
+
+   - Frontend: http://localhost:4200
+   - Backend API: http://localhost:8080
+   - MongoDB: localhost:27017
+
+### Docker Commands
+
+**Start services:**
+```sh
+docker-compose up
+```
+
+**Start services in background:**
+```sh
+docker-compose up -d
+```
+
+**Stop services:**
+```sh
+docker-compose down
+```
+
+**Stop services and remove volumes (⚠️ deletes database data):**
+```sh
+docker-compose down -v
+```
+
+**View logs:**
+```sh
+# All services
+docker-compose logs -f
+
+# Specific service
+docker-compose logs -f inventory-platform
+docker-compose logs -f inventory-server
+docker-compose logs -f mongo
+```
+
+**Rebuild containers:**
+```sh
+docker-compose up --build
+```
+
+**Restart a specific service:**
+```sh
+docker-compose restart inventory-platform
+```
+
+### Production Build
+
+To build and run the production version:
+
+1. **Build the production image:**
+
+   ```sh
+   docker build -t inventory-platform:prod -f Dockerfile .
+   ```
+
+2. **Run the production container:**
+
+   ```sh
+   docker run -p 3000:3000 --env-file .env inventory-platform:prod
+   ```
+
+### Development vs Production
+
+- **Dockerfile.dev** - Used for development with hot-reload and volume mounts
+- **Dockerfile** - Used for production with optimized build and smaller image size
+
+The `docker-compose.yml` uses `Dockerfile.dev` by default for development. To use production builds in docker-compose, you can modify the docker-compose.yml file.
+
+### Troubleshooting
+
+**Port already in use:**
+- Check if ports 4200, 8080, or 27017 are already in use
+- Modify the port mappings in `.env` file or `docker-compose.yml`
+
+**Environment variables not loading:**
+- Ensure `.env` file exists in the project root
+- Check that variable names match in `.env` and `docker-compose.yml`
+
+**Container won't start:**
+- Check logs: `docker-compose logs <service-name>`
+- Ensure Docker has enough resources allocated
+- Try rebuilding: `docker-compose up --build`
+
+**Database connection issues:**
+- Verify MongoDB credentials in `.env` match the backend configuration
+- Ensure MongoDB container is running: `docker-compose ps`
 
 ## Add new projects
 
