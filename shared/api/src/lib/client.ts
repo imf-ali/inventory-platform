@@ -50,8 +50,19 @@ class ApiClient {
       (error: AxiosError) => {
         if (error.response) {
           // Server responded with error status
-          const errorData = error.response.data as { message?: string; errors?: Record<string, string[]> };
-          const apiError = new Error(errorData?.message || error.response.statusText) as Error & {
+          const errorData = error.response.data as { 
+            message?: string; 
+            error?: string;
+            data?: { message?: string };
+            errors?: Record<string, string[]> 
+          };
+          // Extract error message from various possible locations
+          const errorMessage = 
+            errorData?.data?.message || 
+            errorData?.error || 
+            errorData?.message || 
+            error.response.statusText;
+          const apiError = new Error(errorMessage) as Error & {
             status?: number;
             errors?: Record<string, string[]>;
           };

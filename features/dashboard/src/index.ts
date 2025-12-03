@@ -8,6 +8,7 @@ export { default as ProductRegistrationPage } from './lib/routes/dashboard.produ
 export { default as ProductSearchPage } from './lib/routes/dashboard.product-search';
 export { default as RemindersPage } from './lib/routes/dashboard.reminders';
 export { default as ScanSellPage } from './lib/routes/dashboard.scan-sell';
+export { default as CheckoutPage, meta as checkoutMeta } from './lib/routes/dashboard.checkout';
 
 // Re-export meta functions
 export { meta as dashboardMeta } from './lib/routes/dashboard';

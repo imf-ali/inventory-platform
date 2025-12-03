@@ -52,5 +52,23 @@ export const API_ENDPOINTS = {
   SHOPS: {
     REGISTER: '/shops/register',
   },
+
+  // Inventory endpoints
+  INVENTORY: {
+    BASE: '/inventory',
+    SEARCH: '/inventory/search',
+  },
+
+  // Checkout endpoints
+  CHECKOUT: {
+    BASE: '/checkout',
+  },
+
+  // Cart endpoints
+  CART: {
+    BASE: '/cart',
+    ADD: '/cart/upsert',
+    STATUS: '/cart/status',
+  },
 } as const;
 

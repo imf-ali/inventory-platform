@@ -194,3 +194,118 @@ export interface RegisterShopResponse {
   status: string;
 }
 
+// Inventory types
+export interface CreateInventoryDto {
+  barcode: string;
+  name: string;
+  companyName: string;
+  price: number;
+  maximumRetailPrice: number;
+  costPrice: number;
+  sellingPrice: number;
+  businessType: string;
+  location: string;
+  count: number;
+  expiryDate: string;
+  description?: string;
+}
+
+export interface InventoryResponse {
+  lotId: string;
+  barcode: string;
+  reminderCreated: boolean;
+}
+
+export interface InventoryItem {
+  lotId: string;
+  barcode: string | null;
+  name: string | null;
+  description: string | null;
+  companyName: string | null;
+  maximumRetailPrice: number;
+  costPrice: number;
+  sellingPrice: number;
+  receivedCount: number;
+  soldCount: number;
+  currentCount: number;
+  location: string;
+  expiryDate: string;
+  shopId: string;
+}
+
+export interface InventoryListResponse {
+  data: InventoryItem[];
+  meta: unknown | null;
+}
+
+// Checkout types
+export interface CheckoutItem {
+  lotId: string;
+  quantity: number;
+  sellingPrice: number;
+}
+
+export interface CreateCheckoutDto {
+  businessType: string;
+  paymentMethod: string;
+  items: CheckoutItem[];
+}
+
+export interface CheckoutItemResponse {
+  inventoryId: string;
+  name: string;
+  quantity: number;
+  maximumRetailPrice: number;
+  sellingPrice: number;
+  discount: number;
+}
+
+export interface CheckoutResponse {
+  invoiceId: string;
+  invoiceNo: string;
+  businessType: string;
+  userId: string;
+  shopId: string;
+  items: CheckoutItemResponse[];
+  subTotal: number;
+  taxTotal: number;
+  discountTotal: number;
+  grandTotal: number;
+  paymentMethod: string;
+  status: string;
+}
+
+// Cart types
+export interface CartResponse {
+  purchaseId: string;
+  invoiceId: string;
+  invoiceNo: string;
+  businessType: string;
+  userId: string;
+  shopId: string;
+  items: CheckoutItemResponse[];
+  subTotal: number;
+  taxTotal: number;
+  discountTotal: number;
+  grandTotal: number;
+  status: string;
+  customerName?: string;
+  customerAddress?: string;
+  customerPhone?: string;
+  paymentMethod?: string;
+}
+
+export interface AddToCartDto {
+  businessType: string;
+  items: CheckoutItem[];
+  customerName?: string;
+  customerAddress?: string;
+  customerPhone?: string;
+}
+
+export interface UpdateCartStatusDto {
+  purchaseId: string;
+  status: string;
+  paymentMethod: string;
+}
+

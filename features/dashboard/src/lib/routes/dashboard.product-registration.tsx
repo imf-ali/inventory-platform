@@ -1,3 +1,7 @@
+import { useState, FormEvent } from 'react';
+import { useNavigate } from 'react-router';
+import { inventoryApi } from '@inventory-platform/api';
+import type { CreateInventoryDto } from '@inventory-platform/types';
 import styles from './dashboard.product-registration.module.css';
 
 export function meta() {
@@ -8,6 +12,105 @@ export function meta() {
 }
 
 export default function ProductRegistrationPage() {
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  
+  const [formData, setFormData] = useState<CreateInventoryDto>({
+    barcode: '',
+    name: '',
+    companyName: '',
+    price: 0,
+    maximumRetailPrice: 0,
+    costPrice: 0,
+    sellingPrice: 0,
+    businessType: 'pharmacy',
+    location: '',
+    count: 0,
+    expiryDate: '',
+    description: '',
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === 'expiryDate' ? new Date(value).toISOString() : value,
+    }));
+    setError(null);
+    setSuccess(null);
+  };
+
+  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value === '' ? 0 : parseFloat(value) || 0,
+    }));
+    setError(null);
+    setSuccess(null);
+  };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+    setIsLoading(true);
+
+    try {
+      // Validate required fields
+      if (!formData.barcode || !formData.name || !formData.companyName || !formData.location || !formData.expiryDate) {
+        setError('Please fill in all required fields');
+        setIsLoading(false);
+        return;
+      }
+
+      if (formData.count <= 0) {
+        setError('Count must be greater than 0');
+        setIsLoading(false);
+        return;
+      }
+
+      // Ensure price is set to sellingPrice (they should be the same)
+      const submitData: CreateInventoryDto = {
+        ...formData,
+        price: formData.sellingPrice,
+      };
+
+      const response = await inventoryApi.create(submitData);
+      setSuccess(`Product registered successfully! Lot ID: ${response.lotId}`);
+      
+      // Clear form and success message after 5 seconds
+      setTimeout(() => {
+        setFormData({
+          price: 0,
+          barcode: '',
+          name: '',
+          companyName: '',
+          maximumRetailPrice: 0,
+          costPrice: 0,
+          sellingPrice: 0,
+          businessType: 'pharmacy',
+          location: '',
+          count: 0,
+          expiryDate: '',
+          description: '',
+        });
+        setSuccess(null);
+      }, 5000);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to register product. Please try again.';
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancel = () => {
+    navigate('/dashboard');
+  };
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
@@ -15,53 +118,199 @@ export default function ProductRegistrationPage() {
         <p className={styles.subtitle}>Register and manage your product inventory</p>
       </div>
       <div className={styles.formContainer}>
-        <div className={styles.form}>
+        {error && (
+          <div className={styles.errorMessage}>
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className={styles.successMessage}>
+            {success}
+          </div>
+        )}
+        <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.formRow}>
             <div className={styles.formGroup}>
-              <label className={styles.label}>Product Name *</label>
-              <input type="text" className={styles.input} placeholder="Enter product name" />
+              <label htmlFor="barcode" className={styles.label}>Barcode *</label>
+              <input
+                type="text"
+                id="barcode"
+                name="barcode"
+                className={styles.input}
+                placeholder="Enter barcode"
+                value={formData.barcode}
+                onChange={handleChange}
+                required
+                disabled={isLoading}
+              />
             </div>
             <div className={styles.formGroup}>
-              <label className={styles.label}>SKU/Barcode *</label>
-              <input type="text" className={styles.input} placeholder="Enter SKU or barcode" />
+              <label htmlFor="companyName" className={styles.label}>Company *</label>
+              <input
+                type="text"
+                id="companyName"
+                name="companyName"
+                className={styles.input}
+                placeholder="Enter company name"
+                value={formData.companyName}
+                onChange={handleChange}
+                required
+                disabled={isLoading}
+              />
             </div>
           </div>
           <div className={styles.formRow}>
             <div className={styles.formGroup}>
-              <label className={styles.label}>Category *</label>
-              <select className={styles.input}>
-                <option value="">Select category</option>
-                <option value="electronics">Electronics</option>
-                <option value="clothing">Clothing</option>
-                <option value="food">Food & Beverages</option>
-                <option value="books">Books</option>
-                <option value="other">Other</option>
-              </select>
+              <label htmlFor="name" className={styles.label}>Product Name *</label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                className={styles.input}
+                placeholder="Enter product name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+                disabled={isLoading}
+              />
             </div>
             <div className={styles.formGroup}>
-              <label className={styles.label}>Price *</label>
-              <input type="number" className={styles.input} placeholder="0.00" step="0.01" />
+              <label htmlFor="count" className={styles.label}>Count *</label>
+              <input
+                type="number"
+                id="count"
+                name="count"
+                className={styles.input}
+                placeholder="0"
+                min="1"
+                value={formData.count}
+                onChange={handleNumberChange}
+                required
+                disabled={isLoading}
+              />
             </div>
           </div>
           <div className={styles.formRow}>
             <div className={styles.formGroup}>
-              <label className={styles.label}>Quantity in Stock *</label>
-              <input type="number" className={styles.input} placeholder="0" />
+              <label htmlFor="expiryDate" className={styles.label}>Expiry Date *</label>
+              <input
+                type="date"
+                id="expiryDate"
+                name="expiryDate"
+                className={styles.input}
+                value={formData.expiryDate ? new Date(formData.expiryDate).toISOString().split('T')[0] : ''}
+                onChange={(e) => {
+                  const dateValue = e.target.value;
+                  if (dateValue) {
+                    // Create date at midnight UTC to match API format (YYYY-MM-DDTHH:mm:ssZ)
+                    // dateValue is in YYYY-MM-DD format, append T00:00:00Z for UTC midnight
+                    const isoDate = `${dateValue}T00:00:00Z`;
+                    setFormData((prev) => ({
+                      ...prev,
+                      expiryDate: isoDate,
+                    }));
+                  } else {
+                    setFormData((prev) => ({
+                      ...prev,
+                      expiryDate: '',
+                    }));
+                  }
+                  setError(null);
+                  setSuccess(null);
+                }}
+                required
+                disabled={isLoading}
+              />
             </div>
             <div className={styles.formGroup}>
-              <label className={styles.label}>Reorder Level</label>
-              <input type="number" className={styles.input} placeholder="Minimum stock level" />
+              <label htmlFor="location" className={styles.label}>Inventory Location *</label>
+              <input
+                type="text"
+                id="location"
+                name="location"
+                className={styles.input}
+                placeholder="Enter inventory location"
+                value={formData.location}
+                onChange={handleChange}
+                required
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+          <div className={styles.formRow}>
+            <div className={styles.formGroup}>
+              <label htmlFor="maximumRetailPrice" className={styles.label}>MRP *</label>
+              <input
+                type="number"
+                id="maximumRetailPrice"
+                name="maximumRetailPrice"
+                className={styles.input}
+                placeholder="0.00"
+                step="0.01"
+                min="0"
+                value={formData.maximumRetailPrice}
+                onChange={handleNumberChange}
+                required
+                disabled={isLoading}
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label htmlFor="costPrice" className={styles.label}>Cost Price *</label>
+              <input
+                type="number"
+                id="costPrice"
+                name="costPrice"
+                className={styles.input}
+                placeholder="0.00"
+                step="0.01"
+                min="0"
+                value={formData.costPrice}
+                onChange={handleNumberChange}
+                required
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+          <div className={styles.formRow}>
+            <div className={styles.formGroup}>
+              <label htmlFor="sellingPrice" className={styles.label}>Selling Price *</label>
+              <input
+                type="number"
+                id="sellingPrice"
+                name="sellingPrice"
+                className={styles.input}
+                placeholder="0.00"
+                step="0.01"
+                min="0"
+                value={formData.sellingPrice}
+                onChange={handleNumberChange}
+                required
+                disabled={isLoading}
+              />
             </div>
           </div>
           <div className={styles.formGroup}>
-            <label className={styles.label}>Description</label>
-            <textarea className={styles.textarea} rows={4} placeholder="Enter product description"></textarea>
+            <label htmlFor="description" className={styles.label}>Description</label>
+            <textarea
+              id="description"
+              name="description"
+              className={styles.textarea}
+              rows={4}
+              placeholder="Enter product description"
+              value={formData.description}
+              onChange={handleChange}
+              disabled={isLoading}
+            />
           </div>
           <div className={styles.formActions}>
-            <button type="button" className={styles.cancelBtn}>Cancel</button>
-            <button type="button" className={styles.submitBtn}>Register Product</button>
+            <button type="button" className={styles.cancelBtn} onClick={handleCancel} disabled={isLoading}>
+              Cancel
+            </button>
+            <button type="submit" className={styles.submitBtn} disabled={isLoading}>
+              {isLoading ? 'Registering...' : 'Register Product'}
+            </button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );

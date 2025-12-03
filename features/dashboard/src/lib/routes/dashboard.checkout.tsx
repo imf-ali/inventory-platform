@@ -1,0 +1,309 @@
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router';
+import { cartApi } from '@inventory-platform/api';
+import type { CartResponse } from '@inventory-platform/types';
+import styles from './dashboard.checkout.module.css';
+
+export function meta() {
+  return [
+    { title: 'Checkout - InventoryPro' },
+    { name: 'description', content: 'Review and complete your purchase' },
+  ];
+}
+
+export default function CheckoutPage() {
+  const navigate = useNavigate();
+  const [checkoutData, setCheckoutData] = useState<CartResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const cartLoadedRef = useRef(false);
+
+  // Load cart data on mount
+  useEffect(() => {
+    if (!cartLoadedRef.current) {
+      cartLoadedRef.current = true;
+      loadCart();
+    }
+  }, []);
+
+  const loadCart = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const cart = await cartApi.get();
+      
+      // If status is CREATED, redirect to scan-sell page
+      if (cart.status === 'CREATED') {
+        navigate('/dashboard/scan-sell');
+        return;
+      }
+      
+      setCheckoutData(cart);
+    } catch (err) {
+      // On error, redirect to scan-sell page
+      console.error('Error loading cart:', err);
+      navigate('/dashboard/scan-sell');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.errorContainer}>
+          <h2>Loading...</h2>
+          <p>Please wait while we load your cart data.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!checkoutData) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.errorContainer}>
+          <h2>No checkout data found</h2>
+          <p>Please start a new transaction from the Scan and Sell page.</p>
+          <button className={styles.backBtn} onClick={() => navigate('/dashboard/scan-sell')}>
+            Go to Scan and Sell
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const handlePayment = async (method: 'CASH' | 'ONLINE') => {
+    if (!checkoutData) {
+      setError('Checkout data not available');
+      return;
+    }
+
+    setIsProcessingPayment(true);
+    setError(null);
+
+    try {
+      const purchaseId = checkoutData.purchaseId;
+      
+      if (!purchaseId) {
+        throw new Error('Purchase ID not found in checkout data');
+      }
+
+      // Call update status API with status COMPLETED and payment method
+      const statusPayload = {
+        purchaseId,
+        status: 'COMPLETED',
+        paymentMethod: method,
+      };
+
+      await cartApi.updateStatus(statusPayload);
+      
+      // Navigate to scan-sell page after successful payment
+      navigate('/dashboard/scan-sell');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to process payment';
+      setError(errorMessage);
+      setIsProcessingPayment(false);
+    }
+  };
+
+  const handleGoBack = async () => {
+    if (!checkoutData) {
+      navigate('/dashboard/scan-sell');
+      return;
+    }
+
+    setIsUpdating(true);
+    setError(null);
+
+    try {
+      const purchaseId = checkoutData.purchaseId;
+      
+      if (!purchaseId) {
+        throw new Error('Purchase ID not found in checkout data');
+      }
+
+      // Call update status API with status CREATED
+      const statusPayload = {
+        purchaseId,
+        status: 'CREATED',
+        paymentMethod: checkoutData.paymentMethod || 'CASH',
+      };
+
+      await cartApi.updateStatus(statusPayload);
+      
+      // Navigate back to scan-sell page
+      navigate('/dashboard/scan-sell');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update cart status';
+      setError(errorMessage);
+      setIsUpdating(false);
+    }
+  };
+
+  // Calculate tax percentage
+  const taxPercentage = checkoutData.subTotal > 0 
+    ? ((checkoutData.taxTotal / checkoutData.subTotal) * 100).toFixed(1)
+    : '0';
+
+  // Get current date
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  return (
+    <div className={styles.page}>
+      <div className={styles.header}>
+        <h2 className={styles.title}>Checkout</h2>
+        <p className={styles.subtitle}>Invoice #{checkoutData.invoiceNo}</p>
+      </div>
+
+      {error && (
+        <div className={styles.errorMessage}>
+          {error}
+        </div>
+      )}
+
+      <div className={styles.container}>
+        {/* Invoice Details */}
+        <div className={styles.invoiceSection}>
+          <div className={styles.invoiceHeader}>
+            <div>
+              <h3 className={styles.invoiceTitle}>Invoice Details</h3>
+            </div>
+            <div className={styles.statusBadge}>
+              <span className={styles.statusText}>{checkoutData.status}</span>
+            </div>
+          </div>
+
+          <div className={styles.infoGrid}>
+            {checkoutData.customerName && (
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Customer Name:</span>
+                <span className={styles.infoValue}>{checkoutData.customerName}</span>
+              </div>
+            )}
+            {checkoutData.customerPhone && (
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Customer Phone:</span>
+                <span className={styles.infoValue}>{checkoutData.customerPhone}</span>
+              </div>
+            )}
+            <div className={styles.infoItem}>
+              <span className={styles.infoLabel}>Address:</span>
+              <span className={styles.infoValue}>{checkoutData.customerAddress || 'Not specified'}</span>
+            </div>
+            <div className={styles.infoItem}>
+              <span className={styles.infoLabel}>Payment Method:</span>
+              <span className={styles.infoValue}>{checkoutData.paymentMethod || 'Not specified'}</span>
+            </div>
+            <div className={styles.infoItem}>
+              <span className={styles.infoLabel}>Date:</span>
+              <span className={styles.infoValue}>{currentDate}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Items Table */}
+        <div className={styles.itemsSection}>
+          <h3 className={styles.sectionTitle}>Items</h3>
+          <div className={styles.tableContainer}>
+            <table className={styles.itemsTable}>
+              <thead>
+                <tr>
+                  <th>Product Name</th>
+                  <th>Quantity</th>
+                  <th>MRP</th>
+                  <th>Selling Price</th>
+                  <th>Discount</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {checkoutData.items.map((item, index: number) => {
+                  const itemTotal = item.sellingPrice * item.quantity;
+                  // Calculate discount percentage: ((MRP - Selling Price) / MRP) * 100
+                  return (
+                    <tr key={index}>
+                      <td>{item.name}</td>
+                      <td>{item.quantity}</td>
+                      <td>${item.maximumRetailPrice.toFixed(2)}</td>
+                      <td>${item.sellingPrice.toFixed(2)}</td>
+                      <td>{item.discount.toFixed(2)}%</td>
+                      <td>${itemTotal.toFixed(2)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Summary */}
+        <div className={styles.summarySection}>
+          <h3 className={styles.sectionTitle}>Summary</h3>
+          <div className={styles.summaryTable}>
+            <div className={styles.summaryRow}>
+              <span>Subtotal:</span>
+              <span>${checkoutData.subTotal.toFixed(2)}</span>
+            </div>
+            <div className={styles.summaryRow}>
+              <span>Tax ({taxPercentage}%):</span>
+              <span>${checkoutData.taxTotal.toFixed(2)}</span>
+            </div>
+            <div className={styles.summaryRow}>
+              <span>Discount:</span>
+              <span>${checkoutData.discountTotal.toFixed(2)}</span>
+            </div>
+            <div className={styles.summaryRowTotal}>
+              <span>Grand Total:</span>
+              <span>${checkoutData.grandTotal.toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Payment Options */}
+        <div className={styles.paymentSection}>
+          <h3 className={styles.sectionTitle}>Payment Options</h3>
+          <div className={styles.paymentButtons}>
+            <button
+              className={`${styles.paymentBtn} ${styles.cashBtn}`}
+              onClick={() => handlePayment('CASH')}
+              disabled={isProcessingPayment || isUpdating}
+            >
+              <span role="img" aria-label="Cash">💵</span> 
+              {isProcessingPayment ? 'Processing...' : 'Pay in Cash'}
+            </button>
+            <button
+              className={`${styles.paymentBtn} ${styles.onlineBtn}`}
+              onClick={() => handlePayment('ONLINE')}
+              disabled={isProcessingPayment || isUpdating}
+            >
+              <span role="img" aria-label="Online Payment">💳</span> 
+              {isProcessingPayment ? 'Processing...' : 'Pay Online'}
+            </button>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className={styles.actionsSection}>
+          <button 
+            className={styles.backBtn} 
+            onClick={handleGoBack}
+            disabled={isUpdating}
+          >
+            {isUpdating ? 'Updating...' : 'Go Back and Sell'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+

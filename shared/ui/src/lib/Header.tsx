@@ -4,7 +4,7 @@ import { useAuthStore } from '@inventory-platform/store';
 import styles from './Header.module.css';
 
 export function Header() {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
 
   return (
     <header className={styles.header}>

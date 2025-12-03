@@ -18,6 +18,6 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
     }
   }, [token, isAuthenticated]);
 
-  return <>{children}</>;
+  return children;
 }
 
