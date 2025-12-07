@@ -51,6 +51,18 @@ export const API_ENDPOINTS = {
   // Shop endpoints
   SHOPS: {
     REGISTER: '/shops/register',
+    INVITATIONS: (shopId: string) => `/shops/${shopId}/invitations`,
+    USERS_ALL: (shopId: string) => `/shops/${shopId}/users/all`,
+  },
+
+  // Invitation endpoints
+  INVITATIONS: {
+    ACCEPT: (invitationId: string) => `/invitations/${invitationId}/accept`,
+  },
+
+  // User endpoints
+  USERS: {
+    INVITATIONS: '/users/invitations',
   },
 
   // Inventory endpoints

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router';
+import { GoogleLogin, type CredentialResponse } from '@react-oauth/google';
 import { useAuthStore } from '@inventory-platform/store';
 import styles from './LoginForm.module.css';
 
@@ -38,12 +39,37 @@ export function LoginForm() {
     }
 
     try {
-      await login(formData);
+      await login({
+        email: formData.email,
+        password: formData.password,
+      });
       navigate('/dashboard');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Login failed. Please try again.';
       setLocalError(errorMessage);
     }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+    try {
+      setLocalError(null);
+      clearError();
+      if (credentialResponse.credential) {
+        await login({
+          idToken: credentialResponse.credential,
+        });
+        navigate('/dashboard');
+      } else {
+        setLocalError('Google login failed. No credential received.');
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Google login failed. Please try again.';
+      setLocalError(errorMessage);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setLocalError('Google login failed. Please try again.');
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -126,6 +152,23 @@ export function LoginForm() {
         >
           {isLoading ? 'Signing In...' : 'Sign In'}
         </button>
+
+        <div className={styles.divider}>
+          <span className={styles.dividerText}>or</span>
+        </div>
+
+        <div className={styles.googleButtonWrapper}>
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+            useOneTap={false}
+            theme="outline"
+            size="large"
+            text="continue_with"
+            shape="rectangular"
+            width="100%"
+          />
+        </div>
       </div>
       
       <div className={styles.footer}>

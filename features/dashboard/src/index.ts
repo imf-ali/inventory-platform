@@ -9,6 +9,9 @@ export { default as ProductSearchPage } from './lib/routes/dashboard.product-sea
 export { default as RemindersPage } from './lib/routes/dashboard.reminders';
 export { default as ScanSellPage } from './lib/routes/dashboard.scan-sell';
 export { default as CheckoutPage, meta as checkoutMeta } from './lib/routes/dashboard.checkout';
+export { default as InvitationsPage } from './lib/routes/dashboard.invitations';
+export { default as MyInvitationsPage } from './lib/routes/dashboard.my-invitations';
+export { default as ShopUsersPage } from './lib/routes/dashboard.shop-users';
 
 // Re-export meta functions
 export { meta as dashboardMeta } from './lib/routes/dashboard';
@@ -19,4 +22,7 @@ export { meta as productRegistrationMeta } from './lib/routes/dashboard.product-
 export { meta as productSearchMeta } from './lib/routes/dashboard.product-search';
 export { meta as remindersMeta } from './lib/routes/dashboard.reminders';
 export { meta as scanSellMeta } from './lib/routes/dashboard.scan-sell';
+export { meta as invitationsMeta } from './lib/routes/dashboard.invitations';
+export { meta as myInvitationsMeta } from './lib/routes/dashboard.my-invitations';
+export { meta as shopUsersMeta } from './lib/routes/dashboard.shop-users';
 

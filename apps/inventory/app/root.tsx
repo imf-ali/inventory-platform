@@ -7,6 +7,7 @@ import {
   type MetaFunction,
   type LinksFunction,
 } from 'react-router';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { ThemeProvider, AuthInitializer } from '@inventory-platform/ui';
 import '../styles.css';
 
@@ -60,11 +61,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
         />
       </head>
       <body>
+        <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ''}>
         <ThemeProvider>
           <AuthInitializer>
             {children}
           </AuthInitializer>
         </ThemeProvider>
+        </GoogleOAuthProvider>
         <ScrollRestoration />
         <Scripts />
       </body>

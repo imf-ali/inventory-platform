@@ -14,6 +14,9 @@ const menuItems = [
   { path: '/dashboard/analytics', label: 'Analytics Dashboard', icon: '📈' },
   { path: '/dashboard/inventory-alert', label: 'Inventory Low Alert', icon: '🔔' },
   { path: '/dashboard/reminders', label: 'Reminder to Sell/Return', icon: '📅' },
+  { path: '/dashboard/invitations', label: 'Invitations', icon: '✉️' },
+  { path: '/dashboard/my-invitations', label: 'My Invitations', icon: '📬' },
+  { path: '/dashboard/shop-users', label: 'Shop Users', icon: '👥' },
 ];
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
@@ -52,6 +55,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const currentPath = location.pathname;
 
+  // Filter menu items based on user role
+  const filteredMenuItems = menuItems.filter((item) => {
+    // Hide Shop Users and Invitations for CASHIER role
+    if (user?.role === 'CASHIER') {
+      if (item.path === '/dashboard/shop-users' || item.path === '/dashboard/invitations') {
+        return false;
+      }
+    }
+    return true;
+  });
+
   return (
     <div className={styles.dashboard}>
       <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : styles.sidebarClosed}`}>
@@ -77,7 +91,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </button>
         </div>
         <nav className={styles.nav}>
-          {menuItems.map((item) => (
+          {filteredMenuItems.map((item) => (
             <Link
               key={item.path}
               to={item.path}
@@ -93,7 +107,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <header className={styles.header}>
           <div className={styles.headerContent}>
             <h1 className={styles.pageTitle}>
-              {menuItems.find(item => item.path === currentPath)?.label || 'Dashboard'}
+              {filteredMenuItems.find(item => item.path === currentPath)?.label || 'Dashboard'}
             </h1>
             <div className={styles.headerActions}>
               <ThemeToggle />
