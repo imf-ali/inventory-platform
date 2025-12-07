@@ -18,6 +18,7 @@ const menuItems = [
   { path: '/dashboard/my-invitations', label: 'My Invitations', icon: '📬' },
   { path: '/dashboard/join-requests', label: 'Join Requests', icon: '🤝' },
   { path: '/dashboard/shop-users', label: 'Shop Users', icon: '👥' },
+  { path: '/dashboard/history', label: 'History', icon: '📜' },
 ];
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {

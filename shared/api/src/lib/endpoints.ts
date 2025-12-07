@@ -85,5 +85,10 @@ export const API_ENDPOINTS = {
     ADD: '/cart/upsert',
     STATUS: '/cart/status',
   },
+
+  // Purchase endpoints
+  PURCHASES: {
+    BASE: '/purchases',
+  },
 } as const;
 

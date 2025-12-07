@@ -363,6 +363,37 @@ export interface UpdateCartStatusDto {
   paymentMethod: string;
 }
 
+// Purchase History types
+export interface Purchase {
+  purchaseId: string;
+  invoiceId: string;
+  invoiceNo: string;
+  businessType: string;
+  userId: string;
+  shopId: string;
+  grandTotal: number;
+  soldAt: string;
+  status: string;
+  paymentMethod: string;
+  customerName: string | null;
+  customerAddress: string | null;
+  customerPhone: string | null;
+}
+
+export interface PurchaseHistoryResponse {
+  purchases: Purchase[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface GetPurchasesParams {
+  page?: number;
+  limit?: number;
+  order?: string; // e.g., "soldAt:desc"
+}
+
 // Invitation types
 export type InvitationStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'EXPIRED';
 

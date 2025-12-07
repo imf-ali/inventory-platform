@@ -13,6 +13,7 @@ export { default as InvitationsPage } from './lib/routes/dashboard.invitations';
 export { default as MyInvitationsPage } from './lib/routes/dashboard.my-invitations';
 export { default as ShopUsersPage } from './lib/routes/dashboard.shop-users';
 export { default as JoinRequestsPage } from './lib/routes/dashboard.join-requests';
+export { default as HistoryPage } from './lib/routes/dashboard.history';
 
 // Re-export meta functions
 export { meta as dashboardMeta } from './lib/routes/dashboard';
@@ -27,4 +28,5 @@ export { meta as invitationsMeta } from './lib/routes/dashboard.invitations';
 export { meta as myInvitationsMeta } from './lib/routes/dashboard.my-invitations';
 export { meta as shopUsersMeta } from './lib/routes/dashboard.shop-users';
 export { meta as joinRequestsMeta } from './lib/routes/dashboard.join-requests';
+export { meta as historyMeta } from './lib/routes/dashboard.history';
 

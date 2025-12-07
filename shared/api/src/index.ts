@@ -13,3 +13,4 @@ export * from './lib/invitations';
 export * from './lib/inventory';
 export * from './lib/checkout';
 export * from './lib/cart';
+export * from './lib/purchases';

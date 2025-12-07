@@ -21,5 +21,6 @@ export default [
     route('my-invitations', './routes/dashboard.my-invitations.tsx'),
     route('shop-users', './routes/dashboard.shop-users.tsx'),
     route('join-requests', './routes/dashboard.join-requests.tsx'),
+    route('history', './routes/dashboard.history.tsx'),
   ]),
 ] satisfies RouteConfig;
