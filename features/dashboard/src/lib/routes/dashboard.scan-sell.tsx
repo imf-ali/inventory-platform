@@ -741,7 +741,7 @@ function ProductResultItem({ item, onAddToCart }: ProductResultItemProps) {
           <p className={styles.resultItemBarcode}>Barcode: {item.barcode}</p>
         )}
         <p className={styles.resultItemStock}>
-          Stock: {item.currentCount} | Lot: {item.lotId}
+          Current: {item.currentCount}
         </p>
         <p className={styles.resultItemMRP}>
           MRP: ${item.maximumRetailPrice.toFixed(2)}

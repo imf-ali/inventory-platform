@@ -140,9 +140,6 @@ export default function ProductSearchPage() {
                   <h3 className={styles.productName}>
                     {item.name || 'Unnamed Product'}
                   </h3>
-                  <p className={styles.productSku}>
-                    Lot ID: {item.lotId}
-                  </p>
                   {item.companyName && (
                     <p className={styles.productCompany}>
                       Company: {item.companyName}
