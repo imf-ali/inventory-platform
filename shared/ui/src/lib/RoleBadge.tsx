@@ -13,8 +13,6 @@ export function RoleBadge({ role, className = '' }: RoleBadgeProps) {
         return styles.admin;
       case 'MANAGER':
         return styles.manager;
-      case 'STAFF':
-        return styles.staff;
       case 'CASHIER':
         return styles.cashier;
       default:

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { invitationsApi } from '@inventory-platform/api';
-import type { Invitation } from '@inventory-platform/types';
+import type { Invitation, UserRole } from '@inventory-platform/types';
 import { RoleBadge } from './RoleBadge';
 import styles from './InvitationCard.module.css';
 
@@ -63,7 +63,7 @@ export function InvitationCard({
           <div className={styles.shopInfo}>
             <h3 className={styles.shopName}>{invitation.shopName}</h3>
           </div>
-          <RoleBadge role={invitation.role} />
+          <RoleBadge role={invitation.role as UserRole} />
         </div>
         <span className={`${styles.status} ${getStatusColor(invitation.status)}`}>
           {isExpired && invitation.status === 'PENDING' ? 'EXPIRED' : invitation.status}

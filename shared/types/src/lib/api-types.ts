@@ -379,5 +379,5 @@ export interface ShopUsersResponse {
 }
 
 // User Role type
-export type UserRole = 'ADMIN' | 'MANAGER' | 'STAFF' | 'CASHIER';
+export type UserRole = 'ADMIN' | 'MANAGER' | 'CASHIER';
 

@@ -48,7 +48,7 @@ export function InviteForm({ shopId, onInviteSent, onError }: InviteFormProps) {
 
       setSuccess(response.message || 'Invitation sent successfully!');
       setInviteeEmail('');
-      setRole('STAFF');
+      setRole('CASHIER');
 
       if (onInviteSent) {
         onInviteSent();

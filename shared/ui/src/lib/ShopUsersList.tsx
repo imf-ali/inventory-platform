@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { invitationsApi } from '@inventory-platform/api';
-import type { ShopUser } from '@inventory-platform/types';
+import type { ShopUser, UserRole } from '@inventory-platform/types';
 import { RoleBadge } from './RoleBadge';
 import styles from './ShopUsersList.module.css';
 
@@ -88,7 +88,7 @@ export function ShopUsersList({ shopId, onUserChange }: ShopUsersListProps) {
                     <h4 className={styles.userName}>{user.name}</h4>
                     <span className={styles.userEmail}>{user.email}</span>
                   </div>
-                  <RoleBadge role={user.role} />
+                  <RoleBadge role={user.role as UserRole} />
                 </div>
                 <div className={styles.details}>
                   <div className={styles.detailRow}>
@@ -121,7 +121,7 @@ export function ShopUsersList({ shopId, onUserChange }: ShopUsersListProps) {
                     <h4 className={styles.userName}>{user.name}</h4>
                     <span className={styles.userEmail}>{user.email}</span>
                   </div>
-                  <RoleBadge role={user.role} />
+                  <RoleBadge role={user.role as UserRole} />
                 </div>
                 <div className={styles.details}>
                   <div className={styles.detailRow}>
@@ -154,7 +154,7 @@ export function ShopUsersList({ shopId, onUserChange }: ShopUsersListProps) {
                     <h4 className={styles.userName}>{user.name}</h4>
                     <span className={styles.userEmail}>{user.email}</span>
                   </div>
-                  <RoleBadge role={user.role} />
+                  <RoleBadge role={user.role as UserRole} />
                 </div>
                 <div className={styles.details}>
                   <div className={styles.detailRow}>
@@ -187,7 +187,7 @@ export function ShopUsersList({ shopId, onUserChange }: ShopUsersListProps) {
                     <h4 className={styles.userName}>{user.name}</h4>
                     <span className={styles.userEmail}>{user.email}</span>
                   </div>
-                  <RoleBadge role={user.role} />
+                  <RoleBadge role={user.role as UserRole} />
                 </div>
                 <div className={styles.details}>
                   <div className={styles.detailRow}>
