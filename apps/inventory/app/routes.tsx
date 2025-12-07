@@ -15,5 +15,8 @@ export default [
     route('analytics', './routes/dashboard.analytics.tsx'),
     route('inventory-alert', './routes/dashboard.inventory-alert.tsx'),
     route('reminders', './routes/dashboard.reminders.tsx'),
+    route('invitations', './routes/dashboard.invitations.tsx'),
+    route('my-invitations', './routes/dashboard.my-invitations.tsx'),
+    route('shop-users', './routes/dashboard.shop-users.tsx'),
   ]),
 ] satisfies RouteConfig;

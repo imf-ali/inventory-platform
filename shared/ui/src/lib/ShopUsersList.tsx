@@ -21,15 +21,12 @@ export function ShopUsersList({ shopId, onUserChange }: ShopUsersListProps) {
     try {
       const data = await invitationsApi.getShopUsers(shopId);
       setUsers(data);
-      if (onUserChange) {
-        onUserChange();
-      }
     } catch (err: any) {
       setError(err?.message || 'Failed to load shop users');
     } finally {
       setIsLoading(false);
     }
-  }, [shopId, onUserChange]);
+  }, [shopId]);
 
   useEffect(() => {
     fetchUsers();
@@ -66,8 +63,15 @@ export function ShopUsersList({ shopId, onUserChange }: ShopUsersListProps) {
     );
   }
 
-  const owners = users.filter((u) => u.relationship === 'OWNER');
+  // Handle null relationship - if relationship is null but role is OWNER, treat as owner
+  const owners = users.filter((u) => 
+    u.relationship === 'OWNER' || (u.relationship === null && u.role === 'OWNER')
+  );
   const invited = users.filter((u) => u.relationship === 'INVITED');
+  // Get users that don't match owner or invited (fallback for any edge cases)
+  const otherUsers = users.filter((u) => 
+    !owners.includes(u) && !invited.includes(u)
+  );
   const active = users.filter((u) => u.active);
   const inactive = users.filter((u) => !u.active);
 
@@ -88,13 +92,9 @@ export function ShopUsersList({ shopId, onUserChange }: ShopUsersListProps) {
                 </div>
                 <div className={styles.details}>
                   <div className={styles.detailRow}>
-                    <span className={styles.label}>User ID:</span>
-                    <span className={styles.value}>{user.userId}</span>
-                  </div>
-                  <div className={styles.detailRow}>
                     <span className={styles.label}>Joined:</span>
                     <span className={styles.value}>
-                      {new Date(user.joinedAt).toLocaleDateString()}
+                      {user.joinedAt ? new Date(user.joinedAt).toLocaleDateString() : 'N/A'}
                     </span>
                   </div>
                   <div className={styles.detailRow}>
@@ -125,13 +125,42 @@ export function ShopUsersList({ shopId, onUserChange }: ShopUsersListProps) {
                 </div>
                 <div className={styles.details}>
                   <div className={styles.detailRow}>
-                    <span className={styles.label}>User ID:</span>
-                    <span className={styles.value}>{user.userId}</span>
+                    <span className={styles.label}>Joined:</span>
+                    <span className={styles.value}>
+                      {user.joinedAt ? new Date(user.joinedAt).toLocaleDateString() : 'N/A'}
+                    </span>
                   </div>
+                  <div className={styles.detailRow}>
+                    <span className={styles.label}>Status:</span>
+                    <span className={`${styles.status} ${user.active ? styles.statusActive : styles.statusInactive}`}>
+                      {user.active ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {otherUsers.length > 0 && (
+        <div className={styles.section}>
+          <h3 className={styles.sectionTitle}>Users ({otherUsers.length})</h3>
+          <div className={styles.grid}>
+            {otherUsers.map((user) => (
+              <div key={user.userId} className={styles.card}>
+                <div className={styles.header}>
+                  <div className={styles.userInfo}>
+                    <h4 className={styles.userName}>{user.name}</h4>
+                    <span className={styles.userEmail}>{user.email}</span>
+                  </div>
+                  <RoleBadge role={user.role} />
+                </div>
+                <div className={styles.details}>
                   <div className={styles.detailRow}>
                     <span className={styles.label}>Joined:</span>
                     <span className={styles.value}>
-                      {new Date(user.joinedAt).toLocaleDateString()}
+                      {user.joinedAt ? new Date(user.joinedAt).toLocaleDateString() : 'N/A'}
                     </span>
                   </div>
                   <div className={styles.detailRow}>
@@ -168,7 +197,7 @@ export function ShopUsersList({ shopId, onUserChange }: ShopUsersListProps) {
                   <div className={styles.detailRow}>
                     <span className={styles.label}>Joined:</span>
                     <span className={styles.value}>
-                      {new Date(user.joinedAt).toLocaleDateString()}
+                      {user.joinedAt ? new Date(user.joinedAt).toLocaleDateString() : 'N/A'}
                     </span>
                   </div>
                   <div className={styles.detailRow}>

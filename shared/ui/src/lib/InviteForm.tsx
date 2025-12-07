@@ -9,19 +9,11 @@ interface InviteFormProps {
   onError?: (error: string) => void;
 }
 
-<<<<<<< Updated upstream
-const AVAILABLE_ROLES: UserRole[] = ['ADMIN', 'MANAGER', 'STAFF', 'CASHIER'];
-
-export function InviteForm({ shopId, onInviteSent, onError }: InviteFormProps) {
-  const [inviteeEmail, setInviteeEmail] = useState('');
-  const [role, setRole] = useState<UserRole>('STAFF');
-=======
 const AVAILABLE_ROLES: UserRole[] = ['ADMIN', 'MANAGER', 'CASHIER'];
 
 export function InviteForm({ shopId, onInviteSent, onError }: InviteFormProps) {
-  const [email, setEmail] = useState('');
+  const [inviteeEmail, setInviteeEmail] = useState('');
   const [role, setRole] = useState<UserRole>('CASHIER');
->>>>>>> Stashed changes
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -36,20 +28,12 @@ export function InviteForm({ shopId, onInviteSent, onError }: InviteFormProps) {
     setError(null);
     setSuccess(null);
 
-<<<<<<< Updated upstream
     if (!inviteeEmail.trim()) {
-=======
-    if (!email.trim()) {
->>>>>>> Stashed changes
       setError('Email is required');
       return;
     }
 
-<<<<<<< Updated upstream
     if (!validateEmail(inviteeEmail)) {
-=======
-    if (!validateEmail(email)) {
->>>>>>> Stashed changes
       setError('Please enter a valid email address');
       return;
     }
@@ -58,22 +42,13 @@ export function InviteForm({ shopId, onInviteSent, onError }: InviteFormProps) {
 
     try {
       const response = await invitationsApi.sendInvitation(shopId, {
-<<<<<<< Updated upstream
         inviteeEmail: inviteeEmail.trim(),
-=======
-        email: email.trim(),
->>>>>>> Stashed changes
         role,
       });
 
       setSuccess(response.message || 'Invitation sent successfully!');
-<<<<<<< Updated upstream
       setInviteeEmail('');
       setRole('STAFF');
-=======
-      setEmail('');
-      setRole('CASHIER');
->>>>>>> Stashed changes
 
       if (onInviteSent) {
         onInviteSent();
@@ -110,7 +85,6 @@ export function InviteForm({ shopId, onInviteSent, onError }: InviteFormProps) {
 
       <form className={styles.form} onSubmit={handleSubmit}>
         <div className={styles.formGroup}>
-<<<<<<< Updated upstream
           <label htmlFor="inviteeEmail" className={styles.label}>
             Email Address
           </label>
@@ -122,19 +96,6 @@ export function InviteForm({ shopId, onInviteSent, onError }: InviteFormProps) {
             value={inviteeEmail}
             onChange={(e) => {
               setInviteeEmail(e.target.value);
-=======
-          <label htmlFor="email" className={styles.label}>
-            Email Address
-          </label>
-          <input
-            id="email"
-            type="email"
-            className={styles.input}
-            placeholder="user@example.com"
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
->>>>>>> Stashed changes
               if (error) setError(null);
               if (success) setSuccess(null);
             }}
@@ -169,11 +130,7 @@ export function InviteForm({ shopId, onInviteSent, onError }: InviteFormProps) {
         <button
           type="submit"
           className={styles.submitButton}
-<<<<<<< Updated upstream
           disabled={isLoading || !inviteeEmail.trim()}
-=======
-          disabled={isLoading || !email.trim()}
->>>>>>> Stashed changes
         >
           {isLoading ? 'Sending...' : 'Send Invitation'}
         </button>
@@ -181,4 +138,3 @@ export function InviteForm({ shopId, onInviteSent, onError }: InviteFormProps) {
     </div>
   );
 }
-

@@ -13,11 +13,8 @@ export function RoleBadge({ role, className = '' }: RoleBadgeProps) {
         return styles.admin;
       case 'MANAGER':
         return styles.manager;
-<<<<<<< Updated upstream
       case 'STAFF':
         return styles.staff;
-=======
->>>>>>> Stashed changes
       case 'CASHIER':
         return styles.cashier;
       default:
@@ -31,4 +28,3 @@ export function RoleBadge({ role, className = '' }: RoleBadgeProps) {
     </span>
   );
 }
-

@@ -311,3 +311,73 @@ export interface UpdateCartStatusDto {
   paymentMethod: string;
 }
 
+// Invitation types
+export type InvitationStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'EXPIRED';
+
+export interface Invitation {
+  invitationId: string;
+  shopId: string;
+  shopName: string;
+  inviterUserId: string;
+  inviterName: string;
+  inviteeUserId?: string;
+  inviteeEmail: string;
+  inviteeName?: string;
+  role: string;
+  status: InvitationStatus;
+  createdAt: string;
+  expiresAt: string;
+  acceptedAt?: string | null;
+  rejectedAt?: string | null;
+}
+
+export interface SendInvitationDto {
+  inviteeEmail: string;
+  role: string;
+}
+
+export interface SendInvitationResponse {
+  invitationId: string;
+  shopId: string;
+  inviteeEmail: string;
+  role: string;
+  status: InvitationStatus;
+  createdAt: string;
+  expiresAt: string;
+  message: string;
+}
+
+export interface AcceptInvitationResponse {
+  invitationId: string;
+  shopId: string;
+  shopName: string;
+  userId: string;
+  role: string;
+  acceptedAt: string;
+  message: string;
+}
+
+export interface InvitationsResponse {
+  data: Invitation[];
+}
+
+// Shop User types
+export type UserRelationship = 'OWNER' | 'INVITED' | null;
+
+export interface ShopUser {
+  userId: string;
+  name: string;
+  email: string;
+  role: string;
+  relationship: UserRelationship;
+  active: boolean;
+  joinedAt: string | null;
+}
+
+export interface ShopUsersResponse {
+  data: ShopUser[];
+}
+
+// User Role type
+export type UserRole = 'ADMIN' | 'MANAGER' | 'STAFF' | 'CASHIER';
+

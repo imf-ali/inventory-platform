@@ -9,6 +9,7 @@ export * from './lib/analytics';
 export * from './lib/alerts';
 export * from './lib/reminders';
 export * from './lib/shops';
+export * from './lib/invitations';
 export * from './lib/inventory';
 export * from './lib/checkout';
 export * from './lib/cart';

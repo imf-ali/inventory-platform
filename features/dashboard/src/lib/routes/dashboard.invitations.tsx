@@ -1,8 +1,4 @@
-<<<<<<< Updated upstream
 import { useState } from 'react';
-=======
-import { useState, useEffect } from 'react';
->>>>>>> Stashed changes
 import { useAuthStore } from '@inventory-platform/store';
 import { InviteForm, InvitationList } from '@inventory-platform/ui';
 import styles from './dashboard.invitations.module.css';
@@ -20,21 +16,22 @@ export default function InvitationsPage() {
 
   const shopId = user?.shopId;
 
-<<<<<<< Updated upstream
-=======
-  useEffect(() => {
-    if (!shopId) {
-      // User doesn't have a shop, should redirect
-      // This is handled by the layout
-    }
-  }, [shopId]);
-
->>>>>>> Stashed changes
   if (!shopId) {
     return (
       <div className={styles.container}>
         <div className={styles.error}>
           You need to be part of a shop to manage invitations.
+        </div>
+      </div>
+    );
+  }
+
+  // Restrict access for CASHIER role
+  if (user?.role === 'CASHIER') {
+    return (
+      <div className={styles.container}>
+        <div className={styles.error}>
+          You don't have permission to manage invitations.
         </div>
       </div>
     );
@@ -66,4 +63,3 @@ export default function InvitationsPage() {
     </div>
   );
 }
-

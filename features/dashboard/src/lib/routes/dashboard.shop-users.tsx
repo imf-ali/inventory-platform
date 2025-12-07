@@ -26,6 +26,17 @@ export default function ShopUsersPage() {
     );
   }
 
+  // Restrict access for CASHIER role
+  if (user?.role === 'CASHIER') {
+    return (
+      <div className={styles.container}>
+        <div className={styles.error}>
+          You don't have permission to view shop users.
+        </div>
+      </div>
+    );
+  }
+
   const handleUserChange = () => {
     setRefreshKey((prev) => prev + 1);
   };
