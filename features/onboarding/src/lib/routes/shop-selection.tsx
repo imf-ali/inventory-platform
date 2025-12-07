@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuthStore } from '@inventory-platform/store';
 import styles from './shop-selection.module.css';
@@ -12,8 +12,39 @@ export function meta() {
 
 export default function ShopSelectionPage() {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuthStore();
+  const { user, isAuthenticated, fetchCurrentUser } = useAuthStore();
   const [selectedOption, setSelectedOption] = useState<'onboard' | 'request' | null>(null);
+
+  // Periodically check if user has been added to a shop
+  useEffect(() => {
+    if (!isAuthenticated || !user) {
+      return;
+    }
+
+    // If user already has a shop, redirect to dashboard
+    if (user.shopId) {
+      navigate('/dashboard');
+      return;
+    }
+
+    // Set up interval to check for shop updates every 5 seconds
+    const intervalId = setInterval(async () => {
+      try {
+        await fetchCurrentUser();
+        const updatedUser = useAuthStore.getState().user;
+        if (updatedUser?.shopId) {
+          navigate('/dashboard');
+        }
+      } catch (error) {
+        // Silently fail - don't show errors for background checks
+        console.error('Failed to check user status:', error);
+      }
+    }, 5000); // Check every 5 seconds
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [isAuthenticated, user, navigate, fetchCurrentUser]);
 
   // Redirect if not authenticated
   if (!isAuthenticated || !user) {

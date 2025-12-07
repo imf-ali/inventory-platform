@@ -16,3 +16,5 @@ export * from './lib/InvitationList';
 export * from './lib/InvitationCard';
 export * from './lib/RoleBadge';
 export * from './lib/ShopUsersList';
+export * from './lib/JoinRequestCard';
+export * from './lib/JoinRequestList';

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuthStore } from '@inventory-platform/store';
 import { shopsApi } from '@inventory-platform/api';
@@ -23,6 +23,37 @@ export default function RequestJoinShopPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  // Periodically check if user has been added to a shop
+  useEffect(() => {
+    if (!isAuthenticated || !user) {
+      return;
+    }
+
+    // If user already has a shop, redirect to dashboard
+    if (user.shopId) {
+      navigate('/dashboard');
+      return;
+    }
+
+    // Set up interval to check for shop updates every 5 seconds
+    const intervalId = setInterval(async () => {
+      try {
+        await fetchCurrentUser();
+        const updatedUser = useAuthStore.getState().user;
+        if (updatedUser?.shopId) {
+          navigate('/dashboard');
+        }
+      } catch (error) {
+        // Silently fail - don't show errors for background checks
+        console.error('Failed to check user status:', error);
+      }
+    }, 5000); // Check every 5 seconds
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [isAuthenticated, user, navigate, fetchCurrentUser]);
 
   // Redirect if not authenticated
   if (!isAuthenticated || !user) {

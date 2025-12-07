@@ -211,6 +211,43 @@ export interface RequestJoinShopResponse {
   createdAt: string;
 }
 
+export type JoinRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+export interface JoinRequest {
+  requestId: string;
+  shopId: string;
+  shopName: string;
+  userId: string;
+  userEmail: string;
+  userName: string;
+  requestedRole: string;
+  status: JoinRequestStatus;
+  message: string;
+  createdAt: string;
+  reviewedAt: string | null;
+  reviewedBy: string | null;
+}
+
+export interface JoinRequestsResponse {
+  data: JoinRequest[];
+}
+
+export interface ProcessJoinRequestDto {
+  action: 'ACCEPT' | 'REJECT';
+}
+
+export interface ProcessJoinRequestResponse {
+  requestId: string;
+  shopId: string;
+  shopName: string;
+  userId: string;
+  userEmail: string;
+  userName: string;
+  status: string;
+  reviewedAt: string;
+  message: string;
+}
+
 // Inventory types
 export interface CreateInventoryDto {
   barcode: string;

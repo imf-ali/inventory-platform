@@ -52,6 +52,8 @@ export const API_ENDPOINTS = {
   SHOPS: {
     REGISTER: '/shops/register',
     JOIN_REQUEST: '/shops/join-request',
+    JOIN_REQUESTS: '/shops/join-requests',
+    PROCESS_JOIN_REQUEST: (requestId: string) => `/shops/join-requests/${requestId}/process`,
     INVITATIONS: (shopId: string) => `/shops/${shopId}/invitations`,
     USERS_ALL: (shopId: string) => `/shops/${shopId}/users/all`,
   },
