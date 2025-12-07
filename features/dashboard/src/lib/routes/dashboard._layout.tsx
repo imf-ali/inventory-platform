@@ -41,10 +41,10 @@ export default function DashboardLayoutRoute() {
           // No token, redirect immediately
           navigate('/login');
         }
-      } else if (user && !user.shopId) {
-        // User is authenticated but doesn't have a shop, redirect to onboarding
-        navigate('/onboarding');
-      }
+        } else if (user && !user.shopId) {
+          // User is authenticated but doesn't have a shop, redirect to shop selection
+          navigate('/shop-selection');
+        }
     };
 
     checkAuth();
@@ -67,7 +67,7 @@ export default function DashboardLayoutRoute() {
     return null; // Will redirect
   }
 
-  // If user doesn't have shopId, redirect to onboarding
+  // If user doesn't have shopId, redirect to shop selection
   if (user && !user.shopId) {
     return null; // Will redirect
   }

@@ -4,6 +4,8 @@ export default [
   index('./routes/_index.tsx'),
   route('login', './routes/login.tsx'),
   route('signup', './routes/signup.tsx'),
+  route('shop-selection', './routes/shop-selection.tsx'),
+  route('request-join-shop', './routes/request-join-shop.tsx'),
   route('onboarding', './routes/onboarding.tsx'),
   route('dashboard', './routes/dashboard._layout.tsx', [
     route('', './routes/dashboard.tsx'),

@@ -196,6 +196,21 @@ export interface RegisterShopResponse {
   status: string;
 }
 
+export interface RequestJoinShopDto {
+  ownerEmail: string;
+  message?: string;
+  role: string;
+}
+
+export interface RequestJoinShopResponse {
+  requestId: string;
+  shopId: string;
+  shopName: string;
+  status: string;
+  message: string;
+  createdAt: string;
+}
+
 // Inventory types
 export interface CreateInventoryDto {
   barcode: string;
