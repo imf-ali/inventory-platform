@@ -49,7 +49,7 @@ export function SignupForm() {
         password: formData.password,
         role: 'CASHIER', // Default role
       });
-      navigate('/onboarding');
+      navigate('/shop-selection');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Signup failed. Please try again.';
       setLocalError(errorMessage);
@@ -65,7 +65,7 @@ export function SignupForm() {
           idToken: credentialResponse.credential,
           role: 'CASHIER', // Default role
         });
-        navigate('/onboarding');
+        navigate('/shop-selection');
       } else {
         setLocalError('Google signup failed. No credential received.');
       }

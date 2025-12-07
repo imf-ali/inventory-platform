@@ -196,6 +196,58 @@ export interface RegisterShopResponse {
   status: string;
 }
 
+export interface RequestJoinShopDto {
+  ownerEmail: string;
+  message?: string;
+  role: string;
+}
+
+export interface RequestJoinShopResponse {
+  requestId: string;
+  shopId: string;
+  shopName: string;
+  status: string;
+  message: string;
+  createdAt: string;
+}
+
+export type JoinRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+export interface JoinRequest {
+  requestId: string;
+  shopId: string;
+  shopName: string;
+  userId: string;
+  userEmail: string;
+  userName: string;
+  requestedRole: string;
+  status: JoinRequestStatus;
+  message: string;
+  createdAt: string;
+  reviewedAt: string | null;
+  reviewedBy: string | null;
+}
+
+export interface JoinRequestsResponse {
+  data: JoinRequest[];
+}
+
+export interface ProcessJoinRequestDto {
+  action: 'ACCEPT' | 'REJECT';
+}
+
+export interface ProcessJoinRequestResponse {
+  requestId: string;
+  shopId: string;
+  shopName: string;
+  userId: string;
+  userEmail: string;
+  userName: string;
+  status: string;
+  reviewedAt: string;
+  message: string;
+}
+
 // Inventory types
 export interface CreateInventoryDto {
   barcode: string;
@@ -309,6 +361,41 @@ export interface UpdateCartStatusDto {
   purchaseId: string;
   status: string;
   paymentMethod: string;
+}
+
+// Purchase History types
+export interface Purchase {
+  purchaseId: string;
+  invoiceId: string;
+  invoiceNo: string;
+  businessType: string;
+  userId: string;
+  shopId: string;
+  items: CheckoutItemResponse[];
+  subTotal: number;
+  taxTotal: number;
+  discountTotal: number;
+  grandTotal: number;
+  soldAt: string;
+  status: string;
+  paymentMethod: string;
+  customerName: string | null;
+  customerAddress: string | null;
+  customerPhone: string | null;
+}
+
+export interface PurchaseHistoryResponse {
+  purchases: Purchase[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface GetPurchasesParams {
+  page?: number;
+  limit?: number;
+  order?: string; // e.g., "soldAt:desc"
 }
 
 // Invitation types

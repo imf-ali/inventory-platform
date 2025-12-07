@@ -16,7 +16,9 @@ const menuItems = [
   { path: '/dashboard/reminders', label: 'Reminder to Sell/Return', icon: '📅' },
   { path: '/dashboard/invitations', label: 'Invitations', icon: '✉️' },
   { path: '/dashboard/my-invitations', label: 'My Invitations', icon: '📬' },
+  { path: '/dashboard/join-requests', label: 'Join Requests', icon: '🤝' },
   { path: '/dashboard/shop-users', label: 'Shop Users', icon: '👥' },
+  { path: '/dashboard/history', label: 'History', icon: '📜' },
 ];
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
@@ -57,9 +59,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   // Filter menu items based on user role
   const filteredMenuItems = menuItems.filter((item) => {
-    // Hide Shop Users and Invitations for CASHIER role
+    // Hide Shop Users, Invitations, and Join Requests for CASHIER role
     if (user?.role === 'CASHIER') {
-      if (item.path === '/dashboard/shop-users' || item.path === '/dashboard/invitations') {
+      if (
+        item.path === '/dashboard/shop-users' ||
+        item.path === '/dashboard/invitations' ||
+        item.path === '/dashboard/join-requests'
+      ) {
         return false;
       }
     }
