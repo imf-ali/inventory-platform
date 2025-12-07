@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { Purchase } from '@inventory-platform/types';
 import styles from './PurchaseCard.module.css';
 
@@ -6,6 +7,9 @@ interface PurchaseCardProps {
 }
 
 export function PurchaseCard({ purchase }: PurchaseCardProps) {
+  const [isItemsExpanded, setIsItemsExpanded] = useState(false);
+  const [isPriceExpanded, setIsPriceExpanded] = useState(false);
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleString('en-US', {
@@ -59,54 +63,87 @@ export function PurchaseCard({ purchase }: PurchaseCardProps) {
 
       {purchase.items && purchase.items.length > 0 && (
         <div className={styles.itemsSection}>
-          <h4 className={styles.itemsTitle}>Items</h4>
-          <div className={styles.itemsList}>
-            {purchase.items.map((item, index) => (
-              <div key={index} className={styles.itemRow}>
-                <div className={styles.itemInfo}>
-                  <span className={styles.itemName}>{item.name}</span>
-                  <span className={styles.itemQuantity}>Qty: {item.quantity}</span>
-                </div>
-                <div className={styles.itemPricing}>
-                  <span className={styles.itemPrice}>
-                    ${item.sellingPrice.toFixed(2)} × {item.quantity} = ${(item.sellingPrice * item.quantity).toFixed(2)}
-                  </span>
-                  {item.discount > 0 && (
-                    <span className={styles.itemDiscount}>
-                      Discount: ${item.discount.toFixed(2)}
+          <button
+            className={styles.expandButton}
+            onClick={() => setIsItemsExpanded(!isItemsExpanded)}
+            aria-expanded={isItemsExpanded}
+            aria-label={isItemsExpanded ? 'Collapse items' : 'Expand items'}
+          >
+            <h4 className={styles.itemsTitle}>Items</h4>
+            <span className={styles.expandIcon}>
+              {isItemsExpanded ? '▼' : '▲'}
+            </span>
+          </button>
+          {isItemsExpanded && (
+            <div className={styles.itemsList}>
+              {purchase.items.map((item, index) => (
+                <div key={index} className={styles.itemRow}>
+                  <div className={styles.itemInfo}>
+                    <span className={styles.itemName}>{item.name}</span>
+                    <span className={styles.itemQuantity}>Qty: {item.quantity}</span>
+                  </div>
+                  <div className={styles.itemPricing}>
+                    <span className={styles.itemPrice}>
+                      ${item.sellingPrice.toFixed(2)} × {item.quantity} = ${(item.sellingPrice * item.quantity).toFixed(2)}
                     </span>
-                  )}
+                    {item.discount > 0 && (
+                      <span className={styles.itemDiscount}>
+                        Discount: ${item.discount.toFixed(2)}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
       <div className={styles.details}>
         <div className={styles.priceBreakdown}>
-          <div className={styles.priceRow}>
-            <span className={styles.priceLabel}>Subtotal:</span>
-            <span className={styles.priceValue}>${purchase.subTotal.toFixed(2)}</span>
-          </div>
-          {purchase.discountTotal > 0 && (
+          <button
+            className={styles.expandButton}
+            onClick={() => setIsPriceExpanded(!isPriceExpanded)}
+            aria-expanded={isPriceExpanded}
+            aria-label={isPriceExpanded ? 'Collapse price details' : 'Expand price details'}
+          >
+            <span className={styles.priceLabel}>Price Details</span>
+            <span className={styles.expandIcon}>
+              {isPriceExpanded ? '▼' : '▲'}
+            </span>
+          </button>
+          {isPriceExpanded && (
+            <>
+              <div className={styles.priceRow}>
+                <span className={styles.priceLabel}>Subtotal:</span>
+                <span className={styles.priceValue}>${purchase.subTotal.toFixed(2)}</span>
+              </div>
+              {purchase.discountTotal > 0 && (
+                <div className={styles.priceRow}>
+                  <span className={styles.priceLabel}>Discount:</span>
+                  <span className={`${styles.priceValue} ${styles.discountValue}`}>
+                    -${purchase.discountTotal.toFixed(2)}
+                  </span>
+                </div>
+              )}
+              {purchase.taxTotal > 0 && (
+                <div className={styles.priceRow}>
+                  <span className={styles.priceLabel}>Tax:</span>
+                  <span className={styles.priceValue}>${purchase.taxTotal.toFixed(2)}</span>
+                </div>
+              )}
+              <div className={`${styles.priceRow} ${styles.grandTotalRow}`}>
+                <span className={styles.priceLabel}>Grand Total:</span>
+                <span className={styles.grandTotalValue}>${purchase.grandTotal.toFixed(2)}</span>
+              </div>
+            </>
+          )}
+          {!isPriceExpanded && (
             <div className={styles.priceRow}>
-              <span className={styles.priceLabel}>Discount:</span>
-              <span className={`${styles.priceValue} ${styles.discountValue}`}>
-                -${purchase.discountTotal.toFixed(2)}
-              </span>
+              <span className={styles.priceLabel}>Grand Total:</span>
+              <span className={styles.grandTotalValue}>${purchase.grandTotal.toFixed(2)}</span>
             </div>
           )}
-          {purchase.taxTotal > 0 && (
-            <div className={styles.priceRow}>
-              <span className={styles.priceLabel}>Tax:</span>
-              <span className={styles.priceValue}>${purchase.taxTotal.toFixed(2)}</span>
-            </div>
-          )}
-          <div className={`${styles.priceRow} ${styles.grandTotalRow}`}>
-            <span className={styles.priceLabel}>Grand Total:</span>
-            <span className={styles.grandTotalValue}>${purchase.grandTotal.toFixed(2)}</span>
-          </div>
         </div>
 
         <div className={styles.divider}></div>

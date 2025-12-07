@@ -83,11 +83,41 @@
   border-bottom: 1px solid var(--border-color);
 }
 
+.expandButton {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  transition: opacity 0.2s;
+}
+
+.expandButton:hover {
+  opacity: 0.8;
+}
+
+.expandButton:focus {
+  outline: 2px solid var(--border-hover);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 .itemsTitle {
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
-  margin: 0 0 0.75rem 0;
+  margin: 0;
+}
+
+.expandIcon {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  transition: transform 0.2s;
+  user-select: none;
 }
 
 .itemsList {
@@ -157,6 +187,10 @@
   background: var(--bg-primary);
   border-radius: 8px;
   border: 1px solid var(--border-color);
+  margin-bottom: 0.5rem;
+}
+
+.priceBreakdown .expandButton {
   margin-bottom: 0.5rem;
 }
 
