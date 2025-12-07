@@ -371,6 +371,10 @@ export interface Purchase {
   businessType: string;
   userId: string;
   shopId: string;
+  items: CheckoutItemResponse[];
+  subTotal: number;
+  taxTotal: number;
+  discountTotal: number;
   grandTotal: number;
   soldAt: string;
   status: string;

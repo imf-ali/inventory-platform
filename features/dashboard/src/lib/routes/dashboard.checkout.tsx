@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router';
 import { cartApi } from '@inventory-platform/api';
 import type { CartResponse } from '@inventory-platform/types';
@@ -17,18 +17,11 @@ export default function CheckoutPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const cartLoadedRef = useRef(false);
 
-  // Load cart data on mount
-  useEffect(() => {
-    if (!cartLoadedRef.current) {
-      cartLoadedRef.current = true;
-      loadCart();
-    }
-  }, []);
-
-  const loadCart = async () => {
+  const loadCart = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     
@@ -49,7 +42,15 @@ export default function CheckoutPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [navigate]);
+
+  // Load cart data on mount
+  useEffect(() => {
+    if (!cartLoadedRef.current) {
+      cartLoadedRef.current = true;
+      loadCart();
+    }
+  }, [loadCart]);
 
   if (isLoading) {
     return (
@@ -101,8 +102,14 @@ export default function CheckoutPage() {
 
       await cartApi.updateStatus(statusPayload);
       
-      // Navigate to scan-sell page after successful payment
-      navigate('/dashboard/scan-sell');
+      // Show success animation
+      setShowSuccess(true);
+      setIsProcessingPayment(false);
+      
+      // Navigate to scan-sell page after 3 seconds
+      setTimeout(() => {
+        navigate('/dashboard/scan-sell');
+      }, 3000);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to process payment';
       setError(errorMessage);
@@ -157,6 +164,45 @@ export default function CheckoutPage() {
     hour: '2-digit',
     minute: '2-digit'
   });
+
+  // Show success overlay
+  if (showSuccess) {
+    return (
+      <div className={styles.successOverlay}>
+        <div className={styles.successContainer}>
+          <div className={styles.successIcon}>
+            <div className={styles.checkmarkContainer}>
+              <svg
+                className={styles.checkmark}
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 52 52"
+              >
+                <circle
+                  className={styles.checkmarkCircle}
+                  cx="26"
+                  cy="26"
+                  r="25"
+                  fill="none"
+                />
+                <path
+                  className={styles.checkmarkCheck}
+                  fill="none"
+                  d="M14.1 27.2l7.1 7.2 16.7-16.8"
+                />
+              </svg>
+            </div>
+          </div>
+          <h2 className={styles.successTitle}>Order Successful!</h2>
+          <p className={styles.successMessage}>
+            Your payment has been processed successfully.
+          </p>
+          <p className={styles.successSubMessage}>
+            Redirecting to Scan and Sell...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>

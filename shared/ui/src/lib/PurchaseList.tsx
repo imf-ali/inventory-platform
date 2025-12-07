@@ -13,7 +13,7 @@ export function PurchaseList({ onPurchaseChange }: PurchaseListProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const [limit, setLimit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
 
@@ -48,6 +48,12 @@ export function PurchaseList({ onPurchaseChange }: PurchaseListProps) {
     }
   };
 
+  const handleLimitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newLimit = parseInt(e.target.value, 10);
+    setLimit(newLimit);
+    setPage(1); // Reset to first page when limit changes
+  };
+
   if (isLoading && purchases.length === 0) {
     return (
       <div className={styles.container}>
@@ -76,6 +82,24 @@ export function PurchaseList({ onPurchaseChange }: PurchaseListProps) {
           <p className={styles.summaryText}>
             Showing {((page - 1) * limit) + 1} - {Math.min(page * limit, total)} of {total} purchases
           </p>
+          <div className={styles.limitSelector}>
+            <label htmlFor="limit-select" className={styles.limitLabel}>
+              Items per page:
+            </label>
+            <select
+              id="limit-select"
+              className={styles.limitSelect}
+              value={limit}
+              onChange={handleLimitChange}
+              disabled={isLoading}
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
         </div>
       )}
 
