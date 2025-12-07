@@ -175,6 +175,41 @@
   font-size: 0.9rem;
 }
 
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 1.5rem 0;
+  position: relative;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-color);
+}
+
+.dividerText {
+  padding: 0 1rem;
+  color: var(--text-tertiary);
+  font-size: 0.9rem;
+}
+
+.googleButtonWrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.googleButtonWrapper > div {
+  width: 100%;
+}
+
+.googleButtonWrapper > div > div {
+  width: 100% !important;
+}
+
 @media (max-width: 640px) {
   .formContainer {
     padding: 2rem 1.5rem;

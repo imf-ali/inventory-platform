@@ -68,16 +68,18 @@ export interface User {
 }
 
 export interface LoginDto {
-  email: string;
-  password: string;
+  idToken?: string; // For Google login
+  email?: string; // Required if idToken is not provided
+  password?: string; // Required if idToken is not provided
 }
 
 export interface SignupDto {
-  name: string;
-  email: string;
-  password: string;
+  idToken?: string; // For Google signup
+  name?: string; // Required if idToken is not provided
+  email?: string; // Required if idToken is not provided
+  password?: string; // Required if idToken is not provided
   shopId?: string;
-  role: string;
+  role?: string; // Default role if not provided
 }
 
 export interface AcceptInviteDto {
