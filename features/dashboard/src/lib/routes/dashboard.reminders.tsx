@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { remindersApi } from '@inventory-platform/api';
-import type { Reminder, ReminderType, ReminderStatus } from '@inventory-platform/types';
+import type { Reminder, ReminderType, CreateReminderDto, UpdateReminderDto } from '@inventory-platform/types';
 import { ReminderForm } from '@inventory-platform/ui';
 import styles from './dashboard.reminders.module.css';
 
@@ -20,6 +20,7 @@ export default function RemindersPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletingReminderId, setDeletingReminderId] = useState<string | null>(null);
 
   const fetchReminders = async () => {
     setIsLoading(true);
@@ -71,18 +72,34 @@ export default function RemindersPage() {
     }
   };
 
-  const handleDelete = async (reminderId: string) => {
-    if (!confirm('Are you sure you want to delete this reminder?')) {
-      return;
+  const handleSubmit = async (data: CreateReminderDto | UpdateReminderDto) => {
+    if (editingReminder) {
+      await handleUpdate(data as UpdateReminderDto);
+    } else {
+      await handleCreate(data as CreateReminderDto);
     }
+  };
+
+  const handleDeleteClick = (reminderId: string) => {
+    setDeletingReminderId(reminderId);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingReminderId) return;
 
     try {
-      await remindersApi.delete(reminderId);
+      await remindersApi.delete(deletingReminderId);
       await fetchReminders();
+      setDeletingReminderId(null);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete reminder';
       setError(errorMessage);
+      setDeletingReminderId(null);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeletingReminderId(null);
   };
 
   const getDaysUntilReminder = (reminderAt: string): number => {
@@ -162,13 +179,46 @@ export default function RemindersPage() {
             </div>
             <ReminderForm
               reminder={editingReminder || undefined}
-              onSubmit={editingReminder ? handleUpdate : handleCreate}
+              onSubmit={handleSubmit}
               onCancel={() => {
                 setShowCreateForm(false);
                 setEditingReminder(null);
               }}
               isLoading={isSubmitting}
             />
+          </div>
+        </div>
+      )}
+
+      {deletingReminderId && (
+        <div className={styles.modal}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalHeader}>
+              <h3>Delete Reminder</h3>
+              <button
+                className={styles.closeButton}
+                onClick={handleDeleteCancel}
+              >
+                ×
+              </button>
+            </div>
+            <div className={styles.confirmContent}>
+              <p>Are you sure you want to delete this reminder? This action cannot be undone.</p>
+              <div className={styles.confirmActions}>
+                <button
+                  className={styles.cancelButton}
+                  onClick={handleDeleteCancel}
+                >
+                  Cancel
+                </button>
+                <button
+                  className={styles.confirmButton}
+                  onClick={handleDeleteConfirm}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -295,7 +345,7 @@ export default function RemindersPage() {
                     </button>
                     <button
                       className={styles.actionBtnDanger}
-                      onClick={() => handleDelete(reminder.reminderId)}
+                      onClick={() => handleDeleteClick(reminder.reminderId)}
                     >
                       Delete
                     </button>

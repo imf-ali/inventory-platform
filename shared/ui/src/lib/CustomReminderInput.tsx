@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import type { CustomReminderInput } from '@inventory-platform/types';
 import styles from './CustomReminderInput.module.css';
 
