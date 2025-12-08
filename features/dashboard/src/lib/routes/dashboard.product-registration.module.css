@@ -139,6 +139,25 @@
   font-size: 0.9rem;
 }
 
+.reminderSection {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.sectionTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+}
+
+.helperText {
+  font-size: 0.875rem;
+  color: var(--text-tertiary);
+  margin-top: 0.25rem;
+}
+
 @media (max-width: 768px) {
   .formRow {
     grid-template-columns: 1fr;
