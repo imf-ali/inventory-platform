@@ -1,7 +1,8 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router';
 import { inventoryApi } from '@inventory-platform/api';
-import type { CreateInventoryDto } from '@inventory-platform/types';
+import type { CreateInventoryDto, CustomReminderInput } from '@inventory-platform/types';
+import { CustomRemindersSection } from '@inventory-platform/ui';
 import styles from './dashboard.product-registration.module.css';
 
 export function meta() {
@@ -30,7 +31,11 @@ export default function ProductRegistrationPage() {
     count: 0,
     expiryDate: '',
     description: '',
+    reminderAt: undefined,
+    customReminders: [],
   });
+
+  const [customReminders, setCustomReminders] = useState<CustomReminderInput[]>([]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -73,13 +78,28 @@ export default function ProductRegistrationPage() {
       }
 
       // Ensure price is set to sellingPrice (they should be the same)
+      // Format reminderAt if provided
+      let reminderAtISO: string | undefined;
+      if (formData.reminderAt) {
+        if (formData.reminderAt.includes('T')) {
+          // Already in ISO format
+          reminderAtISO = new Date(formData.reminderAt).toISOString();
+        } else {
+          // Date only, convert to ISO
+          reminderAtISO = new Date(formData.reminderAt).toISOString();
+        }
+      }
+
       const submitData: CreateInventoryDto = {
         ...formData,
         price: formData.sellingPrice,
+        reminderAt: reminderAtISO,
+        customReminders: customReminders.length > 0 ? customReminders : undefined,
       };
 
       const response = await inventoryApi.create(submitData);
-      setSuccess(`Product registered successfully! Lot ID: ${response.lotId}`);
+      const displayId = response.lotId || response.id;
+      setSuccess(`Product registered successfully! ${response.reminderCreated ? 'Reminders created. ' : ''}ID: ${displayId}`);
       
       // Clear form and success message after 5 seconds
       setTimeout(() => {
@@ -96,7 +116,10 @@ export default function ProductRegistrationPage() {
           count: 0,
           expiryDate: '',
           description: '',
+          reminderAt: undefined,
+          customReminders: [],
         });
+        setCustomReminders([]);
         setSuccess(null);
       }, 5000);
     } catch (err) {
@@ -302,6 +325,50 @@ export default function ProductRegistrationPage() {
               disabled={isLoading}
             />
           </div>
+          
+          <div className={styles.reminderSection}>
+            <h3 className={styles.sectionTitle}>Reminder Settings</h3>
+            <div className={styles.formRow}>
+              <div className={styles.formGroup}>
+                <label htmlFor="reminderAt" className={styles.label}>Reminder Date & Time (Optional)</label>
+                <input
+                  type="datetime-local"
+                  id="reminderAt"
+                  name="reminderAt"
+                  className={styles.input}
+                  value={formData.reminderAt ? new Date(formData.reminderAt).toISOString().slice(0, 16) : ''}
+                  onChange={(e) => {
+                    const dateValue = e.target.value;
+                    if (dateValue) {
+                      const isoDate = new Date(dateValue).toISOString();
+                      setFormData((prev) => ({
+                        ...prev,
+                        reminderAt: isoDate,
+                      }));
+                    } else {
+                      setFormData((prev) => ({
+                        ...prev,
+                        reminderAt: undefined,
+                      }));
+                    }
+                    setError(null);
+                    setSuccess(null);
+                  }}
+                  disabled={isLoading}
+                />
+                <p className={styles.helperText}>
+                  Set a reminder date for this inventory item (e.g., before expiry)
+                </p>
+              </div>
+            </div>
+            
+            <CustomRemindersSection
+              reminders={customReminders}
+              onChange={setCustomReminders}
+              disabled={isLoading}
+            />
+          </div>
+
           <div className={styles.formActions}>
             <button type="button" className={styles.cancelBtn} onClick={handleCancel} disabled={isLoading}>
               Cancel

@@ -161,16 +161,39 @@ export interface InventoryAlert {
 }
 
 // Reminder types
+export type ReminderStatus = 'PENDING' | 'COMPLETED';
+export type ReminderType = 'EXPIRY' | 'CUSTOM' | null;
+
 export interface Reminder {
-  id: string;
-  type: 'sell' | 'return';
-  productId?: string;
-  productName: string;
-  orderId?: string;
-  dueDate: string;
-  priority: 'high' | 'medium' | 'low';
-  status: 'pending' | 'completed';
-  createdAt: string;
+  reminderId: string;
+  inventoryId: string | null;
+  reminderAt: string;
+  expiryDate: string | null;
+  snoozeDays: number;
+  notes: string | null;
+  status: ReminderStatus;
+  type: ReminderType;
+}
+
+export interface CreateReminderDto {
+  inventoryId?: string;
+  reminderAt: string;
+  endDate?: string;
+  notes?: string;
+  type?: ReminderType;
+}
+
+export interface UpdateReminderDto {
+  reminderAt?: string;
+  endDate?: string;
+  notes?: string;
+  status?: ReminderStatus;
+}
+
+export interface CustomReminderInput {
+  reminderAt: string;
+  endDate: string;
+  notes?: string;
 }
 
 // Shop types
@@ -262,10 +285,13 @@ export interface CreateInventoryDto {
   count: number;
   expiryDate: string;
   description?: string;
+  reminderAt?: string;
+  customReminders?: CustomReminderInput[];
 }
 
 export interface InventoryResponse {
-  lotId: string;
+  id: string;
+  lotId: string | null;
   barcode: string;
   reminderCreated: boolean;
 }
