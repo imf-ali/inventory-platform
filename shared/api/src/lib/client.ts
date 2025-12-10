@@ -1,5 +1,6 @@
 // API Client configuration
 import axios, { AxiosInstance, AxiosError } from 'axios';
+import { EventSourcePolyfill } from 'event-source-polyfill';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
@@ -50,17 +51,17 @@ class ApiClient {
       (error: AxiosError) => {
         if (error.response) {
           // Server responded with error status
-          const errorData = error.response.data as { 
-            message?: string; 
+          const errorData = error.response.data as {
+            message?: string;
             error?: string;
             data?: { message?: string };
-            errors?: Record<string, string[]> 
+            errors?: Record<string, string[]>
           };
           // Extract error message from various possible locations
-          const errorMessage = 
-            errorData?.data?.message || 
-            errorData?.error || 
-            errorData?.message || 
+          const errorMessage =
+            errorData?.data?.message ||
+            errorData?.error ||
+            errorData?.message ||
             error.response.statusText;
           const apiError = new Error(errorMessage) as Error & {
             status?: number;
@@ -147,3 +148,27 @@ class ApiClient {
 
 export const apiClient = new ApiClient(API_BASE_URL);
 
+/**
+ * Create an SSE connection with Authorization header.
+ * Backend stays unchanged and still reads Authorization as usual.
+ */
+export function createSseConnection(path: string): EventSource {
+  const base = API_BASE_URL.replace(/\/$/, ''); // strip trailing slash
+  const token =
+    typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+
+  const url = `${base}${path}`;
+
+  if (token) {
+    // EventSourcePolyfill supports headers
+    return new EventSourcePolyfill(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      withCredentials: false,
+    }) as unknown as EventSource;
+  }
+
+  // Fallback: no token → plain EventSource (will likely 401, but that's fine)
+  return new EventSource(url);
+}
