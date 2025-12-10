@@ -46,6 +46,8 @@ export const API_ENDPOINTS = {
     BASE: '/reminders',
     BY_ID: (id: string) => `/reminders/${id}`,
     BY_TYPE: (type: string) => `/reminders/type/${type}`,
+    SNOOZE: (id: string) => `/reminders/${id}/snooze`,
+    STREAM: '/reminders/stream',
   },
 
   // Shop endpoints
