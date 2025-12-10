@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router';
 import { remindersApi } from '@inventory-platform/api';
-import type { Reminder, ReminderType, CreateReminderDto, UpdateReminderDto } from '@inventory-platform/types';
+import type {
+  Reminder,
+  ReminderType,
+  CreateReminderDto,
+  UpdateReminderDto,
+} from '@inventory-platform/types';
 import { ReminderForm } from '@inventory-platform/ui';
 import styles from './dashboard.reminders.module.css';
 
@@ -11,7 +17,13 @@ export function meta() {
   ];
 }
 
+const SNOOZE_OPTIONS = [1, 2, 3, 5, 7, 14, 30];
+
 export default function RemindersPage() {
+  const location = useLocation();
+  const fromNotification = location.state?.fromNotification === true;
+  const focusReminderId = location.state?.reminderId as string | undefined;
+
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -20,16 +32,51 @@ export default function RemindersPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [deletingReminderId, setDeletingReminderId] = useState<string | null>(null);
+  const [deletingReminderId, setDeletingReminderId] = useState<string | null>(
+    null
+  );
+  const [snoozingReminderId, setSnoozingReminderId] = useState<string | null>(
+    null
+  );
+  const [customSnoozeDays, setCustomSnoozeDays] = useState<number | ''>(''); // 👈 for manual days
+
+  const handleSnooze = async (reminderId: string, snoozeDays: number) => {
+    if (!snoozeDays || snoozeDays <= 0) {
+      setError('Snooze days must be a positive number');
+      return;
+    }
+
+    setSnoozingReminderId(reminderId);
+    setError(null);
+    try {
+      await remindersApi.snooze(reminderId, snoozeDays);
+      await fetchReminders();
+      setCustomSnoozeDays('');
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to snooze reminder';
+      setError(errorMessage);
+    } finally {
+      setSnoozingReminderId(null);
+    }
+  };
 
   const fetchReminders = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await remindersApi.getAll();
-      setReminders(data);
+      if (fromNotification && focusReminderId) {
+        // Notification mode: load only that reminder
+        const reminder = await remindersApi.getById(focusReminderId);
+        setReminders([reminder]);
+      } else {
+        // Normal mode: load all reminders
+        const data = await remindersApi.getAll();
+        setReminders(data);
+      }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load reminders';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to load reminders';
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -38,16 +85,20 @@ export default function RemindersPage() {
 
   useEffect(() => {
     fetchReminders();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fromNotification, focusReminderId]);
 
-  const handleCreate = async (data: Parameters<typeof remindersApi.create>[0]) => {
+  const handleCreate = async (
+    data: Parameters<typeof remindersApi.create>[0]
+  ) => {
     setIsSubmitting(true);
     try {
       await remindersApi.create(data);
       await fetchReminders();
       setShowCreateForm(false);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to create reminder';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to create reminder';
       setError(errorMessage);
       throw err;
     } finally {
@@ -55,16 +106,19 @@ export default function RemindersPage() {
     }
   };
 
-  const handleUpdate = async (data: Parameters<typeof remindersApi.update>[1]) => {
+  const handleUpdate = async (
+    data: Parameters<typeof remindersApi.update>[1]
+  ) => {
     if (!editingReminder) return;
-    
+
     setIsSubmitting(true);
     try {
       await remindersApi.update(editingReminder.reminderId, data);
       await fetchReminders();
       setEditingReminder(null);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update reminder';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to update reminder';
       setError(errorMessage);
       throw err;
     } finally {
@@ -92,7 +146,8 @@ export default function RemindersPage() {
       await fetchReminders();
       setDeletingReminderId(null);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to delete reminder';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to delete reminder';
       setError(errorMessage);
       setDeletingReminderId(null);
     }
@@ -142,27 +197,39 @@ export default function RemindersPage() {
       <div className={styles.header}>
         <div>
           <h2 className={styles.title}>Reminders</h2>
-          <p className={styles.subtitle}>Manage your inventory reminders</p>
+          <p className={styles.subtitle}>
+            {fromNotification
+              ? 'Reminder details from notification'
+              : 'Manage your inventory reminders'}
+          </p>
         </div>
-        <button
-          className={styles.createButton}
-          onClick={() => {
-            setShowCreateForm(true);
-            setEditingReminder(null);
-          }}
-        >
-          + Create Reminder
-        </button>
+
+        {!fromNotification && (
+          <button
+            className={styles.createButton}
+            onClick={() => {
+              setShowCreateForm(true);
+              setEditingReminder(null);
+            }}
+          >
+            + Create Reminder
+          </button>
+        )}
       </div>
 
       {error && (
         <div className={styles.errorMessage}>
           {error}
-          <button className={styles.dismissButton} onClick={() => setError(null)}>×</button>
+          <button
+            className={styles.dismissButton}
+            onClick={() => setError(null)}
+          >
+            ×
+          </button>
         </div>
       )}
 
-      {(showCreateForm || editingReminder) && (
+      {!fromNotification && (showCreateForm || editingReminder) && (
         <div className={styles.modal}>
           <div className={styles.modalContent}>
             <div className={styles.modalHeader}>
@@ -203,7 +270,10 @@ export default function RemindersPage() {
               </button>
             </div>
             <div className={styles.confirmContent}>
-              <p>Are you sure you want to delete this reminder? This action cannot be undone.</p>
+              <p>
+                Are you sure you want to delete this reminder? This action
+                cannot be undone.
+              </p>
               <div className={styles.confirmActions}>
                 <button
                   className={styles.cancelButton}
@@ -224,57 +294,71 @@ export default function RemindersPage() {
       )}
 
       <div className={styles.remindersContainer}>
-        <div className={styles.filters}>
-          <div className={styles.filterGroup}>
-            <span className={styles.filterLabel}>Status:</span>
-            <button
-              className={`${styles.filterBtn} ${filter === 'all' ? styles.active : ''}`}
-              onClick={() => setFilter('all')}
-            >
-              All
-            </button>
-            <button
-              className={`${styles.filterBtn} ${filter === 'PENDING' ? styles.active : ''}`}
-              onClick={() => setFilter('PENDING')}
-            >
-              Pending
-            </button>
-            <button
-              className={`${styles.filterBtn} ${filter === 'COMPLETED' ? styles.active : ''}`}
-              onClick={() => setFilter('COMPLETED')}
-            >
-              Completed
-            </button>
+        {!fromNotification && (
+          <div className={styles.filters}>
+            <div className={styles.filterGroup}>
+              <span className={styles.filterLabel}>Status:</span>
+              <button
+                className={`${styles.filterBtn} ${
+                  filter === 'all' ? styles.active : ''
+                }`}
+                onClick={() => setFilter('all')}
+              >
+                All
+              </button>
+              <button
+                className={`${styles.filterBtn} ${
+                  filter === 'PENDING' ? styles.active : ''
+                }`}
+                onClick={() => setFilter('PENDING')}
+              >
+                Pending
+              </button>
+              <button
+                className={`${styles.filterBtn} ${
+                  filter === 'COMPLETED' ? styles.active : ''
+                }`}
+                onClick={() => setFilter('COMPLETED')}
+              >
+                Completed
+              </button>
+            </div>
+            <div className={styles.filterGroup}>
+              <span className={styles.filterLabel}>Type:</span>
+              <button
+                className={`${styles.filterBtn} ${
+                  typeFilter === 'all' ? styles.active : ''
+                }`}
+                onClick={() => setTypeFilter('all')}
+              >
+                All
+              </button>
+              <button
+                className={`${styles.filterBtn} ${
+                  typeFilter === 'EXPIRY' ? styles.active : ''
+                }`}
+                onClick={() => setTypeFilter('EXPIRY')}
+              >
+                Expiry
+              </button>
+              <button
+                className={`${styles.filterBtn} ${
+                  typeFilter === 'CUSTOM' ? styles.active : ''
+                }`}
+                onClick={() => setTypeFilter('CUSTOM')}
+              >
+                Custom
+              </button>
+            </div>
           </div>
-          <div className={styles.filterGroup}>
-            <span className={styles.filterLabel}>Type:</span>
-            <button
-              className={`${styles.filterBtn} ${typeFilter === 'all' ? styles.active : ''}`}
-              onClick={() => setTypeFilter('all')}
-            >
-              All
-            </button>
-            <button
-              className={`${styles.filterBtn} ${typeFilter === 'EXPIRY' ? styles.active : ''}`}
-              onClick={() => setTypeFilter('EXPIRY')}
-            >
-              Expiry
-            </button>
-            <button
-              className={`${styles.filterBtn} ${typeFilter === 'CUSTOM' ? styles.active : ''}`}
-              onClick={() => setTypeFilter('CUSTOM')}
-            >
-              Custom
-            </button>
-          </div>
-        </div>
+        )}
 
         {isLoading ? (
           <div className={styles.loading}>Loading reminders...</div>
         ) : filteredReminders.length === 0 ? (
           <div className={styles.emptyState}>
             <p>No reminders found.</p>
-            {!showCreateForm && (
+            {!showCreateForm && !fromNotification && (
               <button
                 className={styles.createButton}
                 onClick={() => setShowCreateForm(true)}
@@ -288,19 +372,28 @@ export default function RemindersPage() {
             {filteredReminders.map((reminder) => {
               const daysLeft = getDaysUntilReminder(reminder.reminderAt);
               const priority = getPriority(daysLeft);
-              
+
               return (
-                <div key={reminder.reminderId} className={`${styles.reminderCard} ${styles[priority]}`}>
+                <div
+                  key={reminder.reminderId}
+                  className={`${styles.reminderCard} ${styles[priority]}`}
+                >
                   <div className={styles.reminderIcon}>
                     {reminder.type === 'EXPIRY' ? '📅' : '🔔'}
                   </div>
                   <div className={styles.reminderInfo}>
                     <div className={styles.reminderHeader}>
                       <h3 className={styles.reminderTitle}>
-                        {reminder.inventoryId ? `Inventory #${reminder.inventoryId.slice(-6)}` : 'Custom Reminder'}
+                        {reminder.inventoryId
+                          ? `Inventory #${reminder.inventoryId.slice(-6)}`
+                          : 'Custom Reminder'}
                       </h3>
                       <div className={styles.badges}>
-                        <span className={`${styles.statusBadge} ${styles[reminder.status]}`}>
+                        <span
+                          className={`${styles.statusBadge} ${
+                            styles[reminder.status]
+                          }`}
+                        >
                           {reminder.status}
                         </span>
                         {reminder.type && (
@@ -308,18 +401,22 @@ export default function RemindersPage() {
                             {reminder.type}
                           </span>
                         )}
-                        <span className={`${styles.priorityBadge} ${styles[priority]}`}>
+                        <span
+                          className={`${styles.priorityBadge} ${styles[priority]}`}
+                        >
                           {priority}
                         </span>
                       </div>
                     </div>
                     <div className={styles.reminderDetails}>
                       <div>
-                        <strong>Reminder:</strong> {formatDate(reminder.reminderAt)}
+                        <strong>Reminder:</strong>{' '}
+                        {formatDate(reminder.reminderAt)}
                       </div>
                       {reminder.expiryDate && (
                         <div>
-                          <strong>End Date:</strong> {formatDate(reminder.expiryDate)}
+                          <strong>End Date:</strong>{' '}
+                          {formatDate(reminder.expiryDate)}
                         </div>
                       )}
                       {reminder.notes && (
@@ -332,23 +429,96 @@ export default function RemindersPage() {
                           ? `${Math.abs(daysLeft)} days overdue`
                           : daysLeft === 0
                           ? 'Due today'
-                          : `${daysLeft} ${daysLeft === 1 ? 'day' : 'days'} left`}
+                          : `${daysLeft} ${
+                              daysLeft === 1 ? 'day' : 'days'
+                            } left`}
                       </div>
                     </div>
                   </div>
+
                   <div className={styles.reminderActions}>
-                    <button
-                      className={styles.actionBtn}
-                      onClick={() => setEditingReminder(reminder)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className={styles.actionBtnDanger}
-                      onClick={() => handleDeleteClick(reminder.reminderId)}
-                    >
-                      Delete
-                    </button>
+                    {fromNotification ? (
+                      <div className={styles.snoozeActions}>
+                        <div className={styles.snoozePresetRow}>
+                          {SNOOZE_OPTIONS.map((days) => (
+                            <button
+                              key={days}
+                              type="button"
+                              className={styles.snoozeChip}
+                              disabled={
+                                snoozingReminderId === reminder.reminderId
+                              }
+                              onClick={() =>
+                                handleSnooze(reminder.reminderId, days)
+                              }
+                            >
+                              {days}d
+                            </button>
+                          ))}
+                        </div>
+
+                        <div className={styles.snoozeCustomRow}>
+                          <input
+                            type="number"
+                            min={1}
+                            className={styles.snoozeInput}
+                            placeholder="Custom days"
+                            value={customSnoozeDays}
+                            onChange={(e) =>
+                              setCustomSnoozeDays(
+                                e.target.value === ''
+                                  ? ''
+                                  : Number(e.target.value)
+                              )
+                            }
+                          />
+                          <button
+                            type="button"
+                            className={styles.actionBtn}
+                            disabled={
+                              snoozingReminderId === reminder.reminderId ||
+                              customSnoozeDays === '' ||
+                              Number(customSnoozeDays) <= 0
+                            }
+                            onClick={() =>
+                              customSnoozeDays !== '' &&
+                              handleSnooze(
+                                reminder.reminderId,
+                                Number(customSnoozeDays)
+                              )
+                            }
+                          >
+                            {snoozingReminderId === reminder.reminderId
+                              ? 'Snoozing...'
+                              : 'Snooze'}
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.actionBtnDanger}
+                            onClick={() =>
+                              handleDeleteClick(reminder.reminderId)
+                            }
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <button
+                          className={styles.actionBtn}
+                          onClick={() => setEditingReminder(reminder)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className={styles.actionBtnDanger}
+                          onClick={() => handleDeleteClick(reminder.reminderId)}
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               );
@@ -359,4 +529,3 @@ export default function RemindersPage() {
     </div>
   );
 }
-

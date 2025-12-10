@@ -1,5 +1,9 @@
 import { useState } from 'react';
-import type { CreateReminderDto, UpdateReminderDto, Reminder } from '@inventory-platform/types';
+import type {
+  CreateReminderDto,
+  UpdateReminderDto,
+  Reminder,
+} from '@inventory-platform/types';
 import styles from './ReminderForm.module.css';
 
 interface ReminderFormProps {
@@ -18,9 +22,9 @@ export function ReminderForm({
   isLoading = false,
 }: ReminderFormProps) {
   const isEditMode = !!reminder;
-  
+
   const [formData, setFormData] = useState({
-    reminderAt: reminder?.reminderAt 
+    reminderAt: reminder?.reminderAt
       ? new Date(reminder.reminderAt).toISOString().slice(0, 16)
       : '',
     endDate: reminder?.expiryDate
@@ -33,7 +37,9 @@ export function ReminderForm({
   const [error, setError] = useState<string | null>(null);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -54,7 +60,9 @@ export function ReminderForm({
 
     try {
       const reminderAtISO = new Date(formData.reminderAt).toISOString();
-      const endDateISO = formData.endDate ? new Date(formData.endDate).toISOString() : undefined;
+      const endDateISO = formData.endDate
+        ? new Date(formData.endDate).toISOString()
+        : undefined;
 
       if (isEditMode && reminder) {
         const updateData: UpdateReminderDto = {
@@ -75,18 +83,15 @@ export function ReminderForm({
         await onSubmit(createData);
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to save reminder';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to save reminder';
       setError(errorMessage);
     }
   };
 
   return (
     <form className={styles.form} onSubmit={handleSubmit}>
-      {error && (
-        <div className={styles.errorMessage}>
-          {error}
-        </div>
-      )}
+      {error && <div className={styles.errorMessage}>{error}</div>}
 
       <div className={styles.formGroup}>
         <label htmlFor="reminderAt" className={styles.label}>
@@ -170,10 +175,13 @@ export function ReminderForm({
           className={styles.submitButton}
           disabled={isLoading || !formData.reminderAt}
         >
-          {isLoading ? 'Saving...' : isEditMode ? 'Update Reminder' : 'Create Reminder'}
+          {isLoading
+            ? 'Saving...'
+            : isEditMode
+            ? 'Update Reminder'
+            : 'Create Reminder'}
         </button>
       </div>
     </form>
   );
 }
-

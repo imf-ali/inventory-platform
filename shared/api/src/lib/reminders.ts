@@ -48,5 +48,13 @@ export const remindersApi = {
     );
     return response.data;
   },
+
+  snooze: async (id: string, snoozeDays: number): Promise<Reminder> => {
+    const response = await apiClient.post<ApiResponse<Reminder>>(
+      API_ENDPOINTS.REMINDERS.SNOOZE(id),
+      { snoozeDays }
+    );
+    return response.data;
+  },
 };
 

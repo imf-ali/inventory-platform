@@ -88,16 +88,18 @@ export default function RequestJoinShopPage() {
         role,
         message: message.trim() || undefined,
       });
-      
-      setSuccess(`Request sent successfully! You requested to join "${response.shopName}". The shop owner will review your request.`);
-      
+
+      setSuccess(
+        `Request sent successfully! You requested to join "${response.shopName}". The shop owner will review your request.`
+      );
+
       // Clear form
       setOwnerEmail('');
       setMessage('');
-      
+
       // Refresh user data in case they get added immediately
       await fetchCurrentUser();
-      
+
       // Check if user now has a shop, otherwise stay on page
       const updatedUser = useAuthStore.getState().user;
       if (updatedUser?.shopId) {
@@ -108,7 +110,10 @@ export default function RequestJoinShopPage() {
       }
       // Otherwise, user stays on page to see success message
     } catch (err: any) {
-      const errorMessage = err?.response?.data?.message || err?.message || 'Failed to send request. Please try again.';
+      const errorMessage =
+        err?.response?.data?.message ||
+        err?.message ||
+        'Failed to send request. Please try again.';
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -140,17 +145,9 @@ export default function RequestJoinShopPage() {
         </p>
       </div>
 
-      {error && (
-        <div className={styles.errorMessage}>
-          {error}
-        </div>
-      )}
+      {error && <div className={styles.errorMessage}>{error}</div>}
 
-      {success && (
-        <div className={styles.successMessage}>
-          {success}
-        </div>
-      )}
+      {success && <div className={styles.successMessage}>{success}</div>}
 
       <form className={styles.form} onSubmit={handleSubmit}>
         <div className={styles.formGroup}>
@@ -246,4 +243,3 @@ export default function RequestJoinShopPage() {
     </div>
   );
 }
-
