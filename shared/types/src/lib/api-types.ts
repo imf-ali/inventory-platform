@@ -297,6 +297,7 @@ export interface InventoryResponse {
 }
 
 export interface InventoryItem {
+  id: string;
   lotId: string;
   barcode: string | null;
   name: string | null;
@@ -320,7 +321,7 @@ export interface InventoryListResponse {
 
 // Checkout types
 export interface CheckoutItem {
-  lotId: string;
+  id: string;
   quantity: number;
   sellingPrice: number;
 }
