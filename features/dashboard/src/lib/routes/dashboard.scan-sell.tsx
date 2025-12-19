@@ -105,7 +105,7 @@ export default function ScanSellPage() {
         try {
           const searchResult = await inventoryApi.search(cartItem.inventoryId);
           inventoryItem = searchResult.data?.find(
-            (inv) => inv.lotId === cartItem.inventoryId
+            (inv) => inv.id === cartItem.inventoryId
           ) || null;
         } catch {
           // If search fails, we'll create a minimal item
@@ -123,7 +123,8 @@ export default function ScanSellPage() {
           // Note: We don't know the actual stock, so we'll set a high value to avoid false errors
           // The API will handle stock validation
           const minimalItem: InventoryItem = {
-            lotId: cartItem.inventoryId,
+            id: cartItem.inventoryId,
+            lotId: '', // Will be populated when we fetch full details
             barcode: null,
             name: cartItem.name,
             description: null,
@@ -151,7 +152,7 @@ export default function ScanSellPage() {
     }
   };
 
-  const syncCartToAPI = async (items: CartItem[], changedItemLotId?: string, quantityDelta?: number, originalItem?: CartItem) => {
+  const syncCartToAPI = async (items: CartItem[], changedItemId?: string, quantityDelta?: number, originalItem?: CartItem) => {
     // Prevent duplicate calls
     if (isUpdatingRef.current) {
       return;
@@ -162,15 +163,15 @@ export default function ScanSellPage() {
     try {
       // If a specific item changed, only send that item with quantity: 1 (the increment)
       // Otherwise, send all items (for initial load or bulk updates)
-      let itemsToSend: Array<{ lotId: string; quantity: number; sellingPrice: number }>;
+      let itemsToSend: Array<{ id: string; quantity: number; sellingPrice: number }>;
       
-      if (changedItemLotId && quantityDelta !== undefined) {
+      if (changedItemId && quantityDelta !== undefined) {
         // Only send the changed item with the delta quantity (1 for increment, -1 for decrement)
-        const changedItem = items.find((item) => item.inventoryItem.lotId === changedItemLotId);
+        const changedItem = items.find((item) => item.inventoryItem.id === changedItemId);
         if (changedItem) {
           // Send the actual delta value (1 for +, -1 for -)
           itemsToSend = [{
-            lotId: changedItem.inventoryItem.lotId,
+            id: changedItem.inventoryItem.id,
             quantity: quantityDelta, // Send the actual delta: 1 for increment, -1 for decrement
             sellingPrice: changedItem.price,
           }];
@@ -179,10 +180,11 @@ export default function ScanSellPage() {
           // We still need to send it to API with -1 to remove it from cart
           // Use the originalItem passed as parameter, or find it from cartData
           const itemToRemove = originalItem || (() => {
-            const cartItem = cartData?.items.find((cartItem: CheckoutItemResponse) => cartItem.inventoryId === changedItemLotId);
+            const cartItem = cartData?.items.find((cartItem: CheckoutItemResponse) => cartItem.inventoryId === changedItemId);
             return cartItem ? {
               inventoryItem: {
-                lotId: changedItemLotId,
+                id: changedItemId,
+                lotId: '',
                 barcode: null,
                 name: cartItem.name,
                 description: null,
@@ -204,14 +206,14 @@ export default function ScanSellPage() {
           
           if (itemToRemove) {
             itemsToSend = [{
-              lotId: changedItemLotId,
+              id: changedItemId,
               quantity: quantityDelta, // Send -1 to remove the item
               sellingPrice: itemToRemove.price,
             }];
           } else {
             // Fallback: send all remaining items
             itemsToSend = items.map((item) => ({
-              lotId: item.inventoryItem.lotId,
+              id: item.inventoryItem.id,
               quantity: item.quantity,
               sellingPrice: item.price,
             }));
@@ -220,7 +222,7 @@ export default function ScanSellPage() {
       } else {
         // Send all items (for initial load or bulk operations)
         itemsToSend = items.map((item) => ({
-          lotId: item.inventoryItem.lotId,
+          id: item.inventoryItem.id,
           quantity: item.quantity,
           sellingPrice: item.price,
         }));
@@ -294,7 +296,7 @@ export default function ScanSellPage() {
     }
 
     setCartItems((prev) => {
-      const existingItem = prev.find((cartItem) => cartItem.inventoryItem.lotId === item.lotId);
+      const existingItem = prev.find((cartItem) => cartItem.inventoryItem.id === item.id);
       
       let updatedItems: CartItem[];
       if (existingItem) {
@@ -306,7 +308,7 @@ export default function ScanSellPage() {
           return prev;
         }
         updatedItems = prev.map((cartItem) =>
-          cartItem.inventoryItem.lotId === item.lotId
+          cartItem.inventoryItem.id === item.id
             ? { ...cartItem, quantity: newQuantity }
             : cartItem
         );
@@ -321,16 +323,16 @@ export default function ScanSellPage() {
       }
 
       // Sync to API - only send the changed item with quantity: 1
-      syncCartToAPI(updatedItems, item.lotId, 1);
+      syncCartToAPI(updatedItems, item.id, 1);
       return updatedItems;
     });
     setError(null);
   };
 
-  const handleUpdateQuantity = (lotId: string, delta: number) => {
+  const handleUpdateQuantity = (id: string, delta: number) => {
     setCartItems((prev) => {
       // Find the item before updating to track if it will be removed
-      const originalItem = prev.find((item) => item.inventoryItem.lotId === lotId);
+      const originalItem = prev.find((item) => item.inventoryItem.id === id);
       if (!originalItem) {
         return prev;
       }
@@ -341,8 +343,8 @@ export default function ScanSellPage() {
       // But we'll filter it out from local state
       if (newQuantity <= 0) {
         // Item will be removed - send -1 to API with original item info, then filter out from local state
-        const remainingItems = prev.filter((item) => item.inventoryItem.lotId !== lotId);
-        syncCartToAPI(remainingItems, lotId, delta, originalItem);
+        const remainingItems = prev.filter((item) => item.inventoryItem.id !== id);
+        syncCartToAPI(remainingItems, id, delta, originalItem);
         return remainingItems;
       }
 
@@ -354,32 +356,32 @@ export default function ScanSellPage() {
       }
 
       const updatedItems = prev.map((item) => {
-        if (item.inventoryItem.lotId === lotId) {
+        if (item.inventoryItem.id === id) {
           return { ...item, quantity: newQuantity };
         }
         return item;
       });
 
       // Sync to API - only send the changed item with the delta quantity
-      syncCartToAPI(updatedItems, lotId, delta);
+      syncCartToAPI(updatedItems, id, delta);
       return updatedItems;
     });
     setError(null);
   };
 
-  const handleRemoveItem = (lotId: string) => {
+  const handleRemoveItem = (id: string) => {
     setCartItems((prev) => {
       // Find the item being removed to get its quantity and price
-      const itemToRemove = prev.find((item) => item.inventoryItem.lotId === lotId);
+      const itemToRemove = prev.find((item) => item.inventoryItem.id === id);
       if (!itemToRemove) {
         return prev;
       }
 
       // Remove from local state
-      const updatedItems = prev.filter((item) => item.inventoryItem.lotId !== lotId);
+      const updatedItems = prev.filter((item) => item.inventoryItem.id !== id);
       
       // Sync to API - send the item with negative quantity (remove all)
-      syncCartToAPI(updatedItems, lotId, -itemToRemove.quantity, itemToRemove);
+      syncCartToAPI(updatedItems, id, -itemToRemove.quantity, itemToRemove);
       return updatedItems;
     });
   };
@@ -397,7 +399,7 @@ export default function ScanSellPage() {
       setIsUpdatingCart(true);
       try {
         const itemsToSend = currentItems.map((item) => ({
-          lotId: item.inventoryItem.lotId,
+          id: item.inventoryItem.id,
           quantity: -item.quantity, // Negative quantity to remove all
           sellingPrice: item.price,
         }));
@@ -582,7 +584,7 @@ export default function ScanSellPage() {
               <div className={styles.resultsList}>
                 {searchResults.map((item) => (
                   <ProductResultItem
-                    key={item.lotId}
+                    key={item.id}
                     item={item}
                     onAddToCart={handleAddToCart}
                   />
@@ -604,7 +606,7 @@ export default function ScanSellPage() {
               <div className={styles.emptyCart}>Cart is empty</div>
             ) : (
               cartItems.map((cartItem) => (
-                <div key={cartItem.inventoryItem.lotId} className={styles.cartItem}>
+                <div key={cartItem.inventoryItem.id} className={styles.cartItem}>
                   <div className={styles.itemInfo}>
                     <span className={styles.itemName}>
                       {cartItem.inventoryItem.name || 'Unnamed Product'}
@@ -624,7 +626,7 @@ export default function ScanSellPage() {
                   <div className={styles.itemActions}>
                     <button
                       className={styles.qtyBtn}
-                      onClick={() => handleUpdateQuantity(cartItem.inventoryItem.lotId, -1)}
+                      onClick={() => handleUpdateQuantity(cartItem.inventoryItem.id, -1)}
                       disabled={isUpdatingCart}
                     >
                       -
@@ -632,14 +634,14 @@ export default function ScanSellPage() {
                     <span className={styles.qty}>{cartItem.quantity}</span>
                     <button
                       className={styles.qtyBtn}
-                      onClick={() => handleUpdateQuantity(cartItem.inventoryItem.lotId, 1)}
+                      onClick={() => handleUpdateQuantity(cartItem.inventoryItem.id, 1)}
                       disabled={isUpdatingCart}
                     >
                       +
                     </button>
                     <button
                       className={styles.removeBtn}
-                      onClick={() => handleRemoveItem(cartItem.inventoryItem.lotId)}
+                      onClick={() => handleRemoveItem(cartItem.inventoryItem.id)}
                       disabled={isUpdatingCart}
                     >
                       ×
