@@ -5,6 +5,7 @@ import type {
   CreateInventoryDto,
   InventoryResponse,
   InventoryListResponse,
+  LotsListResponse,
 } from '@inventory-platform/types';
 
 export const inventoryApi = {
@@ -27,6 +28,14 @@ export const inventoryApi = {
     const response = await apiClient.get<ApiResponse<InventoryListResponse>>(
       API_ENDPOINTS.INVENTORY.SEARCH,
       { q: query }
+    );
+    return response.data;
+  },
+
+  searchLots: async (search: string): Promise<LotsListResponse> => {
+    const response = await apiClient.get<ApiResponse<LotsListResponse>>(
+      API_ENDPOINTS.INVENTORY.LOTS,
+      { search }
     );
     return response.data;
   },

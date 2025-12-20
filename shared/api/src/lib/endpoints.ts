@@ -74,6 +74,7 @@ export const API_ENDPOINTS = {
   INVENTORY: {
     BASE: '/inventory',
     SEARCH: '/inventory/search',
+    LOTS: '/inventory/lots',
   },
 
   // Checkout endpoints
@@ -91,6 +92,17 @@ export const API_ENDPOINTS = {
   // Purchase endpoints
   PURCHASES: {
     BASE: '/purchases',
+  },
+
+  // Vendor endpoints
+  VENDORS: {
+    BASE: '/vendors',
+    SEARCH: '/vendors/search',
+  },
+
+  // Customer endpoints
+  CUSTOMERS: {
+    SEARCH: '/customers/search',
   },
 } as const;
 

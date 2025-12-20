@@ -1,7 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router';
-import { inventoryApi } from '@inventory-platform/api';
-import type { CreateInventoryDto, CustomReminderInput } from '@inventory-platform/types';
+import { inventoryApi, vendorsApi } from '@inventory-platform/api';
+import type { CreateInventoryDto, CustomReminderInput, Vendor, CreateVendorDto, VendorBusinessType } from '@inventory-platform/types';
 import { CustomRemindersSection } from '@inventory-platform/ui';
 import styles from './dashboard.product-registration.module.css';
 
@@ -36,6 +36,29 @@ export default function ProductRegistrationPage() {
   });
 
   const [customReminders, setCustomReminders] = useState<CustomReminderInput[]>([]);
+  
+  // Vendor state
+  const [vendorSearchQuery, setVendorSearchQuery] = useState('');
+  const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
+  const [vendorSearchResults, setVendorSearchResults] = useState<Vendor[]>([]);
+  const [isSearchingVendor, setIsSearchingVendor] = useState(false);
+  const [showVendorDropdown, setShowVendorDropdown] = useState(false);
+  const [showVendorModal, setShowVendorModal] = useState(false);
+  const [isCreatingVendor, setIsCreatingVendor] = useState(false);
+  const [vendorFormData, setVendorFormData] = useState<CreateVendorDto>({
+    name: '',
+    contactEmail: '',
+    contactPhone: '',
+    address: '',
+    businessType: 'WHOLESALE',
+  });
+
+  // LotId state
+  const [lotId, setLotId] = useState('');
+  const [lotIdSearchQuery, setLotIdSearchQuery] = useState('');
+  const [lotIdSearchResults, setLotIdSearchResults] = useState<{ lotId: string; createdAt: string }[]>([]);
+  const [isSearchingLots, setIsSearchingLots] = useState(false);
+  const [showLotIdDropdown, setShowLotIdDropdown] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -77,6 +100,13 @@ export default function ProductRegistrationPage() {
         return;
       }
 
+      // Validate vendor is selected
+      if (!selectedVendor || !selectedVendor.vendorId) {
+        setError('Vendor information is required. Please search and select a vendor.');
+        setIsLoading(false);
+        return;
+      }
+
       // Ensure price is set to sellingPrice (they should be the same)
       // Format reminderAt if provided
       let reminderAtISO: string | undefined;
@@ -95,6 +125,8 @@ export default function ProductRegistrationPage() {
         price: formData.sellingPrice,
         reminderAt: reminderAtISO,
         customReminders: customReminders.length > 0 ? customReminders : undefined,
+        vendorId: selectedVendor.vendorId,
+        ...(lotId && { lotId }),
       };
 
       const response = await inventoryApi.create(submitData);
@@ -120,6 +152,10 @@ export default function ProductRegistrationPage() {
           customReminders: [],
         });
         setCustomReminders([]);
+        handleClearVendor();
+        setLotId('');
+        setLotIdSearchQuery('');
+        setLotIdSearchResults([]);
         setSuccess(null);
       }, 5000);
     } catch (err) {
@@ -132,6 +168,114 @@ export default function ProductRegistrationPage() {
 
   const handleCancel = () => {
     navigate('/dashboard');
+  };
+
+  const handleVendorSearch = async () => {
+    if (!vendorSearchQuery.trim()) {
+      setError('Please enter a search query');
+      return;
+    }
+
+    setIsSearchingVendor(true);
+    setError(null);
+    try {
+      const vendors = await vendorsApi.search(vendorSearchQuery.trim());
+      setVendorSearchResults(vendors || []);
+      setShowVendorDropdown(true);
+      // If only one vendor found, auto-select it
+      if (vendors.length === 1) {
+        handleSelectVendor(vendors[0]);
+      } else {
+        setSelectedVendor(null);
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to search vendor';
+      setError(errorMessage);
+      setVendorSearchResults([]);
+      setSelectedVendor(null);
+    } finally {
+      setIsSearchingVendor(false);
+    }
+  };
+
+  const handleSelectVendor = (vendor: Vendor) => {
+    setSelectedVendor(vendor);
+    setVendorSearchQuery(vendor.name);
+    setShowVendorDropdown(false);
+    setVendorSearchResults([]);
+  };
+
+  const handleCreateVendor = async () => {
+    setIsCreatingVendor(true);
+    setError(null);
+    try {
+      // Validate required fields
+      if (!vendorFormData.name || !vendorFormData.contactPhone) {
+        setError('Please fill in all required vendor fields (Name and Phone)');
+        setIsCreatingVendor(false);
+        return;
+      }
+
+      // Only include optional fields if they have values
+      const vendorPayload: CreateVendorDto = {
+        name: vendorFormData.name,
+        contactPhone: vendorFormData.contactPhone,
+        businessType: vendorFormData.businessType,
+        ...(vendorFormData.contactEmail && { contactEmail: vendorFormData.contactEmail }),
+        ...(vendorFormData.address && { address: vendorFormData.address }),
+      };
+      const vendor = await vendorsApi.create(vendorPayload);
+      setSelectedVendor(vendor);
+      setShowVendorModal(false);
+      setVendorSearchQuery(vendor.contactPhone);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create vendor';
+      setError(errorMessage);
+    } finally {
+      setIsCreatingVendor(false);
+    }
+  };
+
+  const handleClearVendor = () => {
+    setSelectedVendor(null);
+    setVendorSearchQuery('');
+    setVendorSearchResults([]);
+    setShowVendorDropdown(false);
+    setVendorFormData({
+      name: '',
+      contactEmail: '',
+      contactPhone: '',
+      address: '',
+      businessType: 'WHOLESALE',
+    });
+  };
+
+  const handleLotIdSearch = async () => {
+    if (!lotIdSearchQuery.trim()) {
+      return;
+    }
+
+    setIsSearchingLots(true);
+    setError(null);
+    try {
+      const response = await inventoryApi.searchLots(lotIdSearchQuery.trim());
+      const lots = response.data || [];
+      setLotIdSearchResults(lots.map(lot => ({ lotId: lot.lotId, createdAt: lot.createdAt })));
+      setShowLotIdDropdown(true);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to search lots';
+      setError(errorMessage);
+      setLotIdSearchResults([]);
+    } finally {
+      setIsSearchingLots(false);
+    }
+  };
+
+  const handleSelectLotId = (selectedLotId: string) => {
+    setLotId(selectedLotId);
+    setLotIdSearchQuery(selectedLotId);
+    setShowLotIdDropdown(false);
+    setLotIdSearchResults([]);
   };
 
   return (
@@ -152,6 +296,67 @@ export default function ProductRegistrationPage() {
           </div>
         )}
         <form className={styles.form} onSubmit={handleSubmit}>
+          <div className={styles.formGroup}>
+            <label htmlFor="lotId" className={styles.label}>Lot ID (Optional)</label>
+            <div style={{ position: 'relative' }}>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  type="text"
+                  id="lotId"
+                  className={styles.input}
+                  placeholder="Enter or search lot ID"
+                  value={lotIdSearchQuery}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    setLotIdSearchQuery(e.target.value);
+                    setLotId(e.target.value);
+                    setShowLotIdDropdown(false);
+                  }}
+                  disabled={isLoading || isSearchingLots}
+                  style={{ flex: 1 }}
+                />
+                <button
+                  type="button"
+                  className={styles.searchBtn}
+                  onClick={handleLotIdSearch}
+                  disabled={isLoading || isSearchingLots || !lotIdSearchQuery.trim()}
+                >
+                  {isSearchingLots ? 'Searching...' : 'Search'}
+                </button>
+              </div>
+              {showLotIdDropdown && lotIdSearchResults.length > 0 && (
+                <div className={styles.dropdown}>
+                  {lotIdSearchResults.map((lot) => {
+                    const formatDate = (dateString: string) => {
+                      try {
+                        const date = new Date(dateString);
+                        return date.toLocaleDateString('en-US', { 
+                          year: 'numeric', 
+                          month: 'short', 
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        });
+                      } catch {
+                        return dateString;
+                      }
+                    };
+                    return (
+                      <div
+                        key={lot.lotId}
+                        className={styles.dropdownItem}
+                        onClick={() => handleSelectLotId(lot.lotId)}
+                      >
+                        <div style={{ fontWeight: 500 }}>{lot.lotId}</div>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                          {formatDate(lot.createdAt)}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
           <div className={styles.formRow}>
             <div className={styles.formGroup}>
               <label htmlFor="barcode" className={styles.label}>Barcode *</label>
@@ -312,20 +517,107 @@ export default function ProductRegistrationPage() {
               />
             </div>
           </div>
-          <div className={styles.formGroup}>
-            <label htmlFor="description" className={styles.label}>Description</label>
-            <textarea
-              id="description"
-              name="description"
-              className={styles.textarea}
-              rows={4}
-              placeholder="Enter product description"
-              value={formData.description}
-              onChange={handleChange}
-              disabled={isLoading}
-            />
+
+          {/* Vendor Section */}
+          <div className={styles.vendorSection}>
+            <h3 className={styles.sectionTitle}>Vendor Information *</h3>
+            <div className={styles.formGroup}>
+              <label htmlFor="vendorSearch" className={styles.label}>Vendor Search *</label>
+              <div style={{ position: 'relative' }}>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    type="text"
+                    id="vendorSearch"
+                    className={styles.input}
+                    placeholder="Search by name, phone, email, or any keyword"
+                    value={vendorSearchQuery}
+                    onChange={(e) => {
+                      setVendorSearchQuery(e.target.value);
+                      setSelectedVendor(null);
+                      setShowVendorDropdown(false);
+                    }}
+                    disabled={isLoading || isSearchingVendor}
+                    style={{ flex: 1 }}
+                  />
+                  <button
+                    type="button"
+                    className={styles.searchBtn}
+                    onClick={handleVendorSearch}
+                    disabled={isLoading || isSearchingVendor || !vendorSearchQuery.trim()}
+                  >
+                    {isSearchingVendor ? 'Searching...' : 'Search'}
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.createVendorBtn}
+                    onClick={() => setShowVendorModal(true)}
+                    disabled={isLoading || isCreatingVendor}
+                  >
+                    Create New
+                  </button>
+                  {selectedVendor && (
+                    <button
+                      type="button"
+                      className={styles.clearBtn}
+                      onClick={handleClearVendor}
+                      disabled={isLoading}
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+                {showVendorDropdown && vendorSearchResults.length > 0 && (
+                  <div className={styles.dropdown}>
+                    {vendorSearchResults.map((vendor) => (
+                      <div
+                        key={vendor.vendorId}
+                        className={styles.dropdownItem}
+                        onClick={() => handleSelectVendor(vendor)}
+                      >
+                        <div style={{ fontWeight: 500 }}>{vendor.name}</div>
+                        {vendor.contactPhone && (
+                          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                            {vendor.contactPhone}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {showVendorDropdown && vendorSearchResults.length === 0 && !isSearchingVendor && (
+                  <div className={styles.vendorNotFound}>
+                    <p>No vendors found. Would you like to create a new vendor?</p>
+                    <button
+                      type="button"
+                      className={styles.createVendorBtn}
+                      onClick={() => {
+                        setShowVendorModal(true);
+                        setShowVendorDropdown(false);
+                      }}
+                      disabled={isLoading}
+                    >
+                      Create New Vendor
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+            {selectedVendor && (
+              <div className={styles.vendorInfo}>
+                <div className={styles.vendorCard}>
+                  <h4>{selectedVendor.name}</h4>
+                  <p><strong>Phone:</strong> {selectedVendor.contactPhone}</p>
+                  {selectedVendor.contactEmail && (
+                    <p><strong>Email:</strong> {selectedVendor.contactEmail}</p>
+                  )}
+                  {selectedVendor.address && (
+                    <p><strong>Address:</strong> {selectedVendor.address}</p>
+                  )}
+                  <p><strong>Business Type:</strong> {selectedVendor.businessType}</p>
+                </div>
+              </div>
+            )}
           </div>
-          
           <div className={styles.reminderSection}>
             <h3 className={styles.sectionTitle}>Reminder Settings</h3>
             <div className={styles.formRow}>
@@ -379,6 +671,111 @@ export default function ProductRegistrationPage() {
           </div>
         </form>
       </div>
+
+      {/* Vendor Creation Modal */}
+      {showVendorModal && (
+        <div className={styles.modalOverlay} onClick={() => !isCreatingVendor && setShowVendorModal(false)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3>Create New Vendor</h3>
+              <button
+                type="button"
+                className={styles.modalCloseBtn}
+                onClick={() => setShowVendorModal(false)}
+                disabled={isCreatingVendor}
+              >
+                ×
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              <div className={styles.formGroup}>
+                <label htmlFor="vendorName" className={styles.label}>Vendor Name *</label>
+                <input
+                  type="text"
+                  id="vendorName"
+                  className={styles.input}
+                  placeholder="Enter vendor name"
+                  value={vendorFormData.name}
+                  onChange={(e) => setVendorFormData((prev) => ({ ...prev, name: e.target.value }))}
+                  disabled={isCreatingVendor}
+                  required
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label htmlFor="vendorContactPhone" className={styles.label}>Contact Phone *</label>
+                <input
+                  type="tel"
+                  id="vendorContactPhone"
+                  className={styles.input}
+                  placeholder="Enter contact phone"
+                  value={vendorFormData.contactPhone}
+                  onChange={(e) => setVendorFormData((prev) => ({ ...prev, contactPhone: e.target.value }))}
+                  disabled={isCreatingVendor}
+                  required
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label htmlFor="vendorContactEmail" className={styles.label}>Contact Email</label>
+                <input
+                  type="email"
+                  id="vendorContactEmail"
+                  className={styles.input}
+                  placeholder="Enter contact email"
+                  value={vendorFormData.contactEmail}
+                  onChange={(e) => setVendorFormData((prev) => ({ ...prev, contactEmail: e.target.value }))}
+                  disabled={isCreatingVendor}
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label htmlFor="vendorAddress" className={styles.label}>Address</label>
+                <input
+                  type="text"
+                  id="vendorAddress"
+                  className={styles.input}
+                  placeholder="Enter address"
+                  value={vendorFormData.address}
+                  onChange={(e) => setVendorFormData((prev) => ({ ...prev, address: e.target.value }))}
+                  disabled={isCreatingVendor}
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label htmlFor="vendorBusinessType" className={styles.label}>Business Type *</label>
+                <select
+                  id="vendorBusinessType"
+                  className={styles.input}
+                  value={vendorFormData.businessType}
+                  onChange={(e) => setVendorFormData((prev) => ({ ...prev, businessType: e.target.value as VendorBusinessType }))}
+                  disabled={isCreatingVendor}
+                  required
+                >
+                  <option value="WHOLESALE">Wholesale</option>
+                  <option value="RETAIL">Retail</option>
+                  <option value="MANUFACTURER">Manufacturer</option>
+                  <option value="DISTRIBUTOR">Distributor</option>
+                </select>
+              </div>
+            </div>
+            <div className={styles.modalFooter}>
+              <button
+                type="button"
+                className={styles.cancelBtn}
+                onClick={() => setShowVendorModal(false)}
+                disabled={isCreatingVendor}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={styles.submitBtn}
+                onClick={handleCreateVendor}
+                disabled={isCreatingVendor}
+              >
+                {isCreatingVendor ? 'Creating...' : 'Create Vendor'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
