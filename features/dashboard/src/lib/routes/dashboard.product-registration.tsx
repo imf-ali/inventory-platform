@@ -1,7 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router';
-import { inventoryApi } from '@inventory-platform/api';
-import type { CreateInventoryDto, CustomReminderInput } from '@inventory-platform/types';
+import { inventoryApi, vendorsApi } from '@inventory-platform/api';
+import type { CreateInventoryDto, CustomReminderInput, Vendor, CreateVendorDto, VendorBusinessType } from '@inventory-platform/types';
 import { CustomRemindersSection } from '@inventory-platform/ui';
 import styles from './dashboard.product-registration.module.css';
 
@@ -36,6 +36,21 @@ export default function ProductRegistrationPage() {
   });
 
   const [customReminders, setCustomReminders] = useState<CustomReminderInput[]>([]);
+  
+  // Vendor state
+  const [vendorPhone, setVendorPhone] = useState('');
+  const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
+  const [isSearchingVendor, setIsSearchingVendor] = useState(false);
+  const [hasSearchedVendor, setHasSearchedVendor] = useState(false);
+  const [showVendorModal, setShowVendorModal] = useState(false);
+  const [isCreatingVendor, setIsCreatingVendor] = useState(false);
+  const [vendorFormData, setVendorFormData] = useState<CreateVendorDto>({
+    name: '',
+    contactEmail: '',
+    contactPhone: '',
+    address: '',
+    businessType: 'WHOLESALE',
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -77,6 +92,13 @@ export default function ProductRegistrationPage() {
         return;
       }
 
+      // Validate vendor is selected
+      if (!selectedVendor || !selectedVendor.vendorId) {
+        setError('Vendor information is required. Please search and select a vendor.');
+        setIsLoading(false);
+        return;
+      }
+
       // Ensure price is set to sellingPrice (they should be the same)
       // Format reminderAt if provided
       let reminderAtISO: string | undefined;
@@ -95,6 +117,7 @@ export default function ProductRegistrationPage() {
         price: formData.sellingPrice,
         reminderAt: reminderAtISO,
         customReminders: customReminders.length > 0 ? customReminders : undefined,
+        vendorId: selectedVendor.vendorId,
       };
 
       const response = await inventoryApi.create(submitData);
@@ -120,6 +143,7 @@ export default function ProductRegistrationPage() {
           customReminders: [],
         });
         setCustomReminders([]);
+        handleClearVendor();
         setSuccess(null);
       }, 5000);
     } catch (err) {
@@ -132,6 +156,87 @@ export default function ProductRegistrationPage() {
 
   const handleCancel = () => {
     navigate('/dashboard');
+  };
+
+  const handleVendorSearch = async () => {
+    if (!vendorPhone.trim()) {
+      setError('Please enter a vendor phone number');
+      return;
+    }
+
+    setIsSearchingVendor(true);
+    setHasSearchedVendor(true);
+    setError(null);
+    try {
+      const vendor = await vendorsApi.searchByPhone(vendorPhone.trim());
+      if (vendor) {
+        setSelectedVendor(vendor);
+        setVendorFormData({
+          name: vendor.name,
+          contactEmail: vendor.contactEmail,
+          contactPhone: vendor.contactPhone,
+          address: vendor.address,
+          businessType: vendor.businessType,
+        });
+      } else {
+        setSelectedVendor(null);
+        // Pre-fill phone number in vendor form
+        setVendorFormData((prev) => ({
+          ...prev,
+          contactPhone: vendorPhone.trim(),
+        }));
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to search vendor';
+      setError(errorMessage);
+      setSelectedVendor(null);
+    } finally {
+      setIsSearchingVendor(false);
+    }
+  };
+
+  const handleCreateVendor = async () => {
+    setIsCreatingVendor(true);
+    setError(null);
+    try {
+      // Validate required fields
+      if (!vendorFormData.name || !vendorFormData.contactPhone) {
+        setError('Please fill in all required vendor fields (Name and Phone)');
+        setIsCreatingVendor(false);
+        return;
+      }
+
+      // Only include optional fields if they have values
+      const vendorPayload: CreateVendorDto = {
+        name: vendorFormData.name,
+        contactPhone: vendorFormData.contactPhone,
+        businessType: vendorFormData.businessType,
+        ...(vendorFormData.contactEmail && { contactEmail: vendorFormData.contactEmail }),
+        ...(vendorFormData.address && { address: vendorFormData.address }),
+      };
+      const vendor = await vendorsApi.create(vendorPayload);
+      setSelectedVendor(vendor);
+      setShowVendorModal(false);
+      setVendorPhone(vendor.contactPhone);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create vendor';
+      setError(errorMessage);
+    } finally {
+      setIsCreatingVendor(false);
+    }
+  };
+
+  const handleClearVendor = () => {
+    setSelectedVendor(null);
+    setVendorPhone('');
+    setHasSearchedVendor(false);
+    setVendorFormData({
+      name: '',
+      contactEmail: '',
+      contactPhone: '',
+      address: '',
+      businessType: 'WHOLESALE',
+    });
   };
 
   return (
@@ -312,20 +417,79 @@ export default function ProductRegistrationPage() {
               />
             </div>
           </div>
-          <div className={styles.formGroup}>
-            <label htmlFor="description" className={styles.label}>Description</label>
-            <textarea
-              id="description"
-              name="description"
-              className={styles.textarea}
-              rows={4}
-              placeholder="Enter product description"
-              value={formData.description}
-              onChange={handleChange}
-              disabled={isLoading}
-            />
+
+          {/* Vendor Section */}
+          <div className={styles.vendorSection}>
+            <h3 className={styles.sectionTitle}>Vendor Information *</h3>
+            <div className={styles.vendorSearch}>
+              <div className={styles.formRow}>
+                <div className={styles.formGroup} style={{ flex: 1 }}>
+                  <label htmlFor="vendorPhone" className={styles.label}>Vendor Phone *</label>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input
+                      type="tel"
+                      id="vendorPhone"
+                      className={styles.input}
+                      placeholder="Enter vendor phone number"
+                    value={vendorPhone}
+                    onChange={(e) => {
+                      setVendorPhone(e.target.value);
+                      setSelectedVendor(null);
+                      setHasSearchedVendor(false);
+                    }}
+                      disabled={isLoading || isSearchingVendor}
+                    />
+                    <button
+                      type="button"
+                      className={styles.searchBtn}
+                      onClick={handleVendorSearch}
+                      disabled={isLoading || isSearchingVendor || !vendorPhone.trim()}
+                    >
+                      {isSearchingVendor ? 'Searching...' : 'Search'}
+                    </button>
+                    {selectedVendor && (
+                      <button
+                        type="button"
+                        className={styles.clearBtn}
+                        onClick={handleClearVendor}
+                        disabled={isLoading}
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {selectedVendor ? (
+                <div className={styles.vendorInfo}>
+                  <div className={styles.vendorCard}>
+                    <h4>{selectedVendor.name}</h4>
+                    <p><strong>Phone:</strong> {selectedVendor.contactPhone}</p>
+                    {selectedVendor.contactEmail && (
+                      <p><strong>Email:</strong> {selectedVendor.contactEmail}</p>
+                    )}
+                    {selectedVendor.address && (
+                      <p><strong>Address:</strong> {selectedVendor.address}</p>
+                    )}
+                    <p><strong>Business Type:</strong> {selectedVendor.businessType}</p>
+                  </div>
+                </div>
+              ) : hasSearchedVendor && !selectedVendor && !isSearchingVendor ? (
+                <div className={styles.vendorNotFound}>
+                  <p>Vendor not found. Would you like to create a new vendor?</p>
+                  <button
+                    type="button"
+                    className={styles.createVendorBtn}
+                    onClick={() => setShowVendorModal(true)}
+                    disabled={isLoading}
+                  >
+                    Create New Vendor
+                  </button>
+                </div>
+              ) : null}
+            </div>
           </div>
-          
           <div className={styles.reminderSection}>
             <h3 className={styles.sectionTitle}>Reminder Settings</h3>
             <div className={styles.formRow}>
@@ -379,6 +543,111 @@ export default function ProductRegistrationPage() {
           </div>
         </form>
       </div>
+
+      {/* Vendor Creation Modal */}
+      {showVendorModal && (
+        <div className={styles.modalOverlay} onClick={() => !isCreatingVendor && setShowVendorModal(false)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3>Create New Vendor</h3>
+              <button
+                type="button"
+                className={styles.modalCloseBtn}
+                onClick={() => setShowVendorModal(false)}
+                disabled={isCreatingVendor}
+              >
+                ×
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              <div className={styles.formGroup}>
+                <label htmlFor="vendorName" className={styles.label}>Vendor Name *</label>
+                <input
+                  type="text"
+                  id="vendorName"
+                  className={styles.input}
+                  placeholder="Enter vendor name"
+                  value={vendorFormData.name}
+                  onChange={(e) => setVendorFormData((prev) => ({ ...prev, name: e.target.value }))}
+                  disabled={isCreatingVendor}
+                  required
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label htmlFor="vendorContactPhone" className={styles.label}>Contact Phone *</label>
+                <input
+                  type="tel"
+                  id="vendorContactPhone"
+                  className={styles.input}
+                  placeholder="Enter contact phone"
+                  value={vendorFormData.contactPhone}
+                  onChange={(e) => setVendorFormData((prev) => ({ ...prev, contactPhone: e.target.value }))}
+                  disabled={isCreatingVendor}
+                  required
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label htmlFor="vendorContactEmail" className={styles.label}>Contact Email</label>
+                <input
+                  type="email"
+                  id="vendorContactEmail"
+                  className={styles.input}
+                  placeholder="Enter contact email"
+                  value={vendorFormData.contactEmail}
+                  onChange={(e) => setVendorFormData((prev) => ({ ...prev, contactEmail: e.target.value }))}
+                  disabled={isCreatingVendor}
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label htmlFor="vendorAddress" className={styles.label}>Address</label>
+                <input
+                  type="text"
+                  id="vendorAddress"
+                  className={styles.input}
+                  placeholder="Enter address"
+                  value={vendorFormData.address}
+                  onChange={(e) => setVendorFormData((prev) => ({ ...prev, address: e.target.value }))}
+                  disabled={isCreatingVendor}
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label htmlFor="vendorBusinessType" className={styles.label}>Business Type *</label>
+                <select
+                  id="vendorBusinessType"
+                  className={styles.input}
+                  value={vendorFormData.businessType}
+                  onChange={(e) => setVendorFormData((prev) => ({ ...prev, businessType: e.target.value as VendorBusinessType }))}
+                  disabled={isCreatingVendor}
+                  required
+                >
+                  <option value="WHOLESALE">Wholesale</option>
+                  <option value="RETAIL">Retail</option>
+                  <option value="MANUFACTURER">Manufacturer</option>
+                  <option value="DISTRIBUTOR">Distributor</option>
+                </select>
+              </div>
+            </div>
+            <div className={styles.modalFooter}>
+              <button
+                type="button"
+                className={styles.cancelBtn}
+                onClick={() => setShowVendorModal(false)}
+                disabled={isCreatingVendor}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={styles.submitBtn}
+                onClick={handleCreateVendor}
+                disabled={isCreatingVendor}
+              >
+                {isCreatingVendor ? 'Creating...' : 'Create Vendor'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

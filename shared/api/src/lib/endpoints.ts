@@ -90,5 +90,16 @@ export const API_ENDPOINTS = {
   PURCHASES: {
     BASE: '/purchases',
   },
+
+  // Vendor endpoints
+  VENDORS: {
+    BASE: '/vendors',
+    SEARCH: '/vendors/search',
+  },
+
+  // Customer endpoints
+  CUSTOMERS: {
+    SEARCH: '/customers/search',
+  },
 } as const;
 
