@@ -287,6 +287,8 @@ export interface CreateInventoryDto {
   description?: string;
   reminderAt?: string;
   customReminders?: CustomReminderInput[];
+  vendorId?: string;
+  lotId?: string;
 }
 
 export interface InventoryResponse {
@@ -316,6 +318,20 @@ export interface InventoryItem {
 
 export interface InventoryListResponse {
   data: InventoryItem[];
+  meta: unknown | null;
+}
+
+// Lot types
+export interface Lot {
+  lotId: string;
+  productCount: number;
+  createdAt: string;
+  lastUpdated: string;
+  firstProductName: string;
+}
+
+export interface LotsListResponse {
+  data: Lot[];
   meta: unknown | null;
 }
 
@@ -373,6 +389,7 @@ export interface CartResponse {
   customerName?: string;
   customerAddress?: string;
   customerPhone?: string;
+  customerEmail?: string;
   paymentMethod?: string;
 }
 
@@ -382,6 +399,7 @@ export interface AddToCartDto {
   customerName?: string;
   customerAddress?: string;
   customerPhone?: string;
+  customerEmail?: string;
 }
 
 export interface UpdateCartStatusDto {
@@ -494,4 +512,60 @@ export interface ShopUsersResponse {
 
 // User Role type
 export type UserRole = 'ADMIN' | 'MANAGER' | 'CASHIER';
+
+// Vendor types
+export type VendorBusinessType = 'WHOLESALE' | 'RETAIL' | 'MANUFACTURER' | 'DISTRIBUTOR';
+
+export interface Vendor {
+  vendorId: string;
+  name: string;
+  contactEmail: string;
+  contactPhone: string;
+  address: string;
+  companyName: string;
+  businessType: VendorBusinessType;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateVendorDto {
+  name: string;
+  contactEmail?: string;
+  contactPhone: string;
+  address?: string;
+  businessType: VendorBusinessType;
+}
+
+export interface VendorResponse {
+  vendorId: string;
+  name: string;
+  contactEmail: string;
+  contactPhone: string;
+  address: string;
+  companyName: string;
+  businessType: VendorBusinessType;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Customer types
+export interface Customer {
+  customerId: string;
+  name: string;
+  phone: string;
+  address: string | null;
+  email: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CustomerResponse {
+  customerId: string;
+  name: string;
+  phone: string;
+  address: string | null;
+  email: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
 

@@ -1,6 +1,6 @@
 import { useState, FormEvent, useEffect, useRef, ChangeEvent } from 'react';
 import { useNavigate } from 'react-router';
-import { inventoryApi, cartApi } from '@inventory-platform/api';
+import { inventoryApi, cartApi, customersApi } from '@inventory-platform/api';
 import type { InventoryItem, CartResponse, CheckoutItemResponse } from '@inventory-platform/types';
 import styles from './dashboard.scan-sell.module.css';
 
@@ -33,6 +33,8 @@ export default function ScanSellPage() {
   const [customerName, setCustomerName] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [isSearchingCustomer, setIsSearchingCustomer] = useState(false);
 
   // Load cart on mount (only once, even in StrictMode)
   useEffect(() => {
@@ -76,6 +78,7 @@ export default function ScanSellPage() {
       setCustomerName(cart.customerName || '');
       setCustomerAddress(cart.customerAddress || '');
       setCustomerPhone(cart.customerPhone || '');
+      setCustomerEmail(cart.customerEmail || '');
       // Convert cart items to local format
       // We need to fetch inventory items for the lotIds to get full details
       await convertCartToLocalItems(cart);
@@ -88,6 +91,7 @@ export default function ScanSellPage() {
       setCustomerName('');
       setCustomerAddress('');
       setCustomerPhone('');
+      setCustomerEmail('');
     } finally {
       setIsLoadingCart(false);
     }
@@ -234,6 +238,7 @@ export default function ScanSellPage() {
         ...(customerName && { customerName }),
         ...(customerAddress && { customerAddress }),
         ...(customerPhone && { customerPhone }),
+        ...(customerEmail && { customerEmail }),
       };
 
       const updatedCart = await cartApi.add(cartPayload);
@@ -410,6 +415,7 @@ export default function ScanSellPage() {
           ...(customerName && { customerName }),
           ...(customerAddress && { customerAddress }),
           ...(customerPhone && { customerPhone }),
+          ...(customerEmail && { customerEmail }),
         };
 
         const updatedCart = await cartApi.add(cartPayload);
@@ -444,6 +450,30 @@ export default function ScanSellPage() {
     return cartData?.grandTotal ?? calculateSubtotal() + calculateTax();
   };
 
+  const handleCustomerSearch = async () => {
+    if (!customerPhone.trim()) {
+      setError('Please enter a customer phone number');
+      return;
+    }
+
+    setIsSearchingCustomer(true);
+    setError(null);
+    try {
+      const customer = await customersApi.searchByPhone(customerPhone.trim());
+      if (customer) {
+        setCustomerName(customer.name || '');
+        setCustomerEmail(customer.email || '');
+        setCustomerAddress(customer.address || '');
+        // Phone is already set from the search input
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to search customer';
+      setError(errorMessage);
+    } finally {
+      setIsSearchingCustomer(false);
+    }
+  };
+
   const handleProcessPayment = async () => {
     if (cartItems.length === 0) {
       setError('Cart is empty');
@@ -460,7 +490,8 @@ export default function ScanSellPage() {
         items: [], // Empty items array - only updating customer info
         ...(customerName && { customerName }),
         ...(customerAddress && { customerAddress }),
-        ...(customerPhone && { customerPhone }),
+        ...(customerPhone && { customerPhone: customerPhone.trim() }),
+        ...(customerEmail && { customerEmail: customerEmail.trim() }),
       };
 
       const upsertResponse = await cartApi.add(upsertPayload);
@@ -504,8 +535,35 @@ export default function ScanSellPage() {
       )}
       {/* Customer Information Section */}
       <div className={styles.customerSection}>
-        <h4 className={styles.customerTitle}>Customer Information (Optional)</h4>
+        <h4 className={styles.customerTitle}>Customer Information</h4>
         <div className={styles.customerFields}>
+          <div className={styles.customerField}>
+            <label htmlFor="customerPhone" className={styles.customerLabel}>
+              Phone
+            </label>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <input
+                id="customerPhone"
+                type="tel"
+                className={styles.customerInput}
+                placeholder="Enter customer phone"
+                value={customerPhone}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                  setCustomerPhone(e.currentTarget.value);
+                }}
+                disabled={isSearchingCustomer}
+                style={{ flex: 1 }}
+              />
+              <button
+                type="button"
+                className={styles.searchBtn}
+                onClick={handleCustomerSearch}
+                disabled={isSearchingCustomer || !customerPhone.trim()}
+              >
+                {isSearchingCustomer ? 'Searching...' : 'Search'}
+              </button>
+            </div>
+          </div>
           <div className={styles.customerField}>
             <label htmlFor="customerName" className={styles.customerLabel}>
               Customer Name
@@ -522,6 +580,21 @@ export default function ScanSellPage() {
             />
           </div>
           <div className={styles.customerField}>
+            <label htmlFor="customerEmail" className={styles.customerLabel}>
+              Email
+            </label>
+            <input
+              id="customerEmail"
+              type="email"
+              className={styles.customerInput}
+              placeholder="Enter customer email"
+              value={customerEmail}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                setCustomerEmail(e.currentTarget.value);
+              }}
+            />
+          </div>
+          <div className={styles.customerField}>
             <label htmlFor="customerAddress" className={styles.customerLabel}>
               Address
             </label>
@@ -533,21 +606,6 @@ export default function ScanSellPage() {
               value={customerAddress}
               onChange={(e: ChangeEvent<HTMLInputElement>) => {
                 setCustomerAddress(e.currentTarget.value);
-              }}
-            />
-          </div>
-          <div className={styles.customerField}>
-            <label htmlFor="customerPhone" className={styles.customerLabel}>
-              Phone
-            </label>
-            <input
-              id="customerPhone"
-              type="tel"
-              className={styles.customerInput}
-              placeholder="Enter customer phone"
-              value={customerPhone}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                setCustomerPhone(e.currentTarget.value);
               }}
             />
           </div>
