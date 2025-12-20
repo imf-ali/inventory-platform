@@ -38,10 +38,11 @@ export default function ProductRegistrationPage() {
   const [customReminders, setCustomReminders] = useState<CustomReminderInput[]>([]);
   
   // Vendor state
-  const [vendorPhone, setVendorPhone] = useState('');
+  const [vendorSearchQuery, setVendorSearchQuery] = useState('');
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
+  const [vendorSearchResults, setVendorSearchResults] = useState<Vendor[]>([]);
   const [isSearchingVendor, setIsSearchingVendor] = useState(false);
-  const [hasSearchedVendor, setHasSearchedVendor] = useState(false);
+  const [showVendorDropdown, setShowVendorDropdown] = useState(false);
   const [showVendorModal, setShowVendorModal] = useState(false);
   const [isCreatingVendor, setIsCreatingVendor] = useState(false);
   const [vendorFormData, setVendorFormData] = useState<CreateVendorDto>({
@@ -51,6 +52,13 @@ export default function ProductRegistrationPage() {
     address: '',
     businessType: 'WHOLESALE',
   });
+
+  // LotId state
+  const [lotId, setLotId] = useState('');
+  const [lotIdSearchQuery, setLotIdSearchQuery] = useState('');
+  const [lotIdSearchResults, setLotIdSearchResults] = useState<{ lotId: string; createdAt: string }[]>([]);
+  const [isSearchingLots, setIsSearchingLots] = useState(false);
+  const [showLotIdDropdown, setShowLotIdDropdown] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -118,6 +126,7 @@ export default function ProductRegistrationPage() {
         reminderAt: reminderAtISO,
         customReminders: customReminders.length > 0 ? customReminders : undefined,
         vendorId: selectedVendor.vendorId,
+        ...(lotId && { lotId }),
       };
 
       const response = await inventoryApi.create(submitData);
@@ -144,6 +153,9 @@ export default function ProductRegistrationPage() {
         });
         setCustomReminders([]);
         handleClearVendor();
+        setLotId('');
+        setLotIdSearchQuery('');
+        setLotIdSearchResults([]);
         setSuccess(null);
       }, 5000);
     } catch (err) {
@@ -159,40 +171,38 @@ export default function ProductRegistrationPage() {
   };
 
   const handleVendorSearch = async () => {
-    if (!vendorPhone.trim()) {
-      setError('Please enter a vendor phone number');
+    if (!vendorSearchQuery.trim()) {
+      setError('Please enter a search query');
       return;
     }
 
     setIsSearchingVendor(true);
-    setHasSearchedVendor(true);
     setError(null);
     try {
-      const vendor = await vendorsApi.searchByPhone(vendorPhone.trim());
-      if (vendor) {
-        setSelectedVendor(vendor);
-        setVendorFormData({
-          name: vendor.name,
-          contactEmail: vendor.contactEmail,
-          contactPhone: vendor.contactPhone,
-          address: vendor.address,
-          businessType: vendor.businessType,
-        });
+      const vendors = await vendorsApi.search(vendorSearchQuery.trim());
+      setVendorSearchResults(vendors || []);
+      setShowVendorDropdown(true);
+      // If only one vendor found, auto-select it
+      if (vendors.length === 1) {
+        handleSelectVendor(vendors[0]);
       } else {
         setSelectedVendor(null);
-        // Pre-fill phone number in vendor form
-        setVendorFormData((prev) => ({
-          ...prev,
-          contactPhone: vendorPhone.trim(),
-        }));
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to search vendor';
       setError(errorMessage);
+      setVendorSearchResults([]);
       setSelectedVendor(null);
     } finally {
       setIsSearchingVendor(false);
     }
+  };
+
+  const handleSelectVendor = (vendor: Vendor) => {
+    setSelectedVendor(vendor);
+    setVendorSearchQuery(vendor.name);
+    setShowVendorDropdown(false);
+    setVendorSearchResults([]);
   };
 
   const handleCreateVendor = async () => {
@@ -217,7 +227,7 @@ export default function ProductRegistrationPage() {
       const vendor = await vendorsApi.create(vendorPayload);
       setSelectedVendor(vendor);
       setShowVendorModal(false);
-      setVendorPhone(vendor.contactPhone);
+      setVendorSearchQuery(vendor.contactPhone);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create vendor';
       setError(errorMessage);
@@ -228,8 +238,9 @@ export default function ProductRegistrationPage() {
 
   const handleClearVendor = () => {
     setSelectedVendor(null);
-    setVendorPhone('');
-    setHasSearchedVendor(false);
+    setVendorSearchQuery('');
+    setVendorSearchResults([]);
+    setShowVendorDropdown(false);
     setVendorFormData({
       name: '',
       contactEmail: '',
@@ -237,6 +248,34 @@ export default function ProductRegistrationPage() {
       address: '',
       businessType: 'WHOLESALE',
     });
+  };
+
+  const handleLotIdSearch = async () => {
+    if (!lotIdSearchQuery.trim()) {
+      return;
+    }
+
+    setIsSearchingLots(true);
+    setError(null);
+    try {
+      const response = await inventoryApi.searchLots(lotIdSearchQuery.trim());
+      const lots = response.data || [];
+      setLotIdSearchResults(lots.map(lot => ({ lotId: lot.lotId, createdAt: lot.createdAt })));
+      setShowLotIdDropdown(true);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to search lots';
+      setError(errorMessage);
+      setLotIdSearchResults([]);
+    } finally {
+      setIsSearchingLots(false);
+    }
+  };
+
+  const handleSelectLotId = (selectedLotId: string) => {
+    setLotId(selectedLotId);
+    setLotIdSearchQuery(selectedLotId);
+    setShowLotIdDropdown(false);
+    setLotIdSearchResults([]);
   };
 
   return (
@@ -257,6 +296,67 @@ export default function ProductRegistrationPage() {
           </div>
         )}
         <form className={styles.form} onSubmit={handleSubmit}>
+          <div className={styles.formGroup}>
+            <label htmlFor="lotId" className={styles.label}>Lot ID (Optional)</label>
+            <div style={{ position: 'relative' }}>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  type="text"
+                  id="lotId"
+                  className={styles.input}
+                  placeholder="Enter or search lot ID"
+                  value={lotIdSearchQuery}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    setLotIdSearchQuery(e.target.value);
+                    setLotId(e.target.value);
+                    setShowLotIdDropdown(false);
+                  }}
+                  disabled={isLoading || isSearchingLots}
+                  style={{ flex: 1 }}
+                />
+                <button
+                  type="button"
+                  className={styles.searchBtn}
+                  onClick={handleLotIdSearch}
+                  disabled={isLoading || isSearchingLots || !lotIdSearchQuery.trim()}
+                >
+                  {isSearchingLots ? 'Searching...' : 'Search'}
+                </button>
+              </div>
+              {showLotIdDropdown && lotIdSearchResults.length > 0 && (
+                <div className={styles.dropdown}>
+                  {lotIdSearchResults.map((lot) => {
+                    const formatDate = (dateString: string) => {
+                      try {
+                        const date = new Date(dateString);
+                        return date.toLocaleDateString('en-US', { 
+                          year: 'numeric', 
+                          month: 'short', 
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        });
+                      } catch {
+                        return dateString;
+                      }
+                    };
+                    return (
+                      <div
+                        key={lot.lotId}
+                        className={styles.dropdownItem}
+                        onClick={() => handleSelectLotId(lot.lotId)}
+                      >
+                        <div style={{ fontWeight: 500 }}>{lot.lotId}</div>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                          {formatDate(lot.createdAt)}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
           <div className={styles.formRow}>
             <div className={styles.formGroup}>
               <label htmlFor="barcode" className={styles.label}>Barcode *</label>
@@ -421,74 +521,102 @@ export default function ProductRegistrationPage() {
           {/* Vendor Section */}
           <div className={styles.vendorSection}>
             <h3 className={styles.sectionTitle}>Vendor Information *</h3>
-            <div className={styles.vendorSearch}>
-              <div className={styles.formRow}>
-                <div className={styles.formGroup} style={{ flex: 1 }}>
-                  <label htmlFor="vendorPhone" className={styles.label}>Vendor Phone *</label>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <input
-                      type="tel"
-                      id="vendorPhone"
-                      className={styles.input}
-                      placeholder="Enter vendor phone number"
-                    value={vendorPhone}
+            <div className={styles.formGroup}>
+              <label htmlFor="vendorSearch" className={styles.label}>Vendor Search *</label>
+              <div style={{ position: 'relative' }}>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    type="text"
+                    id="vendorSearch"
+                    className={styles.input}
+                    placeholder="Search by name, phone, email, or any keyword"
+                    value={vendorSearchQuery}
                     onChange={(e) => {
-                      setVendorPhone(e.target.value);
+                      setVendorSearchQuery(e.target.value);
                       setSelectedVendor(null);
-                      setHasSearchedVendor(false);
+                      setShowVendorDropdown(false);
                     }}
-                      disabled={isLoading || isSearchingVendor}
-                    />
-                    <button
-                      type="button"
-                      className={styles.searchBtn}
-                      onClick={handleVendorSearch}
-                      disabled={isLoading || isSearchingVendor || !vendorPhone.trim()}
-                    >
-                      {isSearchingVendor ? 'Searching...' : 'Search'}
-                    </button>
-                    {selectedVendor && (
-                      <button
-                        type="button"
-                        className={styles.clearBtn}
-                        onClick={handleClearVendor}
-                        disabled={isLoading}
-                      >
-                        Clear
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {selectedVendor ? (
-                <div className={styles.vendorInfo}>
-                  <div className={styles.vendorCard}>
-                    <h4>{selectedVendor.name}</h4>
-                    <p><strong>Phone:</strong> {selectedVendor.contactPhone}</p>
-                    {selectedVendor.contactEmail && (
-                      <p><strong>Email:</strong> {selectedVendor.contactEmail}</p>
-                    )}
-                    {selectedVendor.address && (
-                      <p><strong>Address:</strong> {selectedVendor.address}</p>
-                    )}
-                    <p><strong>Business Type:</strong> {selectedVendor.businessType}</p>
-                  </div>
-                </div>
-              ) : hasSearchedVendor && !selectedVendor && !isSearchingVendor ? (
-                <div className={styles.vendorNotFound}>
-                  <p>Vendor not found. Would you like to create a new vendor?</p>
+                    disabled={isLoading || isSearchingVendor}
+                    style={{ flex: 1 }}
+                  />
+                  <button
+                    type="button"
+                    className={styles.searchBtn}
+                    onClick={handleVendorSearch}
+                    disabled={isLoading || isSearchingVendor || !vendorSearchQuery.trim()}
+                  >
+                    {isSearchingVendor ? 'Searching...' : 'Search'}
+                  </button>
                   <button
                     type="button"
                     className={styles.createVendorBtn}
                     onClick={() => setShowVendorModal(true)}
-                    disabled={isLoading}
+                    disabled={isLoading || isCreatingVendor}
                   >
-                    Create New Vendor
+                    Create New
                   </button>
+                  {selectedVendor && (
+                    <button
+                      type="button"
+                      className={styles.clearBtn}
+                      onClick={handleClearVendor}
+                      disabled={isLoading}
+                    >
+                      Clear
+                    </button>
+                  )}
                 </div>
-              ) : null}
+                {showVendorDropdown && vendorSearchResults.length > 0 && (
+                  <div className={styles.dropdown}>
+                    {vendorSearchResults.map((vendor) => (
+                      <div
+                        key={vendor.vendorId}
+                        className={styles.dropdownItem}
+                        onClick={() => handleSelectVendor(vendor)}
+                      >
+                        <div style={{ fontWeight: 500 }}>{vendor.name}</div>
+                        {vendor.contactPhone && (
+                          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                            {vendor.contactPhone}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {showVendorDropdown && vendorSearchResults.length === 0 && !isSearchingVendor && (
+                  <div className={styles.vendorNotFound}>
+                    <p>No vendors found. Would you like to create a new vendor?</p>
+                    <button
+                      type="button"
+                      className={styles.createVendorBtn}
+                      onClick={() => {
+                        setShowVendorModal(true);
+                        setShowVendorDropdown(false);
+                      }}
+                      disabled={isLoading}
+                    >
+                      Create New Vendor
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
+            {selectedVendor && (
+              <div className={styles.vendorInfo}>
+                <div className={styles.vendorCard}>
+                  <h4>{selectedVendor.name}</h4>
+                  <p><strong>Phone:</strong> {selectedVendor.contactPhone}</p>
+                  {selectedVendor.contactEmail && (
+                    <p><strong>Email:</strong> {selectedVendor.contactEmail}</p>
+                  )}
+                  {selectedVendor.address && (
+                    <p><strong>Address:</strong> {selectedVendor.address}</p>
+                  )}
+                  <p><strong>Business Type:</strong> {selectedVendor.businessType}</p>
+                </div>
+              </div>
+            )}
           </div>
           <div className={styles.reminderSection}>
             <h3 className={styles.sectionTitle}>Reminder Settings</h3>

@@ -15,17 +15,17 @@ export const vendorsApi = {
     return response.data;
   },
 
-  searchByPhone: async (phone: string): Promise<VendorResponse | null> => {
+  search: async (query: string): Promise<VendorResponse[]> => {
     try {
-      const response = await apiClient.get<ApiResponse<VendorResponse>>(
+      const response = await apiClient.get<ApiResponse<VendorResponse[]>>(
         API_ENDPOINTS.VENDORS.SEARCH,
-        { phone }
+        { q: query }
       );
-      return response.data;
+      return response.data || [];
     } catch (error: any) {
-      // If vendor not found, return null instead of throwing
+      // If vendor not found, return empty array instead of throwing
       if (error?.status === 404) {
-        return null;
+        return [];
       }
       throw error;
     }

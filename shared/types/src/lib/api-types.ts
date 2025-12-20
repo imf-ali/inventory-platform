@@ -288,6 +288,7 @@ export interface CreateInventoryDto {
   reminderAt?: string;
   customReminders?: CustomReminderInput[];
   vendorId?: string;
+  lotId?: string;
 }
 
 export interface InventoryResponse {
@@ -317,6 +318,20 @@ export interface InventoryItem {
 
 export interface InventoryListResponse {
   data: InventoryItem[];
+  meta: unknown | null;
+}
+
+// Lot types
+export interface Lot {
+  lotId: string;
+  productCount: number;
+  createdAt: string;
+  lastUpdated: string;
+  firstProductName: string;
+}
+
+export interface LotsListResponse {
+  data: Lot[];
   meta: unknown | null;
 }
 
