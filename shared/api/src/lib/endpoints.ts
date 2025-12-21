@@ -50,6 +50,11 @@ export const API_ENDPOINTS = {
     STREAM: '/reminders/stream',
   },
 
+  // Events endpoints
+  EVENTS: {
+    STREAM: '/events/stream',
+  },
+
   // Shop endpoints
   SHOPS: {
     REGISTER: '/shops/register',

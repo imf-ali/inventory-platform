@@ -1,19 +1,10 @@
-// DashboardLayout.tsx
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { useAuthStore } from '@inventory-platform/store';
-import { ThemeToggle } from './ThemeToggle';
 import type { DashboardLayoutProps } from '@inventory-platform/types';
 import styles from './DashboardLayout.module.css';
-import { createSseConnection, API_ENDPOINTS } from '@inventory-platform/api';
-
-type ReminderNotification = {
-  id: string; // reminderId
-  title: string;
-  message: string;
-  createdAt: string;
-  read: boolean;
-};
+import { ThemeToggle } from './ThemeToggle';
+import { useReminderNotifications } from '@inventory-platform/store';
 
 const MENU_ITEMS = [
   { path: '/dashboard', label: 'Dashboard', icon: '📊' },
@@ -50,12 +41,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-
-  const [notifications, setNotifications] = useState<ReminderNotification[]>(
-    []
-  );
   const [showNotificationMenu, setShowNotificationMenu] = useState(false);
+
   const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // 🔔 Reminder notifications (ALL logic lives in hook)
+  const { notifications, unreadCount, markAsRead } = useReminderNotifications(
+    user?.shopId ?? undefined
+  );
 
   // Close user menu on outside click
   useEffect(() => {
@@ -68,114 +61,26 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     if (userMenuOpen) {
       document.addEventListener('mousedown', handleOutside);
     }
+
     return () => document.removeEventListener('mousedown', handleOutside);
   }, [userMenuOpen]);
 
-  // Load notifications from localStorage on mount (browser only)
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const saved = window.localStorage.getItem('reminder_notifications');
-    if (!saved) return;
-
-    try {
-      const parsed: ReminderNotification[] = JSON.parse(saved);
-      setNotifications(parsed);
-    } catch {
-      // ignore corrupted data
-    }
-  }, []);
-
-  // SSE subscription
-  useEffect(() => {
-    if (!user?.shopId) return;
-
-    const eventSource = createSseConnection(API_ENDPOINTS.REMINDERS.STREAM);
-
-    const onReminderDue = (event: MessageEvent) => {
-      try {
-        const data = JSON.parse(event.data) as {
-          reminderId: string;
-          notes?: string;
-          type?: 'EXPIRY' | 'CUSTOM';
-        };
-
-        const title =
-          data.type === 'EXPIRY' ? 'Expiry Reminder' : 'Custom Reminder';
-
-        const message =
-          data.notes ||
-          (data.type === 'EXPIRY'
-            ? 'A product is nearing expiry.'
-            : 'A custom reminder is due.');
-
-        setNotifications((prev) => {
-          const updated: ReminderNotification[] = [
-            {
-              id: data.reminderId,
-              title,
-              message,
-              createdAt: new Date().toISOString(),
-              read: false,
-            },
-            ...prev,
-          ].slice(0, 10);
-
-          if (typeof window !== 'undefined') {
-            window.localStorage.setItem(
-              'reminder_notifications',
-              JSON.stringify(updated)
-            );
-          }
-          return updated;
-        });
-      } catch {
-        // ignore bad payload
-      }
-    };
-
-    eventSource.addEventListener('REMINDER_DUE', onReminderDue);
-    eventSource.onerror = () => eventSource.close();
-
-    return () => {
-      eventSource.removeEventListener('REMINDER_DUE', onReminderDue as any);
-      eventSource.close();
-    };
-  }, [user?.shopId]);
-
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
   const handleNotificationClick = useCallback(
-    (notification: ReminderNotification) => {
+    (id: string) => {
+      markAsRead(id);
+
       navigate('/dashboard/reminders', {
-        state: { fromNotification: true, reminderId: notification.id },
-      });
-
-      setNotifications((prev) => {
-        const updated = prev.map((item) =>
-          item.id === notification.id ? { ...item, read: true } : item
-        );
-
-        if (typeof window !== 'undefined') {
-          // only keep unread in storage so old ones don't live forever
-          const onlyUnread = updated.filter((item) => !item.read);
-          window.localStorage.setItem(
-            'reminder_notifications',
-            JSON.stringify(onlyUnread)
-          );
-        }
-
-        return updated;
+        state: { fromNotification: true, reminderId: id },
       });
 
       setShowNotificationMenu(false);
     },
-    [navigate]
+    [markAsRead, navigate]
   );
-
-  const toggleNotifications = () => setShowNotificationMenu((open) => !open);
 
   const filteredMenuItems = useMemo(() => {
     if (user?.role !== 'CASHIER') return MENU_ITEMS;
+
     return MENU_ITEMS.filter(
       (item) =>
         item.path !== '/dashboard/shop-users' &&
@@ -188,9 +93,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const handleLogout = async () => {
     try {
-      if (typeof window !== 'undefined') {
-        window.localStorage.removeItem('reminder_notifications');
-      }
       await logout();
     } finally {
       navigate('/login');
@@ -199,6 +101,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className={styles.dashboard}>
+      {/* Sidebar */}
       <aside
         className={`${styles.sidebar} ${
           sidebarOpen ? styles.sidebarOpen : styles.sidebarClosed
@@ -206,15 +109,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       >
         <div className={styles.sidebarHeader}>
           <Link to="/dashboard" className={styles.logo}>
-            <div className={styles.logoIcon}></div>
+            <div className={styles.logoIcon} />
             <span className={styles.logoText}>InventoryPro</span>
           </Link>
+
           <button
             className={styles.toggleBtn}
             onClick={() => setSidebarOpen((s) => !s)}
             aria-label="Toggle sidebar"
           >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <svg width="20" height="20" viewBox="0 0 20 20">
               <path
                 d={
                   sidebarOpen
@@ -248,24 +152,23 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </nav>
       </aside>
 
+      {/* Main */}
       <div className={styles.mainContent}>
         <header className={styles.header}>
           <div className={styles.headerContent}>
             <h1 className={styles.pageTitle}>
-              {filteredMenuItems.find((it) => it.path === currentPath)?.label ??
+              {filteredMenuItems.find((i) => i.path === currentPath)?.label ??
                 'Dashboard'}
             </h1>
 
             <div className={styles.headerActions}>
-              {/* 🔔 Notification bell */}
+              {/* 🔔 Notifications */}
               <div className={styles.notificationWrapper}>
                 <button
-                  type="button"
                   className={styles.notificationBtn}
-                  onClick={toggleNotifications}
-                  aria-label="Open notifications"
+                  onClick={() => setShowNotificationMenu((o) => !o)}
                 >
-                  <span className={styles.notificationIcon}>🔔</span>
+                  🔔
                   {unreadCount > 0 && (
                     <span className={styles.notificationBadge}>
                       {unreadCount}
@@ -283,9 +186,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       notifications.map((n) => (
                         <button
                           key={n.id}
-                          type="button"
                           className={styles.notificationItem}
-                          onClick={() => handleNotificationClick(n)}
+                          onClick={() => handleNotificationClick(n.id)}
                         >
                           <div className={styles.notificationTitle}>
                             <span>{n.title}</span>
@@ -296,12 +198,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                           <div className={styles.notificationMessage}>
                             {n.message}
                           </div>
-                          <div className={styles.notificationTime}>
-                            {new Date(n.createdAt).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </div>
                         </button>
                       ))
                     )}
@@ -311,32 +207,28 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
               <ThemeToggle />
 
+              {/* User Menu */}
               <div ref={userMenuRef} style={{ position: 'relative' }}>
                 <button
                   className={styles.userBtn}
                   onClick={() => setUserMenuOpen((o) => !o)}
                   disabled={isLoading}
                 >
-                  <span className={styles.userIcon}>👤</span>
-                  <span>{user?.name || user?.email || 'User'}</span>
+                  👤 {user?.name || user?.email || 'User'}
                 </button>
+
                 {userMenuOpen && (
                   <div className={styles.userMenu}>
                     <div className={styles.userMenuHeader}>
-                      <div className={styles.userMenuName}>
-                        {user?.name || 'User'}
-                      </div>
-                      <div className={styles.userMenuEmail}>{user?.email}</div>
-                      <div className={styles.userMenuInfo}>
-                        Role: {user?.role} | Shop: {user?.shopId || 'N/A'}
+                      <div>{user?.name}</div>
+                      <div>{user?.email}</div>
+                      <div>
+                        Role: {user?.role} | Shop: {user?.shopId ?? 'N/A'}
                       </div>
                     </div>
-                    <button
-                      onClick={handleLogout}
-                      disabled={isLoading}
-                      className={styles.logoutBtn}
-                    >
-                      {isLoading ? 'Logging out...' : 'Logout'}
+
+                    <button onClick={handleLogout} className={styles.logoutBtn}>
+                      Logout
                     </button>
                   </div>
                 )}
