@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { eventsApi } from '@inventory-platform/api';
 
 export type ReminderNotification = {
-  id: string; // reminderId
+  id: string;
   title: string;
   message: string;
   createdAt: string;
@@ -17,27 +17,25 @@ type ReminderEventPayload = {
 
 const STORAGE_KEY = 'reminder_notifications';
 
+/* SAFE LOCAL STORAGE HYDRATION */
+function loadFromStorage(): ReminderNotification[] {
+  if (typeof window === 'undefined') return [];
+
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
 export function useReminderNotifications(shopId?: string) {
-  const [notifications, setNotifications] = useState<ReminderNotification[]>(
-    []
-  );
+  // hydrate ONCE, before effects
+  const [notifications, setNotifications] =
+    useState<ReminderNotification[]>(loadFromStorage);
   const [isConnected, setIsConnected] = useState(false);
 
-  // Load from localStorage (browser only)
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        setNotifications(JSON.parse(saved));
-      }
-    } catch {
-      // ignore corrupted storage
-    }
-  }, []);
-
-  // Persist unread notifications
+  /* ---------- PERSIST (STRICTMODE SAFE) ---------- */
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -45,7 +43,7 @@ export function useReminderNotifications(shopId?: string) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(unreadOnly));
   }, [notifications]);
 
-  // SSE subscription
+  /* ---------- SSE SUBSCRIPTION ---------- */
   useEffect(() => {
     if (!shopId) return;
 
@@ -59,16 +57,21 @@ export function useReminderNotifications(shopId?: string) {
           ? 'A product is nearing expiry.'
           : 'A custom reminder is due.');
 
-      setNotifications((prev) => [
-        {
-          id: data.reminderId,
-          title,
-          message,
-          createdAt: new Date().toISOString(),
-          read: false,
-        },
-        ...prev,
-      ]);
+      setNotifications((prev) => {
+        // prevent duplicates
+        if (prev.some((n) => n.id === data.reminderId)) return prev;
+
+        return [
+          {
+            id: data.reminderId,
+            title,
+            message,
+            createdAt: new Date().toISOString(),
+            read: false,
+          },
+          ...prev,
+        ];
+      });
     });
 
     setIsConnected(true);
@@ -84,6 +87,7 @@ export function useReminderNotifications(shopId?: string) {
     };
   }, [shopId]);
 
+  /* ---------- ACTIONS ---------- */
   const markAsRead = useCallback((id: string) => {
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
@@ -105,6 +109,5 @@ export function useReminderNotifications(shopId?: string) {
     isConnected,
     markAsRead,
     clearAll,
-    setNotifications, // exposed for advanced cases (optional)
   };
 }
