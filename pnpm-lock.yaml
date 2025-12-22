@@ -20,12 +20,18 @@ importers:
       axios:
         specifier: ^1.13.2
         version: 1.13.2
+      event-source-polyfill:
+        specifier: ^1.0.31
+        version: 1.0.31
       isbot:
         specifier: ^4.4.0
         version: 4.4.0
       lucide-react:
         specifier: ^0.554.0
         version: 0.554.0(react@19.2.0)
+      pnpm:
+        specifier: ^10.24.0
+        version: 10.24.0
       react:
         specifier: ^19.0.0
         version: 19.2.0
@@ -3357,6 +3363,9 @@ packages:
     resolution: {integrity: sha512-aIL5Fx7mawVa300al2BnEE4iNvo1qETxLrPI/o05L7z6go7fCw1J6EQmbK4FmJ2AS7kgVF/KEZWufBfdClMcPg==}
     engines: {node: '>= 0.6'}
 
+  event-source-polyfill@1.0.31:
+    resolution: {integrity: sha512-4IJSItgS/41IxN5UVAVuAyczwZF7ZIEsM1XAoUzIHA6A+xzusEZUutdXz2Nr+MQPLxfTiCvqE79/C8HT8fKFvA==}
+
   eventemitter3@4.0.7:
     resolution: {integrity: sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw==}
 
@@ -4678,6 +4687,11 @@ packages:
 
   pkg-types@2.3.0:
     resolution: {integrity: sha512-SIqCzDRg0s9npO5XQ3tNZioRY1uK06lA41ynBC1YmFTmnY6FjUjVt6s4LoADmwoig1qqD0oK8h1p/8mlMx8Oig==}
+
+  pnpm@10.24.0:
+    resolution: {integrity: sha512-Af+K5xtEGZA7ZcYPstydNM+LtuBtA73hEu8496NNaQTEJLpmvqXNzxKJAjC/OflYBHMUDtnJRv7zKLblI4o0Wg==}
+    engines: {node: '>=18.12'}
+    hasBin: true
 
   portfinder@1.0.38:
     resolution: {integrity: sha512-rEwq/ZHlJIKw++XtLAO8PPuOQA/zaPJOZJ37BVuN97nLpMJeuDVLVGRwbFoBgLudgdTMP2hdRJP++H+8QOA3vg==}
@@ -9900,6 +9914,8 @@ snapshots:
 
   etag@1.8.1: {}
 
+  event-source-polyfill@1.0.31: {}
+
   eventemitter3@4.0.7: {}
 
   events-universal@1.0.1:
@@ -11333,6 +11349,8 @@ snapshots:
       confbox: 0.2.2
       exsolve: 1.0.8
       pathe: 2.0.3
+
+  pnpm@10.24.0: {}
 
   portfinder@1.0.38:
     dependencies:

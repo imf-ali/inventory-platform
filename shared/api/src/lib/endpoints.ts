@@ -46,6 +46,12 @@ export const API_ENDPOINTS = {
     BASE: '/reminders',
     BY_ID: (id: string) => `/reminders/${id}`,
     BY_TYPE: (type: string) => `/reminders/type/${type}`,
+    SNOOZE: (id: string) => `/reminders/${id}/snooze`,
+  },
+
+  // Events endpoints
+  EVENTS: {
+    STREAM: '/events/stream',
   },
 
   // Shop endpoints
@@ -53,7 +59,8 @@ export const API_ENDPOINTS = {
     REGISTER: '/shops/register',
     JOIN_REQUEST: '/shops/join-request',
     JOIN_REQUESTS: '/shops/join-requests',
-    PROCESS_JOIN_REQUEST: (requestId: string) => `/shops/join-requests/${requestId}/process`,
+    PROCESS_JOIN_REQUEST: (requestId: string) =>
+      `/shops/join-requests/${requestId}/process`,
     INVITATIONS: (shopId: string) => `/shops/${shopId}/invitations`,
     USERS_ALL: (shopId: string) => `/shops/${shopId}/users/all`,
   },
@@ -103,4 +110,3 @@ export const API_ENDPOINTS = {
     SEARCH: '/customers/search',
   },
 } as const;
-
