@@ -138,14 +138,163 @@ export interface CreateOrderDto {
 
 // Analytics types
 export interface SalesAnalytics {
-  totalSales: number;
-  totalOrders: number;
-  averageOrderValue: number;
-  inventoryTurnover: number;
-  period: string;
-  trends: {
-    sales: number[];
-    orders: number[];
+  summary: {
+    totalRevenue: number;
+    totalPurchases: number;
+    averageOrderValue: number;
+    totalTax: number;
+    totalDiscount: number;
+  };
+  topProducts: Array<{
+    inventoryId: string;
+    productName: string;
+    lotId: string | null;
+    companyName: string;
+    totalQuantitySold: number;
+    totalRevenue: number;
+    numberOfSales: number;
+  }>;
+  salesByProduct: Array<{
+    groupKey: string;
+    totalQuantitySold: number;
+    totalRevenue: number;
+    numberOfSales: number;
+  }>;
+  salesByLotId: Array<{
+    groupKey: string | null;
+    totalQuantitySold: number;
+    totalRevenue: number;
+    numberOfSales: number;
+  }>;
+  salesByCompany: Array<{
+    groupKey: string;
+    totalQuantitySold: number;
+    totalRevenue: number;
+    numberOfSales: number;
+  }>;
+  timeSeries: Array<{
+    period: string;
+    startTime: string;
+    endTime: string;
+    revenue: number;
+    purchaseCount: number;
+    averageOrderValue: number;
+  }>;
+  periodComparison: {
+    currentPeriod: {
+      totalRevenue: number;
+      totalPurchases: number;
+      averageOrderValue: number;
+      totalTax: number;
+      totalDiscount: number;
+    };
+    previousPeriod: {
+      totalRevenue: number;
+      totalPurchases: number;
+      averageOrderValue: number;
+      totalTax: number;
+      totalDiscount: number;
+    };
+    revenueChange: number;
+    revenueChangePercent: number;
+    purchaseCountChange: number;
+    purchaseCountChangePercent: number;
+    aovChange: number;
+    aovChangePercent: number;
+  } | null;
+  meta: {
+    endDate: string;
+    totalPurchases: number;
+    startDate: string;
+  };
+}
+
+// Profit Analytics types
+export interface ProfitAnalytics {
+  totalRevenue: number;
+  totalCost: number;
+  totalGrossProfit: number;
+  overallMarginPercent: number;
+  totalItemsSold: number;
+  totalPurchases: number;
+  productProfits: Array<{
+    inventoryId: string;
+    productName: string;
+    lotId: string | null;
+    companyName: string;
+    businessType: string;
+    totalQuantitySold: number;
+    totalRevenue: number;
+    totalCost: number;
+    grossProfit: number;
+    marginPercent: number;
+    numberOfSales: number;
+  }>;
+  profitByProduct: Array<{
+    groupKey: string;
+    totalQuantitySold: number;
+    totalRevenue: number;
+    totalCost: number;
+    grossProfit: number;
+    marginPercent: number;
+    numberOfSales: number;
+  }>;
+  profitByLotId: Array<{
+    groupKey: string | null;
+    totalQuantitySold: number;
+    totalRevenue: number;
+    totalCost: number;
+    grossProfit: number;
+    marginPercent: number;
+    numberOfSales: number;
+  }>;
+  profitByBusinessType: Array<{
+    groupKey: string;
+    totalQuantitySold: number;
+    totalRevenue: number;
+    totalCost: number;
+    grossProfit: number;
+    marginPercent: number;
+    numberOfSales: number;
+  }>;
+  discountImpact: {
+    totalDiscountGiven: number;
+    totalRevenueWithDiscount: number;
+    estimatedRevenueWithoutDiscount: number;
+    revenueLostToDiscount: number;
+    discountPercentOfRevenue: number;
+    totalItemsWithDiscount: number;
+    totalItemsSold: number;
+    averageDiscountPerItem: number;
+  };
+  costPriceTrends: Array<{
+    period: string;
+    startTime: string;
+    endTime: string;
+    averageCostPrice: number;
+    averageSellingPrice: number;
+    averageMargin: number;
+    averageMarginPercent: number;
+    totalItemsSold: number;
+  }>;
+  lowMarginProducts: Array<{
+    inventoryId: string;
+    productName: string;
+    lotId: string | null;
+    companyName: string;
+    businessType: string;
+    totalQuantitySold: number;
+    totalRevenue: number;
+    totalCost: number;
+    grossProfit: number;
+    marginPercent: number;
+    numberOfSales: number;
+  }>;
+  meta: {
+    lowMarginThreshold: number;
+    endDate: string;
+    totalPurchases: number;
+    startDate: string;
   };
 }
 

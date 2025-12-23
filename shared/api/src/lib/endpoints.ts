@@ -31,6 +31,7 @@ export const API_ENDPOINTS = {
   ANALYTICS: {
     BASE: '/analytics',
     SALES: '/analytics/sales',
+    PROFIT: '/analytics/profit',
     INVENTORY: '/analytics/inventory',
   },
 
