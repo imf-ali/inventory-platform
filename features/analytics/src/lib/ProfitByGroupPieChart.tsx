@@ -81,7 +81,7 @@ export function ProfitByGroupPieChart({ data, groupBy }: ProfitByGroupPieChartPr
               cy="50%"
               labelLine={false}
               label={({ name, percent }) => {
-                if (percent < 0.05) return '';
+                if (!percent || percent < 0.05) return '';
                 return `${name}: ${(percent * 100).toFixed(0)}%`;
               }}
               outerRadius={120}
@@ -93,10 +93,11 @@ export function ProfitByGroupPieChart({ data, groupBy }: ProfitByGroupPieChartPr
               ))}
             </Pie>
             <Tooltip
-              formatter={(value: number, name: string, props: any) => {
-                const formattedValue = formatCurrency(value as number);
+              formatter={(value: number | undefined, name: string | undefined, props: any) => {
+                if (value === undefined) return '';
+                const formattedValue = formatCurrency(value);
                 const margin = props?.payload?.margin || 0;
-                return [`${formattedValue} (${margin.toFixed(2)}% margin)`, props?.payload?.fullName || name];
+                return [`${formattedValue} (${margin.toFixed(2)}% margin)`, props?.payload?.fullName || name || ''];
               }}
               contentStyle={{
                 backgroundColor: 'white',

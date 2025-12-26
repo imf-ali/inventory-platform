@@ -87,7 +87,8 @@ export function RevenueChart({ data }: RevenueChartProps) {
             {(showRevenue || showAOV) && <YAxis yAxisId="left" stroke="#8884d8" />}
             {showPurchases && <YAxis yAxisId="right" orientation="right" stroke="#ffc658" />}
             <Tooltip
-              formatter={(value: number, name: string) => {
+              formatter={(value: number | undefined, name: string | undefined) => {
+                if (value === undefined) return '';
                 if (name === 'revenue' || name === 'aov') {
                   return formatCurrency(value);
                 }

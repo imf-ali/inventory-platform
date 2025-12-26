@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAnalyticsStore } from '@inventory-platform/store';
+import type { InventoryItemAnalytics } from '@inventory-platform/types';
 import styles from './analytics.module.css';
 
 export function InventoryAnalytics() {
@@ -94,7 +95,7 @@ export function InventoryAnalytics() {
 
   const renderInventoryTable = (
     title: string,
-    items: typeof inventoryData!.lowStockItems,
+    items: InventoryItemAnalytics[] | null | undefined,
     sectionKey: keyof typeof expandedSections,
     showAllColumns = true
   ) => {
@@ -378,23 +379,23 @@ export function InventoryAnalytics() {
           </div>
 
           {/* Low Stock Items Table */}
-          {renderInventoryTable('Low Stock Items', inventoryData.lowStockItems, 'lowStock')}
+          {renderInventoryTable('Low Stock Items', inventoryData.lowStockItems, 'lowStock', true)}
 
           {/* Not Selling Items Table */}
-          {renderInventoryTable('Not Selling Items', inventoryData.notSellingItems, 'notSelling')}
+          {renderInventoryTable('Not Selling Items', inventoryData.notSellingItems, 'notSelling', true)}
 
           {/* Expiring Soon Items Table */}
-          {renderInventoryTable('Expiring Soon Items', inventoryData.expiringSoonItems, 'expiringSoon')}
+          {renderInventoryTable('Expiring Soon Items', inventoryData.expiringSoonItems, 'expiringSoon', true)}
 
           {/* Expired Items Table */}
-          {renderInventoryTable('Expired Items', inventoryData.expiredItems, 'expired')}
+          {renderInventoryTable('Expired Items', inventoryData.expiredItems, 'expired', true)}
 
           {/* Dead Stock Items Table */}
-          {renderInventoryTable('Dead Stock Items', inventoryData.deadStockItems, 'deadStock')}
+          {renderInventoryTable('Dead Stock Items', inventoryData.deadStockItems, 'deadStock', true)}
 
           {/* All Items Table */}
           {inventoryData.allItems && inventoryData.allItems.length > 0 && (
-            renderInventoryTable('All Items', inventoryData.allItems, 'allItems')
+            renderInventoryTable('All Items', inventoryData.allItems, 'allItems', true)
           )}
         </>
       )}

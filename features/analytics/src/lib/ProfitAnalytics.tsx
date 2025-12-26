@@ -41,7 +41,7 @@ export function ProfitAnalytics() {
       startDate: prev.startDate || formatDate(startDate),
       endDate: prev.endDate || formatDate(endDate),
     }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   // Fetch data when filters change

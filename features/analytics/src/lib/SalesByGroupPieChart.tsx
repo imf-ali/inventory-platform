@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
   PieChart,
   Pie,
@@ -86,7 +85,7 @@ export function SalesByGroupPieChart({ data, groupBy, showRevenue }: SalesByGrou
               cy="50%"
               labelLine={false}
               label={({ name, percent }) => {
-                if (percent < 0.05) return ''; // Hide labels for very small slices
+                if (!percent || percent < 0.05) return ''; // Hide labels for very small slices
                 return `${name}: ${(percent * 100).toFixed(0)}%`;
               }}
               outerRadius={120}
@@ -98,9 +97,10 @@ export function SalesByGroupPieChart({ data, groupBy, showRevenue }: SalesByGrou
               ))}
             </Pie>
             <Tooltip
-              formatter={(value: number, name: string, props: any) => {
-                const formattedValue = formatTooltip(value as number);
-                const fullName = props?.payload?.fullName || name;
+              formatter={(value: number | undefined, name: string | undefined, props: any) => {
+                if (value === undefined) return '';
+                const formattedValue = formatTooltip(value);
+                const fullName = props?.payload?.fullName || name || '';
                 return [formattedValue, fullName];
               }}
               contentStyle={{

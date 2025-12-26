@@ -99,7 +99,8 @@ export function SalesByGroupChart({ data, groupBy }: SalesByGroupChartProps) {
             {showRevenue && <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />}
             {showQuantity && <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />}
             <Tooltip
-              formatter={(value: number, name: string) => {
+              formatter={(value: number | undefined, name: string | undefined) => {
+                if (value === undefined) return '';
                 if (name === 'revenue') {
                   return formatCurrency(value);
                 }

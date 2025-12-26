@@ -114,7 +114,8 @@ export function ProfitByGroupChart({ data, groupBy }: ProfitByGroupChartProps) {
             {(showRevenue || showCost || showProfit) && <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />}
             {showProfit && <YAxis yAxisId="right" orientation="right" stroke="#10b981" />}
             <Tooltip
-              formatter={(value: number, name: string) => {
+              formatter={(value: number | undefined, name: string | undefined) => {
+                if (value === undefined) return '';
                 if (name === 'revenue' || name === 'cost' || name === 'profit') {
                   return formatCurrency(value);
                 }

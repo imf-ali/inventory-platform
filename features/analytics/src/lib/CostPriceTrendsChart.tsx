@@ -90,7 +90,8 @@ export function CostPriceTrendsChart({ data }: CostPriceTrendsChartProps) {
             <XAxis dataKey="period" stroke="#6b7280" tick={{ fontSize: 11 }} />
             {(showCost || showSelling || showMargin) && <YAxis yAxisId="left" stroke="#8884d8" />}
             <Tooltip
-              formatter={(value: number, name: string) => {
+              formatter={(value: number | undefined, name: string | undefined) => {
+                if (value === undefined) return '';
                 if (name === 'costPrice' || name === 'sellingPrice' || name === 'margin') {
                   return formatCurrency(value);
                 }
