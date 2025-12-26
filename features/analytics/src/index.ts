@@ -1,6 +1,9 @@
 export * from './lib/analytics';
 export { SalesAnalytics } from './lib/SalesAnalytics';
 export { ProfitAnalytics } from './lib/ProfitAnalytics';
+export { VendorAnalytics } from './lib/VendorAnalytics';
+export { CustomerAnalytics } from './lib/CustomerAnalytics';
+export { InventoryAnalytics } from './lib/InventoryAnalytics';
 export { SummaryCards } from './lib/SummaryCards';
 export { RevenueChart } from './lib/RevenueChart';
 export { TopProductsChart } from './lib/TopProductsChart';

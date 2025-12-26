@@ -21,9 +21,9 @@ export function SalesAnalytics() {
     startDate: '',
     endDate: '',
     groupBy: null,
-    timeSeries: null,
+    timeSeries: 'week',
     topN: 10,
-    compare: false,
+    compare: true,
   });
 
   // Set default dates (30 days ago to now)

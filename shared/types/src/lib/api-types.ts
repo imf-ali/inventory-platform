@@ -718,3 +718,190 @@ export interface CustomerResponse {
   updatedAt: string;
 }
 
+// Vendor Analytics types
+export interface VendorStockAnalytics {
+  vendorId: string;
+  vendorName: string;
+  vendorCompanyName: string | null;
+  totalInventoryReceived: number;
+  totalQuantitySold: number;
+  totalUnsoldStock: number;
+  totalExpiredStock: number;
+  sellThroughPercentage: number;
+  revenueGenerated: number;
+  unsoldStockValue: number;
+  expiredStockValue: number;
+  numberOfProducts: number;
+  numberOfLots: number;
+}
+
+export interface VendorRevenueAnalytics {
+  vendorId: string;
+  vendorName: string;
+  vendorCompanyName: string | null;
+  totalRevenue: number;
+  totalCost: number;
+  grossProfit: number;
+  marginPercent: number;
+  totalItemsSold: number;
+  totalPurchases: number;
+}
+
+export interface VendorPerformanceAnalytics {
+  vendorId: string;
+  vendorName: string;
+  vendorCompanyName: string | null;
+  averageDaysInStock: number;
+  fastMovingItemsPercentage: number;
+  deadStockValue: number;
+  expiredStockValue: number;
+  expiryLossPercentage: number;
+  totalExpiredItems: number;
+  totalDeadStockItems: number;
+  riskScore: number;
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+}
+
+export interface CategoryExpiryAnalytics {
+  vendorId: string;
+  vendorName: string;
+  businessType: string;
+  totalReceived: number;
+  totalExpired: number;
+  expiryPercentage: number;
+  expiredStockValue: number;
+}
+
+export interface VendorDependencyAnalytics {
+  vendorId: string;
+  vendorName: string;
+  vendorCompanyName: string | null;
+  revenuePercentage: number;
+  inventoryPercentage: number;
+  numberOfProducts: number;
+  dependencyScore: number;
+  dependencyLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+}
+
+export interface VendorAnalytics {
+  totalVendors: number;
+  totalInventoryValue: number;
+  totalRevenue: number;
+  totalExpiredStockValue: number;
+  totalUnsoldStockValue: number;
+  vendorStockAnalytics: VendorStockAnalytics[];
+  vendorRevenueAnalytics: VendorRevenueAnalytics[];
+  vendorPerformanceAnalytics: VendorPerformanceAnalytics[];
+  categoryExpiryAnalytics: CategoryExpiryAnalytics[];
+  vendorDependencyAnalytics: VendorDependencyAnalytics[];
+  topVendorRevenuePercentage: number;
+  top3VendorRevenuePercentage: number;
+  mostDependentVendorId: string;
+  mostDependentVendorName: string;
+  meta: {
+    endDate: string;
+    totalPurchases: number;
+    totalInventories: number;
+    startDate: string;
+  };
+}
+
+// Customer Analytics types
+export interface TopCustomer {
+  customerId: string | null;
+  customerName: string;
+  customerPhone: string | null;
+  customerEmail: string | null;
+  totalPurchases: number;
+  totalRevenue: number;
+  averageOrderValue: number;
+  customerLifetimeValue: number;
+  purchaseFrequency: number;
+  firstPurchaseDate: string;
+  lastPurchaseDate: string;
+  daysSinceLastPurchase: number;
+  isRepeatCustomer: boolean;
+  purchaseCountInPeriod: number;
+}
+
+export interface CustomerAnalytics {
+  summary: {
+    totalCustomers: number;
+    newCustomers: number;
+    returningCustomers: number;
+    newCustomerPercentage: number;
+    returningCustomerPercentage: number;
+    averagePurchaseFrequency: number;
+    averageSpendPerCustomer: number;
+    averageCustomerLifetimeValue: number;
+  };
+  topCustomers: TopCustomer[];
+  allCustomers: TopCustomer[] | null;
+  meta: {
+    totalCustomers: number;
+    endDate: string;
+    totalPurchases: number;
+    totalAllPurchases: number;
+    includeAll: boolean;
+    startDate: string;
+    topN: number;
+  };
+}
+
+// Inventory Analytics types
+export interface InventoryItemAnalytics {
+  inventoryId: string;
+  lotId: string | null;
+  barcode: string;
+  productName: string;
+  companyName: string;
+  businessType: string;
+  location: string;
+  receivedCount: number;
+  soldCount: number;
+  currentCount: number;
+  isLowStock: boolean;
+  stockPercentage: number;
+  daysSinceReceived: number;
+  daysUntilExpiry: number;
+  isExpiringSoon: boolean;
+  isExpired: boolean;
+  turnoverRatio: number;
+  isDeadStock: boolean;
+  costValue: number;
+  sellingValue: number;
+  potentialProfit: number;
+  marginPercent: number;
+  receivedDate: string;
+  expiryDate: string;
+  lastSoldDate: string | null;
+}
+
+export interface InventoryAnalytics {
+  summary: {
+    totalProducts: number;
+    lowStockProducts: number;
+    expiredProducts: number;
+    expiringSoonProducts: number;
+    deadStockProducts: number;
+    totalCostValue: number;
+    totalSellingValue: number;
+    totalPotentialProfit: number;
+    averageTurnoverRatio: number;
+    averageStockPercentage: number;
+  };
+  lowStockItems: InventoryItemAnalytics[];
+  notSellingItems: InventoryItemAnalytics[];
+  expiringSoonItems: InventoryItemAnalytics[];
+  expiredItems: InventoryItemAnalytics[];
+  deadStockItems: InventoryItemAnalytics[];
+  allItems: InventoryItemAnalytics[] | null;
+  meta: {
+    totalItems: number;
+    expiringSoonDays: number;
+    lowStockThreshold: number;
+    deadStockDays: number;
+    includeAll: boolean;
+  };
+}
+

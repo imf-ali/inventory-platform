@@ -33,6 +33,8 @@ export const API_ENDPOINTS = {
     SALES: '/analytics/sales',
     PROFIT: '/analytics/profit',
     INVENTORY: '/analytics/inventory',
+    VENDORS: '/analytics/vendors',
+    CUSTOMERS: '/analytics/customers',
   },
 
   // Alert endpoints
