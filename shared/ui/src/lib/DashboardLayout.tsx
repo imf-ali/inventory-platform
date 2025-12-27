@@ -45,7 +45,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  // 🔔 Reminder notifications (ALL logic lives in hook)
+  // Reminder notifications (ALL logic lives in hook)
   const { notifications, unreadCount, markAsRead } = useReminderNotifications(
     user?.shopId ?? undefined
   );
@@ -162,7 +162,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </h1>
 
             <div className={styles.headerActions}>
-              {/* 🔔 Notifications */}
+              {/* Notifications */}
               <div className={styles.notificationWrapper}>
                 <button
                   className={styles.notificationBtn}

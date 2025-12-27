@@ -5,6 +5,8 @@ import type {
   Reminder,
   CreateReminderDto,
   UpdateReminderDto,
+  ReminderDetail,
+  ReminderDetailListResponse,
 } from '@inventory-platform/types';
 
 export interface RemindersListResponse {
@@ -12,9 +14,13 @@ export interface RemindersListResponse {
 }
 
 export const remindersApi = {
-  getAll: async (): Promise<Reminder[]> => {
+  getAll: async (page = 0, size = 10): Promise<Reminder[]> => {
     const response = await apiClient.get<ApiResponse<RemindersListResponse>>(
-      API_ENDPOINTS.REMINDERS.BASE
+      API_ENDPOINTS.REMINDERS.BASE,
+      {
+        page: String(page),
+        size: String(size),
+      }
     );
     return response.data.data;
   },
@@ -56,5 +62,25 @@ export const remindersApi = {
     );
     return response.data;
   },
-};
 
+  getDetails: async (
+    page = 0,
+    size = 10
+  ): Promise<ReminderDetailListResponse> => {
+    const response = await apiClient.get<
+      ApiResponse<ReminderDetailListResponse>
+    >(API_ENDPOINTS.REMINDERS.DETAILS, {
+      page: String(page),
+      size: String(size),
+    });
+
+    return response.data;
+  },
+
+  getDetailById: async (id: string): Promise<ReminderDetail> => {
+    const response = await apiClient.get<ApiResponse<ReminderDetail>>(
+      API_ENDPOINTS.REMINDERS.DETAIL_BY_ID(id)
+    );
+    return response.data;
+  },
+};

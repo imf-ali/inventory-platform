@@ -6,6 +6,7 @@ import type {
   ReminderType,
   CreateReminderDto,
   UpdateReminderDto,
+  ReminderDetail,
 } from '@inventory-platform/types';
 import { ReminderForm } from '@inventory-platform/ui';
 import styles from './dashboard.reminders.module.css';
@@ -23,8 +24,11 @@ export default function RemindersPage() {
   const location = useLocation();
   const fromNotification = location.state?.fromNotification === true;
   const focusReminderId = location.state?.reminderId as string | undefined;
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [reminders, setReminders] = useState<ReminderDetail[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'PENDING' | 'COMPLETED'>('all');
@@ -64,20 +68,21 @@ export default function RemindersPage() {
   const fetchReminders = async () => {
     setIsLoading(true);
     setError(null);
+
     try {
-      if (fromNotification && focusReminderId) {
-        // Notification mode: load only that reminder
-        const reminder = await remindersApi.getById(focusReminderId);
+      if (focusReminderId) {
+        const reminder = await remindersApi.getDetailById(focusReminderId);
+
         setReminders([reminder]);
+        setTotalPages(1);
       } else {
-        // Normal mode: load all reminders
-        const data = await remindersApi.getAll();
-        setReminders(data);
+        const res = await remindersApi.getDetails(page, size);
+
+        setReminders(res.data);
+        setTotalPages(res.meta.totalPages);
       }
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to load reminders';
-      setError(errorMessage);
+      setError(err instanceof Error ? err.message : 'Failed to load reminders');
     } finally {
       setIsLoading(false);
     }
@@ -86,7 +91,13 @@ export default function RemindersPage() {
   useEffect(() => {
     fetchReminders();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fromNotification, focusReminderId]);
+  }, [page, size]);
+
+  useEffect(() => {
+    if (focusReminderId) {
+      window.history.replaceState({}, '', '/dashboard/reminders');
+    }
+  }, [focusReminderId]);
 
   const handleCreate = async (
     data: Parameters<typeof remindersApi.create>[0]
@@ -113,7 +124,7 @@ export default function RemindersPage() {
 
     setIsSubmitting(true);
     try {
-      await remindersApi.update(editingReminder.reminderId, data);
+      await remindersApi.update(editingReminder.id, data);
       await fetchReminders();
       setEditingReminder(null);
     } catch (err) {
@@ -368,162 +379,196 @@ export default function RemindersPage() {
             )}
           </div>
         ) : (
-          <div className={styles.remindersList}>
-            {filteredReminders.map((reminder) => {
-              const daysLeft = getDaysUntilReminder(reminder.reminderAt);
-              const priority = getPriority(daysLeft);
+          <>
+            <div className={styles.remindersList}>
+              {filteredReminders.map((reminder) => {
+                const daysLeft = getDaysUntilReminder(reminder.reminderAt);
+                const priority = getPriority(daysLeft);
 
-              return (
-                <div
-                  key={reminder.reminderId}
-                  className={`${styles.reminderCard} ${styles[priority]}`}
-                >
-                  <div className={styles.reminderIcon}>
-                    {reminder.type === 'EXPIRY' ? '📅' : '🔔'}
-                  </div>
-                  <div className={styles.reminderInfo}>
-                    <div className={styles.reminderHeader}>
-                      <h3 className={styles.reminderTitle}>
-                        {reminder.inventoryId
-                          ? `Inventory #${reminder.inventoryId.slice(-6)}`
-                          : 'Custom Reminder'}
-                      </h3>
-                      <div className={styles.badges}>
-                        <span
-                          className={`${styles.statusBadge} ${
-                            styles[reminder.status]
-                          }`}
-                        >
-                          {reminder.status}
-                        </span>
-                        {reminder.type && (
-                          <span className={styles.typeBadge}>
-                            {reminder.type}
+                return (
+                  <div
+                    key={reminder.id}
+                    className={`${styles.reminderCard} ${styles[priority]}`}
+                  >
+                    <div className={styles.reminderIcon}>
+                      {reminder.type === 'EXPIRY' ? '📅' : '🔔'}
+                    </div>
+                    <div className={styles.reminderInfo}>
+                      <div className={styles.reminderHeader}>
+                        <h3 className={styles.reminderTitle}>
+                          {reminder.inventoryId
+                            ? `Inventory #${reminder.inventoryId.slice(-6)}`
+                            : 'Custom Reminder'}
+                        </h3>
+                        <div className={styles.badges}>
+                          <span
+                            className={`${styles.statusBadge} ${
+                              styles[reminder.status]
+                            }`}
+                          >
+                            {reminder.status}
                           </span>
-                        )}
-                        <span
-                          className={`${styles.priorityBadge} ${styles[priority]}`}
-                        >
-                          {priority}
-                        </span>
+                          {reminder.type && (
+                            <span className={styles.typeBadge}>
+                              {reminder.type}
+                            </span>
+                          )}
+                          <span
+                            className={`${styles.priorityBadge} ${styles[priority]}`}
+                          >
+                            {priority}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                    <div className={styles.reminderDetails}>
-                      <div>
-                        <strong>Reminder:</strong>{' '}
-                        {formatDate(reminder.reminderAt)}
-                      </div>
-                      {reminder.expiryDate && (
+                      <div className={styles.reminderDetails}>
                         <div>
-                          <strong>End Date:</strong>{' '}
-                          {formatDate(reminder.expiryDate)}
+                          <strong>Reminder:</strong>{' '}
+                          {formatDate(reminder.reminderAt)}
                         </div>
-                      )}
-                      {reminder.notes && (
-                        <div className={styles.notes}>
-                          <strong>Notes:</strong> {reminder.notes}
+                        {reminder.expiryDate && (
+                          <div>
+                            <strong>End Date:</strong>{' '}
+                            {formatDate(reminder.expiryDate)}
+                          </div>
+                        )}
+                        {reminder.notes && (
+                          <div className={styles.notes}>
+                            <strong>Notes:</strong> {reminder.notes}
+                          </div>
+                        )}
+                        <div className={styles.daysLeft}>
+                          {daysLeft < 0
+                            ? `${Math.abs(daysLeft)} days overdue`
+                            : daysLeft === 0
+                            ? 'Due today'
+                            : `${daysLeft} ${
+                                daysLeft === 1 ? 'day' : 'days'
+                              } left`}
                         </div>
-                      )}
-                      <div className={styles.daysLeft}>
-                        {daysLeft < 0
-                          ? `${Math.abs(daysLeft)} days overdue`
-                          : daysLeft === 0
-                          ? 'Due today'
-                          : `${daysLeft} ${
-                              daysLeft === 1 ? 'day' : 'days'
-                            } left`}
                       </div>
                     </div>
-                  </div>
 
-                  <div className={styles.reminderActions}>
-                    {fromNotification ? (
-                      <div className={styles.snoozeActions}>
-                        <div className={styles.snoozePresetRow}>
-                          {SNOOZE_OPTIONS.map((days) => (
+                    <div className={styles.reminderActions}>
+                      {fromNotification ? (
+                        <div className={styles.snoozeActions}>
+                          <div className={styles.snoozePresetRow}>
+                            {SNOOZE_OPTIONS.map((days) => (
+                              <button
+                                key={days}
+                                type="button"
+                                className={styles.snoozeChip}
+                                disabled={snoozingReminderId === reminder.id}
+                                onClick={() => handleSnooze(reminder.id, days)}
+                              >
+                                {days}d
+                              </button>
+                            ))}
+                          </div>
+
+                          <div className={styles.snoozeCustomRow}>
+                            <input
+                              type="number"
+                              min={1}
+                              className={styles.snoozeInput}
+                              placeholder="Custom days"
+                              value={customSnoozeDays}
+                              onChange={(e) =>
+                                setCustomSnoozeDays(
+                                  e.target.value === ''
+                                    ? ''
+                                    : Number(e.target.value)
+                                )
+                              }
+                            />
                             <button
-                              key={days}
                               type="button"
-                              className={styles.snoozeChip}
+                              className={styles.actionBtn}
                               disabled={
-                                snoozingReminderId === reminder.reminderId
+                                snoozingReminderId === reminder.id ||
+                                customSnoozeDays === '' ||
+                                Number(customSnoozeDays) <= 0
                               }
                               onClick={() =>
-                                handleSnooze(reminder.reminderId, days)
+                                customSnoozeDays !== '' &&
+                                handleSnooze(
+                                  reminder.id,
+                                  Number(customSnoozeDays)
+                                )
                               }
                             >
-                              {days}d
+                              {snoozingReminderId === reminder.id
+                                ? 'Snoozing...'
+                                : 'Snooze'}
                             </button>
-                          ))}
+                            <button
+                              type="button"
+                              className={styles.actionBtnDanger}
+                              onClick={() => handleDeleteClick(reminder.id)}
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </div>
-
-                        <div className={styles.snoozeCustomRow}>
-                          <input
-                            type="number"
-                            min={1}
-                            className={styles.snoozeInput}
-                            placeholder="Custom days"
-                            value={customSnoozeDays}
-                            onChange={(e) =>
-                              setCustomSnoozeDays(
-                                e.target.value === ''
-                                  ? ''
-                                  : Number(e.target.value)
-                              )
-                            }
-                          />
+                      ) : (
+                        <>
                           <button
-                            type="button"
                             className={styles.actionBtn}
-                            disabled={
-                              snoozingReminderId === reminder.reminderId ||
-                              customSnoozeDays === '' ||
-                              Number(customSnoozeDays) <= 0
-                            }
-                            onClick={() =>
-                              customSnoozeDays !== '' &&
-                              handleSnooze(
-                                reminder.reminderId,
-                                Number(customSnoozeDays)
-                              )
-                            }
+                            onClick={() => setEditingReminder(reminder)}
                           >
-                            {snoozingReminderId === reminder.reminderId
-                              ? 'Snoozing...'
-                              : 'Snooze'}
+                            Edit
                           </button>
                           <button
-                            type="button"
                             className={styles.actionBtnDanger}
-                            onClick={() =>
-                              handleDeleteClick(reminder.reminderId)
-                            }
+                            onClick={() => handleDeleteClick(reminder.id)}
                           >
                             Delete
                           </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <button
-                          className={styles.actionBtn}
-                          onClick={() => setEditingReminder(reminder)}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          className={styles.actionBtnDanger}
-                          onClick={() => handleDeleteClick(reminder.reminderId)}
-                        >
-                          Delete
-                        </button>
-                      </>
-                    )}
+                        </>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+            {!focusReminderId && (
+              <div className={styles.paginationBar}>
+                <button
+                  className={styles.pageBtn}
+                  disabled={page === 0}
+                  onClick={() => setPage(page - 1)}
+                >
+                  ‹ Prev
+                </button>
+
+                <span>
+                  Page {page + 1} of {totalPages}
+                </span>
+
+                <button
+                  className={styles.pageBtn}
+                  disabled={page + 1 >= totalPages}
+                  onClick={() => setPage(page + 1)}
+                >
+                  Next ›
+                </button>
+
+                <select
+                  className={styles.pageSizeSelect}
+                  value={size}
+                  onChange={(e) => {
+                    setSize(Number(e.target.value));
+                    setPage(0);
+                  }}
+                >
+                  {[5, 10, 20, 50].map((n) => (
+                    <option key={n} value={n}>
+                      {n}/page
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

@@ -399,6 +399,7 @@
 }
 
 .notificationMessage {
+  white-space: pre-line;
   font-size: 0.8rem;
   color: var(--text-secondary);
 }
