@@ -51,7 +51,8 @@ export interface CreateProductDto {
   description?: string;
 }
 
-export interface UpdateProductDto extends Partial<Omit<CreateProductDto, 'name' | 'sku'>> {
+export interface UpdateProductDto
+  extends Partial<Omit<CreateProductDto, 'name' | 'sku'>> {
   name?: string;
   sku?: string;
 }
@@ -165,7 +166,7 @@ export type ReminderStatus = 'PENDING' | 'COMPLETED';
 export type ReminderType = 'EXPIRY' | 'CUSTOM' | null;
 
 export interface Reminder {
-  reminderId: string;
+  id: string;
   inventoryId: string | null;
   reminderAt: string;
   expiryDate: string | null;
@@ -194,6 +195,42 @@ export interface CustomReminderInput {
   reminderAt: string;
   endDate: string;
   notes?: string;
+}
+
+export interface ReminderInventorySummary {
+  id: string | null;
+  name: string;
+  companyName: string;
+  location: string;
+}
+
+export interface ReminderDetail extends Reminder {
+  inventory: ReminderInventorySummary | null;
+}
+
+export interface ReminderDetailListResponse {
+  data: ReminderDetail[];
+}
+
+export interface PageMeta {
+  page: number;
+  size: number;
+  totalItems: number;
+  totalPages: number;
+}
+
+export interface ReminderDetailListResponse {
+  data: ReminderDetail[];
+  meta: PageMeta;
+}
+
+//event types
+export interface ReminderNotification {
+  id: string;
+  title: string;
+  message: string;
+  createdAt: string;
+  read: boolean;
 }
 
 // Shop types
@@ -514,7 +551,11 @@ export interface ShopUsersResponse {
 export type UserRole = 'ADMIN' | 'MANAGER' | 'CASHIER';
 
 // Vendor types
-export type VendorBusinessType = 'WHOLESALE' | 'RETAIL' | 'MANUFACTURER' | 'DISTRIBUTOR';
+export type VendorBusinessType =
+  | 'WHOLESALE'
+  | 'RETAIL'
+  | 'MANUFACTURER'
+  | 'DISTRIBUTOR';
 
 export interface Vendor {
   vendorId: string;
@@ -568,4 +609,3 @@ export interface CustomerResponse {
   createdAt: string;
   updatedAt: string;
 }
-

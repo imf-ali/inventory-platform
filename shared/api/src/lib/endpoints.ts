@@ -47,6 +47,8 @@ export const API_ENDPOINTS = {
     BY_ID: (id: string) => `/reminders/${id}`,
     BY_TYPE: (type: string) => `/reminders/type/${type}`,
     SNOOZE: (id: string) => `/reminders/${id}/snooze`,
+    DETAILS: '/reminders/details',
+    DETAIL_BY_ID: (id: string) => `/reminders/${id}/details`,
   },
 
   // Events endpoints

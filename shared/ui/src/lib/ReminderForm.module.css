@@ -30,13 +30,6 @@
   font-family: inherit;
 }
 
-[data-theme='dark'] .input,
-[data-theme='dark'] .select,
-[data-theme='dark'] .textarea {
-  background-color: #020617;
-  border-color: #1e293b;
-}
-
 .input:focus,
 .select:focus,
 .textarea:focus {
@@ -66,12 +59,6 @@
   padding: 0.75rem 1rem;
   border-radius: 8px;
   font-size: 0.875rem;
-}
-
-[data-theme='dark'] .errorMessage {
-  background-color: rgba(239, 68, 68, 0.15);
-  border-color: rgba(239, 68, 68, 0.4);
-  color: #f87171;
 }
 
 .formActions {
@@ -132,3 +119,70 @@
   }
 }
 
+:global([data-theme='dark'] [class*='modalContent']) {
+  background: #0b1220 !important;
+  border: 1px solid #1f2937;
+  backdrop-filter: none !important;
+}
+
+:global([data-theme='dark'] [class^='ReminderForm_form']) {
+  background: transparent;
+  color: #e5e7eb;
+}
+
+:global([data-theme='dark'] [class^='ReminderForm_label']) {
+  color: #cbd5f5;
+}
+
+:global([data-theme='dark'] [class^='ReminderForm_input']),
+:global([data-theme='dark'] [class^='ReminderForm_select']),
+:global([data-theme='dark'] [class^='ReminderForm_textarea']) {
+  background: #111a2e !important;
+  border: 1px solid #2a3a55 !important;
+  color: #f8fafc !important;
+  opacity: 1 !important;
+}
+
+:global([data-theme='dark'] [class^='ReminderForm_input']::placeholder),
+:global([data-theme='dark'] [class^='ReminderForm_textarea']::placeholder) {
+  color: #94a3b8;
+}
+
+:global([data-theme='dark'] [class^='ReminderForm_input']:focus),
+:global([data-theme='dark'] [class^='ReminderForm_select']:focus),
+:global([data-theme='dark'] [class^='ReminderForm_textarea']:focus) {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+:global([data-theme='dark'] [class^='ReminderForm_cancelButton']) {
+  background: #0b1220;
+  border: 1px solid #2a3a55;
+  color: #e5e7eb;
+}
+
+:global(
+    [data-theme='dark']
+      [class^='ReminderForm_cancelButton']:hover:not(:disabled)
+  ) {
+  background: #111a2e;
+}
+
+:global([data-theme='dark'] [class^='ReminderForm_errorMessage']) {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
+
+:global(
+    [data-theme='dark']
+      input[type='datetime-local']::-webkit-calendar-picker-indicator
+  ) {
+  filter: invert(1) brightness(1.5);
+  opacity: 1;
+  cursor: pointer;
+}
+
+:global([data-theme='dark'] input[type='datetime-local']) {
+  color-scheme: dark;
+}
