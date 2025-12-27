@@ -33,6 +33,10 @@ export default function ProductRegistrationPage() {
     description: '',
     reminderAt: undefined,
     customReminders: [],
+    hsn: '',
+    sac: '',
+    batchNo: '',
+    scheme: '',
   });
 
   const [customReminders, setCustomReminders] = useState<CustomReminderInput[]>([]);
@@ -127,6 +131,10 @@ export default function ProductRegistrationPage() {
         customReminders: customReminders.length > 0 ? customReminders : undefined,
         vendorId: selectedVendor.vendorId,
         ...(lotId && { lotId }),
+        ...(formData.hsn && { hsn: formData.hsn }),
+        ...(formData.sac && { sac: formData.sac }),
+        ...(formData.batchNo && { batchNo: formData.batchNo }),
+        ...(formData.scheme && { scheme: formData.scheme }),
       };
 
       const response = await inventoryApi.create(submitData);
@@ -150,6 +158,10 @@ export default function ProductRegistrationPage() {
           description: '',
           reminderAt: undefined,
           customReminders: [],
+          hsn: '',
+          sac: '',
+          batchNo: '',
+          scheme: '',
         });
         setCustomReminders([]);
         handleClearVendor();
@@ -465,6 +477,65 @@ export default function ProductRegistrationPage() {
               />
             </div>
           </div>
+
+          {/* Additional Product Information */}
+          <div className={styles.formRow}>
+            <div className={styles.formGroup}>
+              <label htmlFor="hsn" className={styles.label}>HSN Code</label>
+              <input
+                type="text"
+                id="hsn"
+                name="hsn"
+                className={styles.input}
+                placeholder="30049099"
+                value={formData.hsn || ''}
+                onChange={handleChange}
+                disabled={isLoading}
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label htmlFor="sac" className={styles.label}>SAC Code</label>
+              <input
+                type="text"
+                id="sac"
+                name="sac"
+                className={styles.input}
+                placeholder="998314"
+                value={formData.sac || ''}
+                onChange={handleChange}
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+          <div className={styles.formRow}>
+            <div className={styles.formGroup}>
+              <label htmlFor="batchNo" className={styles.label}>Batch Number</label>
+              <input
+                type="text"
+                id="batchNo"
+                name="batchNo"
+                className={styles.input}
+                placeholder="BATCH-2024-001"
+                value={formData.batchNo || ''}
+                onChange={handleChange}
+                disabled={isLoading}
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label htmlFor="scheme" className={styles.label}>Scheme/Promotion</label>
+              <input
+                type="text"
+                id="scheme"
+                name="scheme"
+                className={styles.input}
+                placeholder="Buy 2 Get 1 Free"
+                value={formData.scheme || ''}
+                onChange={handleChange}
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+
           <div className={styles.formRow}>
             <div className={styles.formGroup}>
               <label htmlFor="maximumRetailPrice" className={styles.label}>MRP *</label>
