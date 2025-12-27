@@ -361,6 +361,12 @@ export interface RegisterShopDto {
   location: Location;
   contactEmail: string;
   contactPhone: string;
+  gstinNo?: string;
+  fssai?: string;
+  dlNo?: string;
+  panNo?: string;
+  sgst?: string;
+  cgst?: string;
 }
 
 export interface RegisterShopResponse {
@@ -438,6 +444,10 @@ export interface CreateInventoryDto {
   customReminders?: CustomReminderInput[];
   vendorId?: string;
   lotId?: string;
+  hsn?: string;
+  sac?: string;
+  batchNo?: string;
+  scheme?: string;
 }
 
 export interface InventoryResponse {
@@ -463,6 +473,10 @@ export interface InventoryItem {
   location: string;
   expiryDate: string;
   shopId: string;
+  hsn?: string | null;
+  sac?: string | null;
+  batchNo?: string | null;
+  scheme?: string | null;
 }
 
 export interface InventoryListResponse {
