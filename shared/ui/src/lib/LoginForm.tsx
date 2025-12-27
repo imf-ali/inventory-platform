@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router';
+import { useNavigate, Link, useLocation } from 'react-router';
 import { GoogleLogin, type CredentialResponse } from '@react-oauth/google';
 import { useAuthStore } from '@inventory-platform/store';
 import styles from './LoginForm.module.css';
 
 export function LoginForm() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, isAuthenticated, isLoading, error, clearError } = useAuthStore();
   const [formData, setFormData] = useState({
     email: '',
@@ -15,9 +16,11 @@ export function LoginForm() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard');
+      // Redirect to the original location if available, otherwise go to dashboard
+      const from = (location.state as { from?: string })?.from || '/dashboard';
+      navigate(from, { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, location.state]);
 
   useEffect(() => {
     return () => {
@@ -43,7 +46,9 @@ export function LoginForm() {
         email: formData.email,
         password: formData.password,
       });
-      navigate('/dashboard');
+      // Redirect to the original location if available, otherwise go to dashboard
+      const from = (location.state as { from?: string })?.from || '/dashboard';
+      navigate(from, { replace: true });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Login failed. Please try again.';
       setLocalError(errorMessage);
@@ -58,7 +63,9 @@ export function LoginForm() {
         await login({
           idToken: credentialResponse.credential,
         });
-        navigate('/dashboard');
+        // Redirect to the original location if available, otherwise go to dashboard
+        const from = (location.state as { from?: string })?.from || '/dashboard';
+        navigate(from, { replace: true });
       } else {
         setLocalError('Google login failed. No credential received.');
       }

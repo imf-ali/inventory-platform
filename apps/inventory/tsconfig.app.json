@@ -23,7 +23,8 @@
       "@inventory-platform/onboarding": [
         "../../features/onboarding/src/index.ts"
       ],
-      "@inventory-platform/auth": ["../../features/auth/src/index.ts"]
+      "@inventory-platform/auth": ["../../features/auth/src/index.ts"],
+      "@inventory-platform/analytics": ["../../features/analytics/src/index.ts"]
     }
   },
   "include": [

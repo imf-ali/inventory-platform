@@ -38,7 +38,14 @@ export default defineConfig(() => ({
     },
     rollupOptions: {
       // External packages that should not be bundled into your library.
-      external: ['react', 'react-dom', 'react/jsx-runtime'],
+      external: (id) => {
+        return (
+          id === 'react' ||
+          id === 'react-dom' ||
+          id === 'react/jsx-runtime' ||
+          id.startsWith('@inventory-platform/')
+        );
+      },
     },
   },
 }));

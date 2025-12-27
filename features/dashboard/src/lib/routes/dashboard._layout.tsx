@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react';
-import { useNavigate, Outlet } from 'react-router';
+import { useNavigate, Outlet, useLocation } from 'react-router';
 import { useAuthStore } from '@inventory-platform/store';
 import { DashboardLayout } from '@inventory-platform/ui';
 
 export default function DashboardLayoutRoute() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, isLoading, user, token, fetchCurrentUser } = useAuthStore();
   const hasCheckedAuth = useRef(false);
   const isCheckingRef = useRef(false);
@@ -19,7 +20,12 @@ export default function DashboardLayoutRoute() {
   useEffect(() => {
     const checkAuth = async () => {
       // Prevent multiple simultaneous calls
-      if (isCheckingRef.current || isLoading) {
+      if (isCheckingRef.current) {
+        return;
+      }
+
+      // If we're loading, wait - don't redirect yet
+      if (isLoading) {
         return;
       }
 
@@ -30,27 +36,30 @@ export default function DashboardLayoutRoute() {
           hasCheckedAuth.current = true;
           try {
             await fetchCurrentUser();
+            // If successful, the auth state will update and we'll re-render
           } catch {
             // If fetch fails, redirect to login and reset flags
             hasCheckedAuth.current = false;
-            navigate('/login');
+            // Preserve the current location for redirect after login
+            navigate('/login', { state: { from: location.pathname }, replace: true });
           } finally {
             isCheckingRef.current = false;
           }
         } else if (!token) {
-          // No token, redirect immediately
-          navigate('/login');
+          // No token, redirect immediately but preserve location
+          navigate('/login', { state: { from: location.pathname }, replace: true });
         }
-        } else if (user && !user.shopId) {
-          // User is authenticated but doesn't have a shop, redirect to shop selection
-          navigate('/shop-selection');
-        }
+      } else if (isAuthenticated && user && !user.shopId) {
+        // User is authenticated but doesn't have a shop, redirect to shop selection
+        navigate('/shop-selection', { replace: true });
+      }
     };
 
     checkAuth();
-  }, [isAuthenticated, isLoading, user, token, navigate, fetchCurrentUser]);
+  }, [isAuthenticated, isLoading, user, token, navigate, fetchCurrentUser, location.pathname]);
 
-  if (isLoading) {
+  // Show loading while checking auth or if we have a token and haven't checked yet
+  if (isLoading || (token && !hasCheckedAuth.current && !isAuthenticated)) {
     return (
       <div style={{ 
         display: 'flex', 
@@ -63,12 +72,13 @@ export default function DashboardLayoutRoute() {
     );
   }
 
-  if (!isAuthenticated) {
+  // Only redirect if we're definitively not authenticated (no token and not checking)
+  if (!isAuthenticated && !token) {
     return null; // Will redirect
   }
 
   // If user doesn't have shopId, redirect to shop selection
-  if (user && !user.shopId) {
+  if (isAuthenticated && user && !user.shopId) {
     return null; // Will redirect
   }
 
