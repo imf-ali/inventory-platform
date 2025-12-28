@@ -1,19 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { eventsApi } from '@inventory-platform/api';
-
-export type ReminderNotification = {
-  id: string;
-  title: string;
-  message: string;
-  createdAt: string;
-  read: boolean;
-};
-
-type ReminderEventPayload = {
-  reminderId: string;
-  notes?: string;
-  type?: 'EXPIRY' | 'CUSTOM';
-};
+import type {
+  ReminderDetail,
+  ReminderNotification,
+} from '@inventory-platform/types';
 
 const STORAGE_KEY = 'reminder_notifications';
 
@@ -47,23 +37,30 @@ export function useReminderNotifications(shopId?: string) {
   useEffect(() => {
     if (!shopId) return;
 
-    const es = eventsApi.subscribeToReminders((data: ReminderEventPayload) => {
+    const es = eventsApi.subscribeToReminders((data: ReminderDetail) => {
       const title =
         data.type === 'EXPIRY' ? 'Expiry Reminder' : 'Custom Reminder';
 
-      const message =
-        data.notes ??
-        (data.type === 'EXPIRY'
-          ? 'A product is nearing expiry.'
-          : 'A custom reminder is due.');
+      const message = [
+        data.notes,
+        data.inventory?.name && `Product: ${data.inventory.name}`,
+        data.inventory?.companyName && `Company: ${data.inventory.companyName}`,
+      ]
+        .filter(Boolean)
+        .join('\n');
 
       setNotifications((prev) => {
         // prevent duplicates
-        if (prev.some((n) => n.id === data.reminderId)) return prev;
+        if (prev.some((n) => n.id === data.id)) return prev;
+        console.log(
+          'SSE reminderId = ',
+          (data as any).reminderId,
+          (data as any).id
+        );
 
         return [
           {
-            id: data.reminderId,
+            id: data.id,
             title,
             message,
             createdAt: new Date().toISOString(),

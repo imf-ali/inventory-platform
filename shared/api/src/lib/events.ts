@@ -1,14 +1,10 @@
 import { apiClient } from './client';
 import { API_ENDPOINTS } from './endpoints';
+import type { ReminderDetail } from '@inventory-platform/types';
 
 export const eventsApi = {
   subscribeToReminders(
-    onReminderDue: (data: {
-      reminderId: string;
-      inventoryId: string;
-      notes?: string;
-      type?: 'EXPIRY' | 'CUSTOM';
-    }) => void
+    onReminderDue: (data: ReminderDetail) => void
   ): EventSource {
     const es = apiClient.createSseConnection(API_ENDPOINTS.EVENTS.STREAM);
 
