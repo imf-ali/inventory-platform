@@ -6,6 +6,7 @@ import type {
   InventoryResponse,
   InventoryListResponse,
   LotsListResponse,
+  PaginationInventoryResponse,
 } from '@inventory-platform/types';
 
 export const inventoryApi = {
@@ -17,10 +18,26 @@ export const inventoryApi = {
     return response.data;
   },
 
-  getAll: async (): Promise<InventoryListResponse> => {
-    const response = await apiClient.get<ApiResponse<InventoryListResponse>>(
-      API_ENDPOINTS.INVENTORY.BASE
-    );
+  getAll: async (page = 0, size = 10): Promise<PaginationInventoryResponse> => {
+    const response = await apiClient.get<
+      ApiResponse<PaginationInventoryResponse>
+    >(API_ENDPOINTS.INVENTORY.BASE, {
+      page: String(page),
+      size: String(size),
+    });
+    return response.data;
+  },
+
+  getLowStock: async (
+    page = 0,
+    size = 10
+  ): Promise<PaginationInventoryResponse> => {
+    const response = await apiClient.get<
+      ApiResponse<PaginationInventoryResponse>
+    >(API_ENDPOINTS.INVENTORY.LOW_STOCK, {
+      page: String(page),
+      size: String(size),
+    });
     return response.data;
   },
 
@@ -32,12 +49,15 @@ export const inventoryApi = {
     return response.data;
   },
 
-  searchLots: async (search: string): Promise<LotsListResponse> => {
+  searchLots: async (
+    search: string,
+    page = 0,
+    size = 10
+  ): Promise<LotsListResponse> => {
     const response = await apiClient.get<ApiResponse<LotsListResponse>>(
       API_ENDPOINTS.INVENTORY.LOTS,
-      { search }
+      { search, page: String(page), size: String(size) }
     );
     return response.data;
   },
 };
-
