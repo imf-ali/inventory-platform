@@ -487,7 +487,7 @@ export default function ProductRegistrationPage() {
                 id="hsn"
                 name="hsn"
                 className={styles.input}
-                placeholder="30049099"
+                placeholder="Enter the HSN code"
                 value={formData.hsn || ''}
                 onChange={handleChange}
                 disabled={isLoading}
@@ -500,7 +500,7 @@ export default function ProductRegistrationPage() {
                 id="sac"
                 name="sac"
                 className={styles.input}
-                placeholder="998314"
+                placeholder="Enter the SAC code"
                 value={formData.sac || ''}
                 onChange={handleChange}
                 disabled={isLoading}
@@ -515,7 +515,7 @@ export default function ProductRegistrationPage() {
                 id="batchNo"
                 name="batchNo"
                 className={styles.input}
-                placeholder="BATCH-2024-001"
+                placeholder="Enter the batch number"
                 value={formData.batchNo || ''}
                 onChange={handleChange}
                 disabled={isLoading}
@@ -528,7 +528,7 @@ export default function ProductRegistrationPage() {
                 id="scheme"
                 name="scheme"
                 className={styles.input}
-                placeholder="Buy 2 Get 1 Free"
+                placeholder="Enter the scheme/promotion"
                 value={formData.scheme || ''}
                 onChange={handleChange}
                 disabled={isLoading}
@@ -690,10 +690,10 @@ export default function ProductRegistrationPage() {
             )}
           </div>
           <div className={styles.reminderSection}>
-            <h3 className={styles.sectionTitle}>Reminder Settings</h3>
+            <h3 className={styles.sectionTitle}>Expiry Reminder Settings</h3>
             <div className={styles.formRow}>
               <div className={styles.formGroup}>
-                <label htmlFor="reminderAt" className={styles.label}>Reminder Date & Time (Optional)</label>
+                <label htmlFor="reminderAt" className={styles.label}>Expiry Reminder Date & Time (Optional)</label>
                 <input
                   type="datetime-local"
                   id="reminderAt"
@@ -720,7 +720,7 @@ export default function ProductRegistrationPage() {
                   disabled={isLoading}
                 />
                 <p className={styles.helperText}>
-                  Set a reminder date for this inventory item (e.g., before expiry)
+                  Set a reminder date to be notified before this inventory item expires
                 </p>
               </div>
             </div>
