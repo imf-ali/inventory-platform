@@ -396,8 +396,8 @@ export default function RemindersPage() {
                     <div className={styles.reminderInfo}>
                       <div className={styles.reminderHeader}>
                         <h3 className={styles.reminderTitle}>
-                          {reminder.inventoryId
-                            ? `Inventory #${reminder.inventoryId.slice(-6)}`
+                          {reminder.type === 'EXPIRY'
+                            ? 'Expiry Reminder'
                             : 'Custom Reminder'}
                         </h3>
                         <div className={styles.badges}>
