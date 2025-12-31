@@ -398,6 +398,12 @@ export interface RegisterShopDto {
   location: Location;
   contactEmail: string;
   contactPhone: string;
+  gstinNo?: string;
+  fssai?: string;
+  dlNo?: string;
+  panNo?: string;
+  sgst?: string;
+  cgst?: string;
 }
 
 export interface RegisterShopResponse {
@@ -475,6 +481,10 @@ export interface CreateInventoryDto {
   customReminders?: CustomReminderInput[];
   vendorId?: string;
   lotId?: string;
+  hsn?: string;
+  sac?: string;
+  batchNo?: string;
+  scheme?: string;
 }
 
 export interface InventoryResponse {
@@ -500,6 +510,10 @@ export interface InventoryItem {
   location: string;
   expiryDate: string;
   shopId: string;
+  hsn?: string | null;
+  sac?: string | null;
+  batchNo?: string | null;
+  scheme?: string | null;
 }
 
 export interface InventoryListResponse {
@@ -569,6 +583,8 @@ export interface CartResponse {
   items: CheckoutItemResponse[];
   subTotal: number;
   taxTotal: number;
+  sgstAmount?: number;
+  cgstAmount?: number;
   discountTotal: number;
   grandTotal: number;
   status: string;
@@ -576,6 +592,9 @@ export interface CartResponse {
   customerAddress?: string;
   customerPhone?: string;
   customerEmail?: string;
+  customerGstin?: string;
+  customerDlNo?: string;
+  customerPan?: string;
   paymentMethod?: string;
 }
 
@@ -586,6 +605,9 @@ export interface AddToCartDto {
   customerAddress?: string;
   customerPhone?: string;
   customerEmail?: string;
+  customerGstin?: string;
+  customerDlNo?: string;
+  customerPan?: string;
 }
 
 export interface UpdateCartStatusDto {
@@ -605,6 +627,8 @@ export interface Purchase {
   items: CheckoutItemResponse[];
   subTotal: number;
   taxTotal: number;
+  sgstAmount?: number;
+  cgstAmount?: number;
   discountTotal: number;
   grandTotal: number;
   soldAt: string;
@@ -745,6 +769,9 @@ export interface Customer {
   phone: string;
   address: string | null;
   email: string | null;
+  gstin?: string | null;
+  dlNo?: string | null;
+  pan?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -755,6 +782,9 @@ export interface CustomerResponse {
   phone: string;
   address: string | null;
   email: string | null;
+  gstin?: string | null;
+  dlNo?: string | null;
+  pan?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -944,5 +974,62 @@ export interface InventoryAnalytics {
     deadStockDays: number;
     includeAll: boolean;
   };
+}
+
+// Dashboard types
+export interface DashboardKeyMetrics {
+  totalProducts: number;
+  totalRevenueToday: number;
+  ordersToday: number;
+  lowStockItemsCount: number;
+  averageOrderValue: number;
+  totalCustomers: number;
+  totalRevenueAllTime: number;
+  totalOrdersAllTime: number;
+}
+
+export interface LowStockItem {
+  inventoryId: string;
+  name: string;
+  currentCount: number;
+  threshold: number;
+  lotId: string;
+  barcode: string;
+}
+
+export interface RevenueBreakdown {
+  today: number;
+  yesterday: number;
+  thisWeek: number;
+  thisMonth: number;
+  percentageChangeToday: number;
+}
+
+export interface ProductInsights {
+  totalUniqueProducts: number;
+  productsAddedToday: number;
+  productsAddedThisWeek: number;
+  productsAddedThisMonth: number;
+  outOfStockItems: number;
+}
+
+export interface SalesTrendDataPoint {
+  date: string;
+  revenue: number;
+  orderCount: number;
+}
+
+export interface SalesTrend {
+  last7Days: SalesTrendDataPoint[];
+  bestDayRevenue: number;
+  bestDayDate: string;
+}
+
+export interface DashboardData {
+  keyMetrics: DashboardKeyMetrics;
+  lowStockItems: LowStockItem[];
+  revenueBreakdown: RevenueBreakdown;
+  productInsights: ProductInsights;
+  salesTrend: SalesTrend;
 }
 

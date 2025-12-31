@@ -17,3 +17,4 @@ export * from './lib/cart';
 export * from './lib/purchases';
 export * from './lib/vendors';
 export * from './lib/customers';
+export * from './lib/dashboard';

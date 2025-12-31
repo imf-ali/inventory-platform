@@ -11,6 +11,7 @@ const STEPS: OnboardingStep[] = [
   'contactPhone',
   'contactEmail',
   'location',
+  'businessDetails',
 ];
 
 const STEP_LABELS: Record<OnboardingStep, string> = {
@@ -19,6 +20,7 @@ const STEP_LABELS: Record<OnboardingStep, string> = {
   contactPhone: 'Mobile number',
   contactEmail: 'Contact Email',
   location: 'Location Details',
+  businessDetails: 'Business Details',
 };
 
 export function meta() {
@@ -47,6 +49,12 @@ export default function OnboardingPage() {
     },
     contactEmail: user?.email || '',
     contactPhone: '',
+    gstinNo: '',
+    fssai: '',
+    dlNo: '',
+    panNo: '',
+    sgst: '',
+    cgst: '',
   });
 
   useEffect(() => {
@@ -86,6 +94,8 @@ export default function OnboardingPage() {
         ...formData,
         location: { ...formData.location, [locationField]: value },
       });
+    } else if (step === 'businessDetails') {
+      setFormData({ ...formData, [name]: value });
     }
     
     if (error) {
@@ -101,6 +111,9 @@ export default function OnboardingPage() {
     if (step === 'contactEmail') return formData.contactEmail;
     if (step === 'location' && fieldName) {
       return formData.location[fieldName as keyof typeof formData.location] || '';
+    }
+    if (step === 'businessDetails' && fieldName) {
+      return formData[fieldName as keyof typeof formData] as string || '';
     }
     return '';
   };
@@ -134,6 +147,15 @@ export default function OnboardingPage() {
       // Business ID is fixed, skip validation and move to next step
       setCurrentStep(currentStep + 1);
       setError(null);
+      return;
+    } else if (step === 'businessDetails') {
+      // Business details are all optional, skip validation and move to next step or submit
+      if (currentStep === STEPS.length - 1) {
+        handleSubmit();
+      } else {
+        setCurrentStep(currentStep + 1);
+        setError(null);
+      }
       return;
     } else {
       // Validate other steps
@@ -180,6 +202,12 @@ export default function OnboardingPage() {
         },
         contactEmail: formData.contactEmail,
         contactPhone: formData.contactPhone,
+        gstinNo: formData.gstinNo || undefined,
+        fssai: formData.fssai || undefined,
+        dlNo: formData.dlNo || undefined,
+        panNo: formData.panNo || undefined,
+        sgst: formData.sgst || undefined,
+        cgst: formData.cgst || undefined,
       });
 
       // Check if registration was successful - response should have shopId
@@ -367,6 +395,96 @@ export default function OnboardingPage() {
                       className={styles.input}
                       placeholder="IND"
                       value={getCurrentValue('country')}
+                      onChange={handleChange}
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+              </>
+            ) : STEPS[currentStep] === 'businessDetails' ? (
+              <>
+                <p className={styles.subtitle} style={{ marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+                  These fields are optional. You can skip this step or fill them later.
+                </p>
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label htmlFor="gstinNo" className={styles.label}>GSTIN No</label>
+                    <input
+                      type="text"
+                      id="gstinNo"
+                      name="gstinNo"
+                      className={styles.input}
+                      placeholder="Enter the GSTIN No"
+                      value={getCurrentValue('gstinNo')}
+                      onChange={handleChange}
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label htmlFor="fssai" className={styles.label}>FSSAI</label>
+                    <input
+                      type="text"
+                      id="fssai"
+                      name="fssai"
+                      className={styles.input}
+                      placeholder="Enter the FSSAI"
+                      value={getCurrentValue('fssai')}
+                      onChange={handleChange}
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label htmlFor="dlNo" className={styles.label}>Drug License No (DL No)</label>
+                    <input
+                      type="text"
+                      id="dlNo"
+                      name="dlNo"
+                      className={styles.input}
+                      placeholder="Enter the DL No"
+                      value={getCurrentValue('dlNo')}
+                      onChange={handleChange}
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label htmlFor="panNo" className={styles.label}>PAN No</label>
+                    <input
+                      type="text"
+                      id="panNo"
+                      name="panNo"
+                      className={styles.input}
+                      placeholder="Enter the PAN No"
+                      value={getCurrentValue('panNo')}
+                      onChange={handleChange}
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label htmlFor="sgst" className={styles.label}>SGST (%)</label>
+                    <input
+                      type="text"
+                      id="sgst"
+                      name="sgst"
+                      className={styles.input}
+                      placeholder="Enter the SGST (%)"
+                      value={getCurrentValue('sgst')}
+                      onChange={handleChange}
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label htmlFor="cgst" className={styles.label}>CGST (%)</label>
+                    <input
+                      type="text"
+                      id="cgst"
+                      name="cgst"
+                      className={styles.input}
+                      placeholder="Enter the CGST (%)"
+                      value={getCurrentValue('cgst')}
                       onChange={handleChange}
                       disabled={isLoading}
                     />

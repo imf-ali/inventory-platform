@@ -28,6 +28,16 @@ export default function CheckoutPage() {
     try {
       const cart = await cartApi.get();
       
+      // Debug: Log cart data to verify retailer fields
+      if (import.meta.env.DEV) {
+        console.log('Cart data:', cart);
+        console.log('Retailer fields:', {
+          customerGstin: cart.customerGstin,
+          customerDlNo: cart.customerDlNo,
+          customerPan: cart.customerPan,
+        });
+      }
+      
       // If status is CREATED, redirect to scan-sell page
       if (cart.status === 'CREATED') {
         navigate('/dashboard/scan-sell');
@@ -246,6 +256,24 @@ export default function CheckoutPage() {
               <span className={styles.infoLabel}>Address:</span>
               <span className={styles.infoValue}>{checkoutData.customerAddress || 'Not specified'}</span>
             </div>
+            {checkoutData.customerGstin && checkoutData.customerGstin.trim() && (
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Customer GSTIN:</span>
+                <span className={styles.infoValue}>{checkoutData.customerGstin}</span>
+              </div>
+            )}
+            {checkoutData.customerDlNo && checkoutData.customerDlNo.trim() && (
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Customer DL No:</span>
+                <span className={styles.infoValue}>{checkoutData.customerDlNo}</span>
+              </div>
+            )}
+            {checkoutData.customerPan && checkoutData.customerPan.trim() && (
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Customer PAN:</span>
+                <span className={styles.infoValue}>{checkoutData.customerPan}</span>
+              </div>
+            )}
             <div className={styles.infoItem}>
               <span className={styles.infoLabel}>Payment Method:</span>
               <span className={styles.infoValue}>{checkoutData.paymentMethod || 'Not specified'}</span>

@@ -33,6 +33,10 @@ export default function ProductRegistrationPage() {
     description: '',
     reminderAt: undefined,
     customReminders: [],
+    hsn: '',
+    sac: '',
+    batchNo: '',
+    scheme: '',
   });
 
   const [customReminders, setCustomReminders] = useState<CustomReminderInput[]>([]);
@@ -127,6 +131,10 @@ export default function ProductRegistrationPage() {
         customReminders: customReminders.length > 0 ? customReminders : undefined,
         vendorId: selectedVendor.vendorId,
         ...(lotId && { lotId }),
+        ...(formData.hsn && { hsn: formData.hsn }),
+        ...(formData.sac && { sac: formData.sac }),
+        ...(formData.batchNo && { batchNo: formData.batchNo }),
+        ...(formData.scheme && { scheme: formData.scheme }),
       };
 
       const response = await inventoryApi.create(submitData);
@@ -150,6 +158,10 @@ export default function ProductRegistrationPage() {
           description: '',
           reminderAt: undefined,
           customReminders: [],
+          hsn: '',
+          sac: '',
+          batchNo: '',
+          scheme: '',
         });
         setCustomReminders([]);
         handleClearVendor();
@@ -465,6 +477,65 @@ export default function ProductRegistrationPage() {
               />
             </div>
           </div>
+
+          {/* Additional Product Information */}
+          <div className={styles.formRow}>
+            <div className={styles.formGroup}>
+              <label htmlFor="hsn" className={styles.label}>HSN Code</label>
+              <input
+                type="text"
+                id="hsn"
+                name="hsn"
+                className={styles.input}
+                placeholder="Enter the HSN code"
+                value={formData.hsn || ''}
+                onChange={handleChange}
+                disabled={isLoading}
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label htmlFor="sac" className={styles.label}>SAC Code</label>
+              <input
+                type="text"
+                id="sac"
+                name="sac"
+                className={styles.input}
+                placeholder="Enter the SAC code"
+                value={formData.sac || ''}
+                onChange={handleChange}
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+          <div className={styles.formRow}>
+            <div className={styles.formGroup}>
+              <label htmlFor="batchNo" className={styles.label}>Batch Number</label>
+              <input
+                type="text"
+                id="batchNo"
+                name="batchNo"
+                className={styles.input}
+                placeholder="Enter the batch number"
+                value={formData.batchNo || ''}
+                onChange={handleChange}
+                disabled={isLoading}
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label htmlFor="scheme" className={styles.label}>Scheme/Promotion</label>
+              <input
+                type="text"
+                id="scheme"
+                name="scheme"
+                className={styles.input}
+                placeholder="Enter the scheme/promotion"
+                value={formData.scheme || ''}
+                onChange={handleChange}
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+
           <div className={styles.formRow}>
             <div className={styles.formGroup}>
               <label htmlFor="maximumRetailPrice" className={styles.label}>MRP *</label>
@@ -619,10 +690,10 @@ export default function ProductRegistrationPage() {
             )}
           </div>
           <div className={styles.reminderSection}>
-            <h3 className={styles.sectionTitle}>Reminder Settings</h3>
+            <h3 className={styles.sectionTitle}>Expiry Reminder Settings</h3>
             <div className={styles.formRow}>
               <div className={styles.formGroup}>
-                <label htmlFor="reminderAt" className={styles.label}>Reminder Date & Time (Optional)</label>
+                <label htmlFor="reminderAt" className={styles.label}>Expiry Reminder Date & Time (Optional)</label>
                 <input
                   type="datetime-local"
                   id="reminderAt"
@@ -649,7 +720,7 @@ export default function ProductRegistrationPage() {
                   disabled={isLoading}
                 />
                 <p className={styles.helperText}>
-                  Set a reminder date for this inventory item (e.g., before expiry)
+                  Set a reminder date to be notified before this inventory item expires
                 </p>
               </div>
             </div>
