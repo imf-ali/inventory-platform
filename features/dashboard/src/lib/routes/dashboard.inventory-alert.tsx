@@ -17,8 +17,6 @@ export default function InventoryAlertPage() {
   const [size, setSize] = useState(10);
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
-  const [showConfig, setShowConfig] = useState(false);
-  const [defaultThreshold, setDefaultThreshold] = useState(50);
   const [selected, setSelected] = useState<any | null>(null);
 
   useEffect(() => {
@@ -75,7 +73,9 @@ export default function InventoryAlertPage() {
             </span>
             <button
               className={styles.configureBtn}
-              onClick={() => setShowConfig(true)}
+              onClick={() => {
+                // TODO: Implement threshold configuration
+              }}
             >
               Configure Thresholds
             </button>
