@@ -125,4 +125,5 @@ export type OnboardingStep =
   | 'businessId'
   | 'contactPhone'
   | 'contactEmail'
-  | 'location';
+  | 'location'
+  | 'businessDetails';

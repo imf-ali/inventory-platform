@@ -1,5 +1,5 @@
 import { useState, useEffect, FormEvent } from 'react';
-import { inventoryApi } from '@inventory-platform/api';
+import { inventoryApi, cartApi } from '@inventory-platform/api';
 import type { InventoryItem } from '@inventory-platform/types';
 import styles from './dashboard.product-search.module.css';
 
@@ -15,6 +15,8 @@ export default function ProductSearchPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [addingToCart, setAddingToCart] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Fetch all inventory on mount
   useEffect(() => {
@@ -75,6 +77,43 @@ export default function ProductSearchPage() {
     }
   };
 
+  const handleAddToSell = async (item: InventoryItem) => {
+    if (item.currentCount <= 0) {
+      setError('Product is out of stock');
+      return;
+    }
+
+    setAddingToCart(item.id);
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      const cartPayload = {
+        businessType: 'pharmacy',
+        items: [
+          {
+            id: item.id,
+            quantity: 1,
+            sellingPrice: item.sellingPrice,
+          },
+        ],
+      };
+
+      await cartApi.add(cartPayload);
+      setSuccessMessage(`Added "${item.name || 'Product'}" to cart successfully!`);
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccessMessage(null);
+      }, 3000);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to add item to cart';
+      setError(errorMessage);
+    } finally {
+      setAddingToCart(null);
+    }
+  };
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
@@ -110,6 +149,11 @@ export default function ProductSearchPage() {
       {error && (
         <div className={styles.errorMessage}>
           {error}
+        </div>
+      )}
+      {successMessage && (
+        <div className={styles.successMessage}>
+          {successMessage}
         </div>
       )}
       <div className={styles.results}>
@@ -183,6 +227,13 @@ export default function ProductSearchPage() {
                       {item.description}
                     </p>
                   )}
+                  <button
+                    className={styles.addToSellBtn}
+                    onClick={() => handleAddToSell(item)}
+                    disabled={isLoading || addingToCart === item.id || item.currentCount <= 0}
+                  >
+                    {addingToCart === item.id ? 'Adding...' : item.currentCount <= 0 ? 'Out of Stock' : 'Add to Sell'}
+                  </button>
                 </div>
               </div>
             ))}

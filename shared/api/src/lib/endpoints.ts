@@ -115,4 +115,9 @@ export const API_ENDPOINTS = {
   CUSTOMERS: {
     SEARCH: '/customers/search',
   },
+
+  // Dashboard endpoints
+  DASHBOARD: {
+    BASE: '/dashboard',
+  },
 } as const;
