@@ -21,4 +21,5 @@ export * from './lib/JoinRequestList';
 export * from './lib/PurchaseCard';
 export * from './lib/PurchaseList';
 export * from './lib/ReminderForm';
+export * from './lib/InventoryAlertDetails';
 export * from './lib/CustomReminderInput';

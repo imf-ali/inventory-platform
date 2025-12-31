@@ -1,0 +1,115 @@
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.modal {
+  background: var(--bg-card);
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+  width: 95%;
+  max-width: 520px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modalHeader h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.closeBtn:hover {
+  opacity: 0.7;
+}
+
+.modalBody {
+  padding: 1.25rem 1.5rem;
+  color: var(--text-secondary);
+}
+
+.modalBody p {
+  margin: 0.35rem 0;
+  font-size: 0.95rem;
+}
+
+.modalBody strong {
+  color: var(--text-primary);
+}
+
+.modalFooter {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.secondaryBtn {
+  padding: 0.55rem 1.1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.secondaryBtn:hover {
+  background: var(--hover-bg);
+  border-color: var(--border-hover);
+}
+
+.primaryBtn {
+  padding: 0.55rem 1.1rem;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #3b82f6, #06b6d4);
+  border: none;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+:root[data-theme='dark'] .modal {
+  background: #0b1220;
+  border: 1px solid #1f2937;
+}
+
+:root[data-theme='light'] .modal {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}

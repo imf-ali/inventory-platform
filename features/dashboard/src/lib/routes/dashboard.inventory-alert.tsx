@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import styles from './dashboard.inventory-alert.module.css';
 import { inventoryApi } from '@inventory-platform/api';
+import { InventoryAlertDetails } from '@inventory-platform/ui';
 
 export function meta() {
   return [
@@ -21,10 +22,10 @@ export default function InventoryAlertPage() {
   const [selected, setSelected] = useState<any | null>(null);
 
   useEffect(() => {
-    load();
+    InventoryAlertLoad();
   }, [page, size]);
 
-  async function load() {
+  async function InventoryAlertLoad() {
     setLoading(true);
 
     try {
@@ -117,7 +118,6 @@ export default function InventoryAlertPage() {
               </div>
 
               <div className={styles.alertActions}>
-                <button className={styles.actionBtn}>Reorder</button>
                 <button
                   className={styles.actionBtnSecondary}
                   onClick={() => setSelected(alert.raw)}
@@ -163,99 +163,11 @@ export default function InventoryAlertPage() {
           </select>
         </div>
       </div>
-      {showConfig && (
-        <div
-          className={styles.modalBackdrop}
-          onClick={() => setShowConfig(false)}
-        >
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3>Default Low Stock Threshold</h3>
-              <button
-                className={styles.closeBtn}
-                onClick={() => setShowConfig(false)}
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className={styles.modalBody}>
-              <label className={styles.label}>Threshold Value</label>
-              <input
-                type="number"
-                className={styles.input}
-                value={defaultThreshold}
-                onChange={(e) => setDefaultThreshold(Number(e.target.value))}
-              />
-            </div>
-
-            <div className={styles.modalFooter}>
-              <button
-                className={styles.secondaryBtn}
-                onClick={() => setShowConfig(false)}
-              >
-                Cancel
-              </button>
-
-              <button
-                className={styles.primaryBtn}
-                onClick={() => {
-                  setShowConfig(false);
-                  load();
-                }}
-              >
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {selected && (
-        <div className={styles.modalBackdrop} onClick={() => setSelected(null)}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3>{selected.name ?? selected.barcode ?? 'Item Details'}</h3>
-              <button
-                className={styles.closeBtn}
-                onClick={() => setSelected(null)}
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className={styles.modalBody}>
-              <p>
-                <strong>Lot:</strong> {selected.lotId ?? '—'}
-              </p>
-              <p>
-                <strong>Current:</strong> {selected.currentCount ?? 0}
-              </p>
-              <p>
-                <strong>Sold:</strong> {selected.soldCount ?? 0}
-              </p>
-              <p>
-                <strong>Received:</strong> {selected.receivedCount ?? 0}
-              </p>
-              <p>
-                <strong>Expiry:</strong>{' '}
-                {selected.expiryDate
-                  ? new Date(selected.expiryDate).toLocaleDateString()
-                  : '—'}
-              </p>
-            </div>
-
-            <div className={styles.modalFooter}>
-              <button
-                className={styles.secondaryBtn}
-                onClick={() => setSelected(null)}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <InventoryAlertDetails
+        open={!!selected}
+        item={selected}
+        onClose={() => setSelected(null)}
+      />
     </div>
   );
 }
