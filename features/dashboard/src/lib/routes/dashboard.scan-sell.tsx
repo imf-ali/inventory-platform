@@ -456,12 +456,46 @@ export default function ScanSellPage() {
     return cartData?.subTotal ?? cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
   };
 
+  const calculateSGST = () => {
+    if (cartData?.sgstAmount !== undefined) {
+      return cartData.sgstAmount;
+    }
+    // Fallback: calculate 4.5% if not provided
+    return calculateSubtotal() * 0.045;
+  };
+
+  const calculateCGST = () => {
+    if (cartData?.cgstAmount !== undefined) {
+      return cartData.cgstAmount;
+    }
+    // Fallback: calculate 4.5% if not provided
+    return calculateSubtotal() * 0.045;
+  };
+
   const calculateTax = () => {
-    return cartData?.taxTotal ?? calculateSubtotal() * 0.08; // 8% tax
+    if (cartData?.taxTotal !== undefined) {
+      return cartData.taxTotal;
+    }
+    // Fallback: sum of SGST and CGST
+    return calculateSGST() + calculateCGST();
   };
 
   const calculateTotal = () => {
     return cartData?.grandTotal ?? calculateSubtotal() + calculateTax();
+  };
+
+  const getSGSTPercentage = () => {
+    const subtotal = calculateSubtotal();
+    if (subtotal === 0) return '0.0';
+    const sgst = calculateSGST();
+    return ((sgst / subtotal) * 100).toFixed(1);
+  };
+
+  const getCGSTPercentage = () => {
+    const subtotal = calculateSubtotal();
+    if (subtotal === 0) return '0.0';
+    const cgst = calculateCGST();
+    return ((cgst / subtotal) * 100).toFixed(1);
   };
 
   const handleCustomerSearch = async () => {
@@ -848,7 +882,15 @@ export default function ScanSellPage() {
                   </div>
                 )}
                 <div className={styles.summaryRow}>
-                  <span>Tax ({cartData ? ((cartData.taxTotal / cartData.subTotal) * 100).toFixed(1) : '8.0'}%)</span>
+                  <span>SGST ({getSGSTPercentage()}%)</span>
+                  <span>${calculateSGST().toFixed(2)}</span>
+                </div>
+                <div className={styles.summaryRow}>
+                  <span>CGST ({getCGSTPercentage()}%)</span>
+                  <span>${calculateCGST().toFixed(2)}</span>
+                </div>
+                <div className={styles.summaryRow}>
+                  <span>Total Tax</span>
                   <span>${calculateTax().toFixed(2)}</span>
                 </div>
                 <div className={styles.summaryRowTotal}>

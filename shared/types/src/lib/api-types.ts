@@ -546,6 +546,8 @@ export interface CartResponse {
   items: CheckoutItemResponse[];
   subTotal: number;
   taxTotal: number;
+  sgstAmount?: number;
+  cgstAmount?: number;
   discountTotal: number;
   grandTotal: number;
   status: string;
@@ -588,6 +590,8 @@ export interface Purchase {
   items: CheckoutItemResponse[];
   subTotal: number;
   taxTotal: number;
+  sgstAmount?: number;
+  cgstAmount?: number;
   discountTotal: number;
   grandTotal: number;
   soldAt: string;

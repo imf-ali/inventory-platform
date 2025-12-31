@@ -414,7 +414,7 @@ export default function OnboardingPage() {
                       id="gstinNo"
                       name="gstinNo"
                       className={styles.input}
-                      placeholder="27ABCDE1234F1Z5"
+                      placeholder="Enter the GSTIN No"
                       value={getCurrentValue('gstinNo')}
                       onChange={handleChange}
                       disabled={isLoading}
@@ -427,7 +427,7 @@ export default function OnboardingPage() {
                       id="fssai"
                       name="fssai"
                       className={styles.input}
-                      placeholder="12345678901234"
+                      placeholder="Enter the FSSAI"
                       value={getCurrentValue('fssai')}
                       onChange={handleChange}
                       disabled={isLoading}
@@ -442,7 +442,7 @@ export default function OnboardingPage() {
                       id="dlNo"
                       name="dlNo"
                       className={styles.input}
-                      placeholder="DL/2024/12345"
+                      placeholder="Enter the DL No"
                       value={getCurrentValue('dlNo')}
                       onChange={handleChange}
                       disabled={isLoading}
@@ -455,7 +455,7 @@ export default function OnboardingPage() {
                       id="panNo"
                       name="panNo"
                       className={styles.input}
-                      placeholder="ABCDE1234F"
+                      placeholder="Enter the PAN No"
                       value={getCurrentValue('panNo')}
                       onChange={handleChange}
                       disabled={isLoading}
@@ -470,7 +470,7 @@ export default function OnboardingPage() {
                       id="sgst"
                       name="sgst"
                       className={styles.input}
-                      placeholder="9"
+                      placeholder="Enter the SGST (%)"
                       value={getCurrentValue('sgst')}
                       onChange={handleChange}
                       disabled={isLoading}
@@ -483,7 +483,7 @@ export default function OnboardingPage() {
                       id="cgst"
                       name="cgst"
                       className={styles.input}
-                      placeholder="9"
+                      placeholder="Enter the CGST (%)"
                       value={getCurrentValue('cgst')}
                       onChange={handleChange}
                       disabled={isLoading}
