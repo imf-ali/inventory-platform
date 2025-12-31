@@ -34,6 +34,10 @@ export default function ScanSellPage() {
   const [customerAddress, setCustomerAddress] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
+  const [isRetailer, setIsRetailer] = useState(false);
+  const [customerGstin, setCustomerGstin] = useState('');
+  const [customerDlNo, setCustomerDlNo] = useState('');
+  const [customerPan, setCustomerPan] = useState('');
   const [isSearchingCustomer, setIsSearchingCustomer] = useState(false);
 
   // Load cart on mount (only once, even in StrictMode)
@@ -92,6 +96,10 @@ export default function ScanSellPage() {
       setCustomerAddress('');
       setCustomerPhone('');
       setCustomerEmail('');
+      setIsRetailer(false);
+      setCustomerGstin('');
+      setCustomerDlNo('');
+      setCustomerPan('');
     } finally {
       setIsLoadingCart(false);
     }
@@ -239,6 +247,9 @@ export default function ScanSellPage() {
         ...(customerAddress && { customerAddress }),
         ...(customerPhone && { customerPhone }),
         ...(customerEmail && { customerEmail }),
+        ...(isRetailer && customerGstin && { customerGstin }),
+        ...(isRetailer && customerDlNo && { customerDlNo }),
+        ...(isRetailer && customerPan && { customerPan }),
       };
 
       const updatedCart = await cartApi.add(cartPayload);
@@ -416,6 +427,9 @@ export default function ScanSellPage() {
           ...(customerAddress && { customerAddress }),
           ...(customerPhone && { customerPhone }),
           ...(customerEmail && { customerEmail }),
+          ...(isRetailer && customerGstin && { customerGstin }),
+          ...(isRetailer && customerDlNo && { customerDlNo }),
+          ...(isRetailer && customerPan && { customerPan }),
         };
 
         const updatedCart = await cartApi.add(cartPayload);
@@ -465,10 +479,41 @@ export default function ScanSellPage() {
         setCustomerEmail(customer.email || '');
         setCustomerAddress(customer.address || '');
         // Phone is already set from the search input
+        
+        // Check if retailer fields are present
+        const hasRetailerFields = !!(customer.gstin || customer.dlNo || customer.pan);
+        if (hasRetailerFields) {
+          setIsRetailer(true);
+          setCustomerGstin(customer.gstin || '');
+          setCustomerDlNo(customer.dlNo || '');
+          setCustomerPan(customer.pan || '');
+        } else {
+          setIsRetailer(false);
+          setCustomerGstin('');
+          setCustomerDlNo('');
+          setCustomerPan('');
+        }
+      } else {
+        // Customer not found - clear all fields
+        setCustomerName('');
+        setCustomerEmail('');
+        setCustomerAddress('');
+        setIsRetailer(false);
+        setCustomerGstin('');
+        setCustomerDlNo('');
+        setCustomerPan('');
       }
     } catch (err) {
+      // On error (404 or any other error), clear all fields
       const errorMessage = err instanceof Error ? err.message : 'Failed to search customer';
       setError(errorMessage);
+      setCustomerName('');
+      setCustomerEmail('');
+      setCustomerAddress('');
+      setIsRetailer(false);
+      setCustomerGstin('');
+      setCustomerDlNo('');
+      setCustomerPan('');
     } finally {
       setIsSearchingCustomer(false);
     }
@@ -492,6 +537,9 @@ export default function ScanSellPage() {
         ...(customerAddress && { customerAddress }),
         ...(customerPhone && { customerPhone: customerPhone.trim() }),
         ...(customerEmail && { customerEmail: customerEmail.trim() }),
+        ...(isRetailer && customerGstin && { customerGstin: customerGstin.trim() }),
+        ...(isRetailer && customerDlNo && { customerDlNo: customerDlNo.trim() }),
+        ...(isRetailer && customerPan && { customerPan: customerPan.trim() }),
       };
 
       const upsertResponse = await cartApi.add(upsertPayload);
@@ -610,6 +658,81 @@ export default function ScanSellPage() {
             />
           </div>
         </div>
+        
+        {/* Retailer Checkbox */}
+        <div className={styles.retailerCheckboxContainer}>
+          <label className={styles.retailerCheckboxLabel}>
+            <input
+              type="checkbox"
+              checked={isRetailer}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                setIsRetailer(e.currentTarget.checked);
+                // Clear retailer fields when unchecked
+                if (!e.currentTarget.checked) {
+                  setCustomerGstin('');
+                  setCustomerDlNo('');
+                  setCustomerPan('');
+                }
+              }}
+              className={styles.retailerCheckbox}
+            />
+            <span>Is Retailer</span>
+          </label>
+        </div>
+
+        {/* Retailer Information Section */}
+        {isRetailer && (
+          <div className={styles.retailerSection}>
+            <h5 className={styles.retailerSectionTitle}>Retailer Information</h5>
+            <div className={styles.customerFields}>
+              <div className={styles.customerField}>
+                <label htmlFor="customerGstin" className={styles.customerLabel}>
+                  Customer GSTIN
+                </label>
+                <input
+                  id="customerGstin"
+                  type="text"
+                  className={styles.customerInput}
+                  placeholder="Enter customer GSTIN"
+                  value={customerGstin}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                    setCustomerGstin(e.currentTarget.value);
+                  }}
+                />
+              </div>
+              <div className={styles.customerField}>
+                <label htmlFor="customerDlNo" className={styles.customerLabel}>
+                  Customer DL No
+                </label>
+                <input
+                  id="customerDlNo"
+                  type="text"
+                  className={styles.customerInput}
+                  placeholder="Enter customer DL No"
+                  value={customerDlNo}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                    setCustomerDlNo(e.currentTarget.value);
+                  }}
+                />
+              </div>
+              <div className={styles.customerField}>
+                <label htmlFor="customerPan" className={styles.customerLabel}>
+                  Customer PAN
+                </label>
+                <input
+                  id="customerPan"
+                  type="text"
+                  className={styles.customerInput}
+                  placeholder="Enter customer PAN"
+                  value={customerPan}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                    setCustomerPan(e.currentTarget.value);
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       <div className={styles.container}>
         {/* Product Search Section */}

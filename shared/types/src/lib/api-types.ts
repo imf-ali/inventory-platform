@@ -553,6 +553,9 @@ export interface CartResponse {
   customerAddress?: string;
   customerPhone?: string;
   customerEmail?: string;
+  customerGstin?: string;
+  customerDlNo?: string;
+  customerPan?: string;
   paymentMethod?: string;
 }
 
@@ -563,6 +566,9 @@ export interface AddToCartDto {
   customerAddress?: string;
   customerPhone?: string;
   customerEmail?: string;
+  customerGstin?: string;
+  customerDlNo?: string;
+  customerPan?: string;
 }
 
 export interface UpdateCartStatusDto {
@@ -718,6 +724,9 @@ export interface Customer {
   phone: string;
   address: string | null;
   email: string | null;
+  gstin?: string | null;
+  dlNo?: string | null;
+  pan?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -728,6 +737,9 @@ export interface CustomerResponse {
   phone: string;
   address: string | null;
   email: string | null;
+  gstin?: string | null;
+  dlNo?: string | null;
+  pan?: string | null;
   createdAt: string;
   updatedAt: string;
 }
