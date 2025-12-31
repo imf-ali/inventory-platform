@@ -436,6 +436,22 @@ export default function RemindersPage() {
                             <strong>Notes:</strong> {reminder.notes}
                           </div>
                         )}
+                        {reminder.inventory && (
+                          <div className={styles.inventoryBox}>
+                            <div>
+                              <strong>Product:</strong>{' '}
+                              {reminder.inventory.name ?? '—'}
+                            </div>
+                            <div>
+                              <strong>Company:</strong>{' '}
+                              {reminder.inventory.companyName ?? '—'}
+                            </div>
+                            <div>
+                              <strong>Location:</strong>{' '}
+                              {reminder.inventory.location ?? '—'}
+                            </div>
+                          </div>
+                        )}
                         <div className={styles.daysLeft}>
                           {daysLeft < 0
                             ? `${Math.abs(daysLeft)} days overdue`
