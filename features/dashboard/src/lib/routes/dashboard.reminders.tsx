@@ -396,8 +396,8 @@ export default function RemindersPage() {
                     <div className={styles.reminderInfo}>
                       <div className={styles.reminderHeader}>
                         <h3 className={styles.reminderTitle}>
-                          {reminder.inventoryId
-                            ? `Inventory #${reminder.inventoryId.slice(-6)}`
+                          {reminder.type === 'EXPIRY'
+                            ? 'Expiry Reminder'
                             : 'Custom Reminder'}
                         </h3>
                         <div className={styles.badges}>
@@ -434,6 +434,22 @@ export default function RemindersPage() {
                         {reminder.notes && (
                           <div className={styles.notes}>
                             <strong>Notes:</strong> {reminder.notes}
+                          </div>
+                        )}
+                        {reminder.inventory && (
+                          <div className={styles.inventoryBox}>
+                            <div>
+                              <strong>Product:</strong>{' '}
+                              {reminder.inventory.name ?? '—'}
+                            </div>
+                            <div>
+                              <strong>Company:</strong>{' '}
+                              {reminder.inventory.companyName ?? '—'}
+                            </div>
+                            <div>
+                              <strong>Location:</strong>{' '}
+                              {reminder.inventory.location ?? '—'}
+                            </div>
                           </div>
                         )}
                         <div className={styles.daysLeft}>

@@ -506,6 +506,7 @@ export interface InventoryItem {
   sellingPrice: number;
   receivedCount: number;
   soldCount: number;
+  thresholdCount?: number;
   currentCount: number;
   location: string;
   expiryDate: string;
@@ -521,6 +522,12 @@ export interface InventoryListResponse {
   meta: unknown | null;
 }
 
+export interface PaginationInventoryResponse {
+  data: InventoryItem[];
+  meta: unknown | null;
+  page: PageMeta;
+}
+
 // Lot types
 export interface Lot {
   lotId: string;
@@ -533,6 +540,7 @@ export interface Lot {
 export interface LotsListResponse {
   data: Lot[];
   meta: unknown | null;
+  page: PageMeta;
 }
 
 // Checkout types

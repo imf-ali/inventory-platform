@@ -85,6 +85,7 @@ export const API_ENDPOINTS = {
     BASE: '/inventory',
     SEARCH: '/inventory/search',
     LOTS: '/inventory/lots',
+    LOW_STOCK: '/inventory/low-stock',
   },
 
   // Checkout endpoints
