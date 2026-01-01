@@ -348,9 +348,15 @@ export interface CustomReminderInput {
 
 export interface ReminderInventorySummary {
   id: string | null;
+  lotId: string | null;
   name: string;
   companyName: string;
   location: string;
+  vendorId: string | null;
+  batchNo: string | null;
+  maximumRetailPrice: number;
+  costPrice: number;
+  sellingPrice: number;
 }
 
 export interface ReminderDetail extends Reminder {
@@ -511,6 +517,7 @@ export interface InventoryItem {
   location: string;
   expiryDate: string;
   shopId: string;
+  vendorId?: string | null;
   hsn?: string | null;
   sac?: string | null;
   batchNo?: string | null;
@@ -520,6 +527,12 @@ export interface InventoryItem {
 export interface InventoryListResponse {
   data: InventoryItem[];
   meta: unknown | null;
+  page?: {
+    page: number;
+    size: number;
+    totalItems: number;
+    totalPages: number;
+  } | null;
 }
 
 export interface PaginationInventoryResponse {

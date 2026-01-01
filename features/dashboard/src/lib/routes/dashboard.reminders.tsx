@@ -7,8 +7,9 @@ import type {
   CreateReminderDto,
   UpdateReminderDto,
   ReminderDetail,
+  ReminderInventorySummary,
 } from '@inventory-platform/types';
-import { ReminderForm } from '@inventory-platform/ui';
+import { ReminderForm, InventoryAlertDetails } from '@inventory-platform/ui';
 import styles from './dashboard.reminders.module.css';
 
 export function meta() {
@@ -43,6 +44,7 @@ export default function RemindersPage() {
     null
   );
   const [customSnoozeDays, setCustomSnoozeDays] = useState<number | ''>(''); // 👈 for manual days
+  const [selectedInventory, setSelectedInventory] = useState<ReminderInventorySummary | null>(null);
 
   const handleSnooze = async (reminderId: string, snoozeDays: number) => {
     if (!snoozeDays || snoozeDays <= 0) {
@@ -524,22 +526,41 @@ export default function RemindersPage() {
                               Delete
                             </button>
                           </div>
+                          {reminder.inventory && (
+                            <button
+                              type="button"
+                              className={styles.viewDetailsBtn}
+                              onClick={() => setSelectedInventory(reminder.inventory)}
+                            >
+                              View Details
+                            </button>
+                          )}
                         </div>
                       ) : (
-                        <>
-                          <button
-                            className={styles.actionBtn}
-                            onClick={() => setEditingReminder(reminder)}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            className={styles.actionBtnDanger}
-                            onClick={() => handleDeleteClick(reminder.id)}
-                          >
-                            Delete
-                          </button>
-                        </>
+                        <div className={styles.actionButtonsContainer}>
+                          <div className={styles.actionButtonsRow}>
+                            <button
+                              className={styles.actionBtn}
+                              onClick={() => setEditingReminder(reminder)}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className={styles.actionBtnDanger}
+                              onClick={() => handleDeleteClick(reminder.id)}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                          {reminder.inventory && (
+                            <button
+                              className={styles.viewDetailsBtn}
+                              onClick={() => setSelectedInventory(reminder.inventory)}
+                            >
+                              View Details
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -587,6 +608,13 @@ export default function RemindersPage() {
           </>
         )}
       </div>
+      {selectedInventory && (
+        <InventoryAlertDetails
+          open={selectedInventory !== null}
+          item={selectedInventory as any}
+          onClose={() => setSelectedInventory(null)}
+        />
+      )}
     </div>
   );
 }

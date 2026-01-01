@@ -1,6 +1,7 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { inventoryApi, cartApi } from '@inventory-platform/api';
 import type { InventoryItem } from '@inventory-platform/types';
+import { InventoryAlertDetails } from '@inventory-platform/ui';
 import styles from './dashboard.product-search.module.css';
 
 export function meta() {
@@ -17,18 +18,34 @@ export default function ProductSearchPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [addingToCart, setAddingToCart] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [searchPage, setSearchPage] = useState(0);
+  const [searchPageSize, setSearchPageSize] = useState(10);
+  const [searchTotalPages, setSearchTotalPages] = useState(0);
+  const [searchTotalItems, setSearchTotalItems] = useState(0);
+  const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
 
   // Fetch all inventory on mount
   useEffect(() => {
     fetchAllInventory();
   }, []);
 
-  const fetchAllInventory = async () => {
+  const fetchAllInventory = async (page = 0, size = 10) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await inventoryApi.getAll();
+      const response = await inventoryApi.getAll(page, size);
       setInventory(response.data || []);
+      // Update pagination info if available
+      if (response.page) {
+        setSearchTotalPages(response.page.totalPages || 0);
+        setSearchTotalItems(response.page.totalItems || 0);
+        setSearchPage(response.page.page || 0);
+      } else {
+        // Reset pagination if no page info
+        setSearchTotalPages(0);
+        setSearchTotalItems(0);
+        setSearchPage(0);
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch inventory';
       setError(errorMessage);
@@ -38,18 +55,36 @@ export default function ProductSearchPage() {
     }
   };
 
-  const handleSearch = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleSearch = async (e?: FormEvent<HTMLFormElement>, pageNum?: number, pageSize?: number) => {
+    e?.preventDefault();
+    
+    const currentPage = pageNum !== undefined ? pageNum : 0;
+    const currentPageSize = pageSize !== undefined ? pageSize : searchPageSize;
+    
+    if (pageNum === undefined && pageSize === undefined) {
+      setSearchPage(0); // Reset to first page on new search
+    }
+    
+    if (pageSize !== undefined) {
+      setSearchPageSize(pageSize);
+    }
+
     if (!searchQuery.trim()) {
-      fetchAllInventory();
+      fetchAllInventory(currentPage, currentPageSize);
       return;
     }
 
     setIsLoading(true);
     setError(null);
     try {
-      const response = await inventoryApi.search(searchQuery.trim());
+      const response = await inventoryApi.search(searchQuery.trim(), currentPage, currentPageSize);
       setInventory(response.data || []);
+      // Update pagination info
+      if (response.page) {
+        setSearchTotalPages(response.page.totalPages);
+        setSearchTotalItems(response.page.totalItems);
+        setSearchPage(response.page.page);
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to search inventory';
       setError(errorMessage);
@@ -61,7 +96,10 @@ export default function ProductSearchPage() {
 
   const handleClearSearch = () => {
     setSearchQuery('');
-    fetchAllInventory();
+    setSearchPage(0);
+    setSearchTotalPages(0);
+    setSearchTotalItems(0);
+    fetchAllInventory(0, searchPageSize);
   };
 
   const formatDate = (dateString: string) => {
@@ -176,70 +214,120 @@ export default function ProductSearchPage() {
             )}
           </div>
         ) : (
-          <div className={styles.productsGrid}>
-            {inventory.map((item) => (
-              <div key={item.lotId} className={styles.productCard}>
-                <div className={styles.productImage} role="img" aria-label="Product">📦</div>
-                <div className={styles.productInfo}>
-                  <h3 className={styles.productName}>
-                    {item.name || 'Unnamed Product'}
-                  </h3>
-                  {item.companyName && (
-                    <p className={styles.productCompany}>
-                      Company: {item.companyName}
-                    </p>
-                  )}
-                  {item.barcode && (
-                    <p className={styles.productBarcode}>
-                      Barcode: {item.barcode}
-                    </p>
-                  )}
-                  {item.location && (
-                    <p className={styles.productLocation}>
-                      Location: {item.location}
-                    </p>
-                  )}
-                  <div className={styles.productDetails}>
-                    <div className={styles.stockInfo}>
-                      <span className={styles.productStock}>
-                        Current: {item.currentCount}
-                      </span>
-                      <span className={styles.productStock}>
-                        Received: {item.receivedCount} | Sold: {item.soldCount}
-                      </span>
+          <>
+            <div className={styles.productsGrid}>
+              {inventory.map((item) => (
+                <div key={item.id || item.lotId} className={styles.productCard}>
+                  <div className={styles.productImage} role="img" aria-label="Product">📦</div>
+                  <div className={styles.productInfo}>
+                    <h3 className={styles.productName}>
+                      {item.name || 'Unnamed Product'}
+                    </h3>
+                    {item.companyName && (
+                      <p className={styles.productCompany}>
+                        Company: {item.companyName}
+                      </p>
+                    )}
+                    {item.barcode && (
+                      <p className={styles.productBarcode}>
+                        Barcode: {item.barcode}
+                      </p>
+                    )}
+                    {item.location && (
+                      <p className={styles.productLocation}>
+                        Location: {item.location}
+                      </p>
+                    )}
+                    <div className={styles.productDetails}>
+                      <div className={styles.stockInfo}>
+                        <span className={styles.productStock}>
+                          Current: {item.currentCount}
+                        </span>
+                        <span className={styles.productStock}>
+                          Received: {item.receivedCount} | Sold: {item.soldCount}
+                        </span>
+                      </div>
+                      <div className={styles.priceInfo}>
+                        <span className={styles.productPrice}>
+                          Selling: ${item.sellingPrice.toFixed(2)}
+                        </span>
+                        <span className={styles.productPrice}>
+                          MRP: ${item.maximumRetailPrice.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className={styles.expiryInfo}>
+                        <span className={styles.expiryDate}>
+                          Expires: {formatDate(item.expiryDate)}
+                        </span>
+                      </div>
                     </div>
-                    <div className={styles.priceInfo}>
-                      <span className={styles.productPrice}>
-                        Selling: ${item.sellingPrice.toFixed(2)}
-                      </span>
-                      <span className={styles.productPrice}>
-                        MRP: ${item.maximumRetailPrice.toFixed(2)}
-                      </span>
-                    </div>
-                    <div className={styles.expiryInfo}>
-                      <span className={styles.expiryDate}>
-                        Expires: {formatDate(item.expiryDate)}
-                      </span>
+                    {item.description && (
+                      <p className={styles.productDescription}>
+                        {item.description}
+                      </p>
+                    )}
+                    <div className={styles.actionButtons}>
+                      <button
+                        className={styles.viewDetailsBtn}
+                        onClick={() => setSelectedItem(item)}
+                        disabled={isLoading}
+                      >
+                        View Details
+                      </button>
+                      <button
+                        className={styles.addToSellBtn}
+                        onClick={() => handleAddToSell(item)}
+                        disabled={isLoading || addingToCart === item.id || item.currentCount <= 0}
+                      >
+                        {addingToCart === item.id ? 'Adding...' : item.currentCount <= 0 ? 'Out of Stock' : 'Add to Sell'}
+                      </button>
                     </div>
                   </div>
-                  {item.description && (
-                    <p className={styles.productDescription}>
-                      {item.description}
-                    </p>
-                  )}
-                  <button
-                    className={styles.addToSellBtn}
-                    onClick={() => handleAddToSell(item)}
-                    disabled={isLoading || addingToCart === item.id || item.currentCount <= 0}
-                  >
-                    {addingToCart === item.id ? 'Adding...' : item.currentCount <= 0 ? 'Out of Stock' : 'Add to Sell'}
-                  </button>
                 </div>
+              ))}
+            </div>
+            {searchTotalPages > 1 && (
+              <div className={styles.paginationBar}>
+                <button
+                  className={styles.pageBtn}
+                  disabled={searchPage === 0 || isLoading}
+                  onClick={() => handleSearch(undefined, searchPage - 1)}
+                >
+                  Previous
+                </button>
+                <span className={styles.pageInfo}>
+                  Page {searchPage + 1} of {searchTotalPages} • {searchTotalItems} items
+                </span>
+                <button
+                  className={styles.pageBtn}
+                  disabled={searchPage >= searchTotalPages - 1 || isLoading}
+                  onClick={() => handleSearch(undefined, searchPage + 1)}
+                >
+                  Next
+                </button>
+                <select
+                  className={styles.pageSizeSelect}
+                  value={searchPageSize}
+                  onChange={(e) => {
+                    const newSize = Number(e.target.value);
+                    handleSearch(undefined, 0, newSize);
+                  }}
+                  disabled={isLoading}
+                >
+                  <option value={10}>10 / page</option>
+                  <option value={20}>20 / page</option>
+                  <option value={50}>50 / page</option>
+                </select>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
+      <InventoryAlertDetails
+        open={selectedItem !== null}
+        item={selectedItem}
+        onClose={() => setSelectedItem(null)}
+      />
     </div>
   );
 }
