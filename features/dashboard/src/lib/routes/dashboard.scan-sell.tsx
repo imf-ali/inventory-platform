@@ -22,6 +22,10 @@ export default function ScanSellPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<InventoryItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [searchPage, setSearchPage] = useState(0);
+  const [searchPageSize, setSearchPageSize] = useState(10);
+  const [searchTotalPages, setSearchTotalPages] = useState(0);
+  const [searchTotalItems, setSearchTotalItems] = useState(0);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [cartData, setCartData] = useState<CartResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -276,22 +280,87 @@ export default function ScanSellPage() {
     }
   };
 
-  const handleSearch = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleSearch = async (e?: FormEvent<HTMLFormElement>, pageNum?: number, pageSize?: number) => {
+    e?.preventDefault();
     if (!searchQuery.trim()) {
       setSearchResults([]);
+      setSearchPage(0);
+      setSearchTotalPages(0);
+      setSearchTotalItems(0);
       return;
+    }
+
+    const currentPage = pageNum !== undefined ? pageNum : 0;
+    const currentPageSize = pageSize !== undefined ? pageSize : searchPageSize;
+    
+    if (pageNum === undefined && pageSize === undefined) {
+      setSearchPage(0); // Reset to first page on new search
+    }
+    
+    if (pageSize !== undefined) {
+      setSearchPageSize(pageSize);
     }
 
     setIsSearching(true);
     setError(null);
     try {
-      const response = await inventoryApi.search(searchQuery.trim());
-      setSearchResults(response.data || []);
+      const response = await inventoryApi.search(
+        searchQuery.trim(),
+        currentPage,
+        currentPageSize
+      );
+      
+      if (import.meta.env.DEV) {
+        console.log('Raw search response from API:', response);
+        console.log('Response type:', typeof response);
+        console.log('Response.data:', response?.data);
+        console.log('Response.page:', response?.page);
+        console.log('Is response.data an array?', Array.isArray(response?.data));
+      }
+      
+      // Response should be InventoryListResponse: { data: InventoryItem[], meta: unknown | null, page: {...} }
+      // So response.data should be the array of InventoryItem[]
+      let items: InventoryItem[] = [];
+      
+      if (response) {
+        if (Array.isArray(response)) {
+          // If response is directly an array
+          items = response;
+        } else if (response.data) {
+          if (Array.isArray(response.data)) {
+            // response.data is the array - this is the expected case
+            items = response.data;
+          } else if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+            // Handle nested structure: { data: { data: [...] } }
+            const nestedData = (response.data as { data?: InventoryItem[] }).data;
+            items = Array.isArray(nestedData) ? nestedData : [];
+          }
+        }
+      }
+      
+      // Update pagination info
+      if (response?.page) {
+        setSearchTotalPages(response.page.totalPages);
+        setSearchTotalItems(response.page.totalItems);
+        setSearchPage(response.page.page);
+      }
+      
+      if (import.meta.env.DEV) {
+        console.log('Final extracted items:', items);
+        console.log('Items count:', items.length);
+        if (items.length > 0) {
+          console.log('First item:', items[0]);
+        }
+      }
+      
+      setSearchResults(items);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to search products';
       setError(errorMessage);
       setSearchResults([]);
+      if (import.meta.env.DEV) {
+        console.error('Search error:', err);
+      }
     } finally {
       setIsSearching(false);
     }
@@ -796,15 +865,51 @@ export default function ScanSellPage() {
             ) : searchResults.length === 0 && searchQuery ? (
               <div className={styles.emptyState}>No products found</div>
             ) : searchResults.length > 0 ? (
-              <div className={styles.resultsList}>
-                {searchResults.map((item) => (
-                  <ProductResultItem
-                    key={item.id}
-                    item={item}
-                    onAddToCart={handleAddToCart}
-                  />
-                ))}
-              </div>
+              <>
+                <div className={styles.resultsList}>
+                  {searchResults.map((item) => (
+                    <ProductResultItem
+                      key={item.id}
+                      item={item}
+                      onAddToCart={handleAddToCart}
+                    />
+                  ))}
+                </div>
+                {searchTotalPages > 1 && (
+                  <div className={styles.paginationBar}>
+                    <button
+                      className={styles.pageBtn}
+                      disabled={searchPage === 0 || isSearching}
+                      onClick={() => handleSearch(undefined, searchPage - 1)}
+                    >
+                      Previous
+                    </button>
+                    <span className={styles.pageInfo}>
+                      Page {searchPage + 1} of {searchTotalPages} • {searchTotalItems} items
+                    </span>
+                    <button
+                      className={styles.pageBtn}
+                      disabled={searchPage >= searchTotalPages - 1 || isSearching}
+                      onClick={() => handleSearch(undefined, searchPage + 1)}
+                    >
+                      Next
+                    </button>
+                    <select
+                      className={styles.pageSizeSelect}
+                      value={searchPageSize}
+                      onChange={(e) => {
+                        const newSize = Number(e.target.value);
+                        handleSearch(undefined, 0, newSize);
+                      }}
+                      disabled={isSearching}
+                    >
+                      <option value={10}>10 / page</option>
+                      <option value={20}>20 / page</option>
+                      <option value={50}>50 / page</option>
+                    </select>
+                  </div>
+                )}
+              </>
             ) : (
               <div className={styles.emptyState}>Enter a search query to find products</div>
             )}
@@ -991,7 +1096,11 @@ function ProductResultItem({ item, onAddToCart }: ProductResultItemProps) {
         <button
           className={styles.addBtn}
           onClick={handleAdd}
-          disabled={!price || parseFloat(price) <= 0 || item.currentCount <= 0}
+          disabled={
+            item.currentCount <= 0 ||
+            (price.trim() !== '' && parseFloat(price) <= 0) ||
+            (price.trim() !== '' && isNaN(parseFloat(price)))
+          }
         >
           Add
         </button>

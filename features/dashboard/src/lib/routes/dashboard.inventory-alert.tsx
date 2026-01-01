@@ -18,6 +18,16 @@ export default function InventoryAlertPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
   const [selected, setSelected] = useState<any | null>(null);
+  const [thresholdModal, setThresholdModal] = useState<{
+    open: boolean;
+    item: any | null;
+    threshold: number;
+  }>({
+    open: false,
+    item: null,
+    threshold: 10,
+  });
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     InventoryAlertLoad();
@@ -71,14 +81,6 @@ export default function InventoryAlertPage() {
             <span className={styles.alertCount}>
               {alerts.length} items need attention
             </span>
-            <button
-              className={styles.configureBtn}
-              onClick={() => {
-                // TODO: Implement threshold configuration
-              }}
-            >
-              Configure Thresholds
-            </button>
           </div>
         </div>
 
@@ -124,6 +126,18 @@ export default function InventoryAlertPage() {
                 >
                   View Details
                 </button>
+                <button
+                  className={styles.actionBtn}
+                  onClick={() =>
+                    setThresholdModal({
+                      open: true,
+                      item: alert.raw,
+                      threshold: alert.raw?.thresholdCount ?? alert.threshold ?? 10,
+                    })
+                  }
+                >
+                  Configure Threshold
+                </button>
               </div>
             </div>
           ))}
@@ -168,6 +182,118 @@ export default function InventoryAlertPage() {
         item={selected}
         onClose={() => setSelected(null)}
       />
+
+      {/* Threshold Configuration Modal */}
+      {thresholdModal.open && (
+        <div
+          className={styles.modalBackdrop}
+          onClick={() =>
+            setThresholdModal({ open: false, item: null, threshold: 10 })
+          }
+        >
+          <div
+            className={styles.modal}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.modalHeader}>
+              <h3>Configure Threshold</h3>
+              <button
+                className={styles.closeBtn}
+                onClick={() =>
+                  setThresholdModal({ open: false, item: null, threshold: 10 })
+                }
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className={styles.modalBody}>
+              <p>
+                <strong>Product:</strong>{' '}
+                {thresholdModal.item?.name ??
+                  thresholdModal.item?.barcode ??
+                  'Unknown'}
+              </p>
+              <p>
+                <strong>Current Stock:</strong>{' '}
+                {thresholdModal.item?.currentCount ?? 0}
+              </p>
+              <p>
+                <strong>Current Threshold:</strong>{' '}
+                {thresholdModal.item?.thresholdCount ?? 10}
+              </p>
+
+              <div style={{ marginTop: '1.5rem' }}>
+                <label className={styles.label} htmlFor="threshold">
+                  New Threshold Count
+                </label>
+                <input
+                  id="threshold"
+                  type="number"
+                  min="1"
+                  className={styles.input}
+                  value={thresholdModal.threshold}
+                  onChange={(e) =>
+                    setThresholdModal({
+                      ...thresholdModal,
+                      threshold: parseInt(e.target.value) || 1,
+                    })
+                  }
+                  disabled={updating}
+                />
+              </div>
+
+              <div className={styles.modalActions}>
+                <button
+                  className={styles.secondaryBtn}
+                  onClick={() =>
+                    setThresholdModal({
+                      open: false,
+                      item: null,
+                      threshold: 10,
+                    })
+                  }
+                  disabled={updating}
+                >
+                  Cancel
+                </button>
+                <button
+                  className={styles.primaryBtn}
+                  onClick={async () => {
+                    if (!thresholdModal.item?.id) return;
+
+                    setUpdating(true);
+                    try {
+                      await inventoryApi.updateThreshold(
+                        thresholdModal.item.id,
+                        thresholdModal.threshold
+                      );
+                      // Reload the alerts to reflect the updated threshold
+                      await InventoryAlertLoad();
+                      setThresholdModal({
+                        open: false,
+                        item: null,
+                        threshold: 10,
+                      });
+                    } catch (error: any) {
+                      console.error('Failed to update threshold:', error);
+                      alert(
+                        error?.message ||
+                          'Failed to update threshold. Please try again.'
+                      );
+                    } finally {
+                      setUpdating(false);
+                    }
+                  }}
+                  disabled={updating}
+                >
+                  {updating ? 'Updating...' : 'Update Threshold'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

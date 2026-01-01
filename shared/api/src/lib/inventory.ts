@@ -41,11 +41,26 @@ export const inventoryApi = {
     return response.data;
   },
 
-  search: async (query: string): Promise<InventoryListResponse> => {
+  search: async (
+    query: string,
+    page?: number,
+    size?: number
+  ): Promise<InventoryListResponse> => {
+    const params: Record<string, string> = { q: query };
+    if (page !== undefined) {
+      params.page = String(page);
+    }
+    if (size !== undefined) {
+      params.size = String(size);
+    }
     const response = await apiClient.get<ApiResponse<InventoryListResponse>>(
       API_ENDPOINTS.INVENTORY.SEARCH,
-      { q: query }
+      params
     );
+    // The API returns { success: true, data: { data: [...], meta: null, page: {...} } }
+    // apiClient.get returns r.data which is the full response body: { success: true, data: {...} }
+    // So response is ApiResponse<InventoryListResponse> = { success: true, data: InventoryListResponse }
+    // response.data is InventoryListResponse = { data: InventoryItem[], meta: unknown | null, page: {...} }
     return response.data;
   },
 
@@ -59,5 +74,15 @@ export const inventoryApi = {
       { search, page: String(page), size: String(size) }
     );
     return response.data;
+  },
+
+  updateThreshold: async (
+    inventoryId: string,
+    thresholdCount: number
+  ): Promise<void> => {
+    await apiClient.put<ApiResponse<void>>(
+      API_ENDPOINTS.INVENTORY.BY_ID(inventoryId),
+      { thresholdCount }
+    );
   },
 };

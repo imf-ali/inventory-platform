@@ -237,10 +237,39 @@
   font-style: italic;
 }
 
-.addToSellBtn {
-  width: 100%;
-  padding: 0.75rem 1rem;
+.actionButtons {
+  display: flex;
+  gap: 0.75rem;
   margin-top: 1rem;
+}
+
+.viewDetailsBtn {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.viewDetailsBtn:hover:not(:disabled) {
+  background: var(--hover-bg);
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.viewDetailsBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.addToSellBtn {
+  flex: 1;
+  padding: 0.75rem 1rem;
   border: none;
   border-radius: 8px;
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
@@ -300,6 +329,53 @@
   font-size: 1rem;
 }
 
+/* Pagination Styles */
+.paginationBar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.pageBtn {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.pageBtn:hover:not(:disabled) {
+  background: var(--hover-bg);
+  border-color: var(--border-hover);
+}
+
+.pageBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pageInfo {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.pageSizeSelect {
+  padding: 0.45rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
 @media (max-width: 768px) {
   .searchBar {
     flex-direction: column;
@@ -311,6 +387,16 @@
 
   .productsGrid {
     grid-template-columns: 1fr;
+  }
+
+  .paginationBar {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .pageInfo {
+    width: 100%;
+    text-align: center;
   }
 }
 

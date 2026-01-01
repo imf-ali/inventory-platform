@@ -86,6 +86,7 @@ export const API_ENDPOINTS = {
     SEARCH: '/inventory/search',
     LOTS: '/inventory/lots',
     LOW_STOCK: '/inventory/low-stock',
+    BY_ID: (id: string) => `/inventory/${id}`,
   },
 
   // Checkout endpoints
@@ -109,6 +110,7 @@ export const API_ENDPOINTS = {
   VENDORS: {
     BASE: '/vendors',
     SEARCH: '/vendors/search',
+    BY_ID: (id: string) => `/vendors/${id}`,
   },
 
   // Customer endpoints

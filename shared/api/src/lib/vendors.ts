@@ -30,5 +30,12 @@ export const vendorsApi = {
       throw error;
     }
   },
+
+  getById: async (vendorId: string): Promise<VendorResponse> => {
+    const response = await apiClient.get<ApiResponse<VendorResponse>>(
+      API_ENDPOINTS.VENDORS.BY_ID(vendorId)
+    );
+    return response.data;
+  },
 };
 
