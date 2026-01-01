@@ -66,18 +66,6 @@ export function InventoryAlertDetails({
 
   if (!open || !item) return null;
 
-  const formatDate = (dateString: string) => {
-    try {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      });
-    } catch {
-      return dateString;
-    }
-  };
-
   return (
     <div className={styles.modalBackdrop} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
