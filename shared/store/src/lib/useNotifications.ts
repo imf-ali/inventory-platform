@@ -3,6 +3,7 @@ import { eventsApi } from '@inventory-platform/api';
 import type {
   ReminderDetail,
   ReminderNotification,
+  InventoryLowEvent,
 } from '@inventory-platform/types';
 
 const STORAGE_KEY = 'reminder_notifications';
@@ -19,7 +20,7 @@ function loadFromStorage(): ReminderNotification[] {
   }
 }
 
-export function useReminderNotifications(shopId?: string) {
+export function useNotifications(shopId?: string) {
   // hydrate ONCE, before effects
   const [notifications, setNotifications] =
     useState<ReminderNotification[]>(loadFromStorage);
@@ -37,39 +38,63 @@ export function useReminderNotifications(shopId?: string) {
   useEffect(() => {
     if (!shopId) return;
 
-    const es = eventsApi.subscribeToReminders((data: ReminderDetail) => {
-      const title =
-        data.type === 'EXPIRY' ? 'Expiry Reminder' : 'Custom Reminder';
+    const es = eventsApi.subscribe(
+      /* REMINDER_DUE */
+      (data: ReminderDetail) => {
+        const title =
+          data.type === 'EXPIRY' ? 'Expiry Reminder' : 'Custom Reminder';
 
-      const message = [
-        data.notes,
-        data.inventory?.name && `Product: ${data.inventory.name}`,
-        data.inventory?.companyName && `Company: ${data.inventory.companyName}`,
-      ]
-        .filter(Boolean)
-        .join('\n');
+        const message = [
+          data.notes,
+          data.inventory?.name && `Product: ${data.inventory.name}`,
+          data.inventory?.companyName &&
+            `Company: ${data.inventory.companyName}`,
+        ]
+          .filter(Boolean)
+          .join('\n');
 
-      setNotifications((prev) => {
-        // prevent duplicates
-        if (prev.some((n) => n.id === data.id)) return prev;
-        console.log(
-          'SSE reminderId = ',
-          (data as any).reminderId,
-          (data as any).id
-        );
+        setNotifications((prev) => {
+          // prevent duplicates
+          if (prev.some((n) => n.id === data.id)) return prev;
+          console.log(
+            'SSE reminderId = ',
+            (data as any).reminderId,
+            (data as any).id
+          );
 
-        return [
-          {
-            id: data.id,
-            title,
-            message,
-            createdAt: new Date().toISOString(),
-            read: false,
-          },
-          ...prev,
-        ];
-      });
-    });
+          return [
+            {
+              id: data.id,
+              type: 'REMINDER_DUE',
+              title,
+              message,
+              createdAt: new Date().toISOString(),
+              read: false,
+            },
+            ...prev,
+          ];
+        });
+      },
+
+      /* INVENTORY_LOW */
+      (e: InventoryLowEvent) => {
+        setNotifications((prev) => {
+          if (prev.some((n) => n.id === e.inventoryId)) return prev;
+
+          return [
+            {
+              id: e.inventoryId,
+              type: 'INVENTORY_LOW',
+              title: 'Low Stock Alert',
+              message: `${e.productName} is low (${e.currentCount}/${e.threshold})`,
+              createdAt: new Date().toISOString(),
+              read: false,
+            },
+            ...prev,
+          ];
+        });
+      }
+    );
 
     setIsConnected(true);
 
