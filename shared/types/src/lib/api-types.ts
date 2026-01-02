@@ -386,7 +386,16 @@ export interface ReminderNotification {
   message: string;
   createdAt: string;
   read: boolean;
+  type: 'REMINDER_DUE' | 'INVENTORY_LOW';
 }
+
+export type InventoryLowEvent = {
+  shopId: string;
+  inventoryId: string;
+  productName: string;
+  currentCount: number;
+  threshold: number;
+};
 
 // Shop types
 export interface Location {
@@ -1053,4 +1062,3 @@ export interface DashboardData {
   productInsights: ProductInsights;
   salesTrend: SalesTrend;
 }
-

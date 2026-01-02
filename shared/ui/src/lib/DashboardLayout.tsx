@@ -4,7 +4,7 @@ import { useAuthStore } from '@inventory-platform/store';
 import type { DashboardLayoutProps } from '@inventory-platform/types';
 import styles from './DashboardLayout.module.css';
 import { ThemeToggle } from './ThemeToggle';
-import { useReminderNotifications } from '@inventory-platform/store';
+import { useNotifications } from '@inventory-platform/store';
 
 const MENU_ITEMS = [
   { path: '/dashboard', label: 'Dashboard', icon: '📊' },
@@ -46,7 +46,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   // Reminder notifications (ALL logic lives in hook)
-  const { notifications, unreadCount, markAsRead } = useReminderNotifications(
+  const { notifications, unreadCount, markAsRead } = useNotifications(
     user?.shopId ?? undefined
   );
 
@@ -67,15 +67,26 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const handleNotificationClick = useCallback(
     (id: string) => {
+      const n = notifications.find((n) => n.id === id);
+      if (!n) return;
+
       markAsRead(id);
 
-      navigate('/dashboard/reminders', {
-        state: { fromNotification: true, reminderId: id },
-      });
+      if (n.type === 'REMINDER_DUE') {
+        navigate('/dashboard/reminders', {
+          state: { fromNotification: true, reminderId: id },
+        });
+      }
+
+      if (n.type === 'INVENTORY_LOW') {
+        navigate('/dashboard/inventory-alert', {
+          state: { fromNotification: true, inventoryId: id },
+        });
+      }
 
       setShowNotificationMenu(false);
     },
-    [markAsRead, navigate]
+    [notifications, markAsRead, navigate]
   );
 
   const filteredMenuItems = useMemo(() => {

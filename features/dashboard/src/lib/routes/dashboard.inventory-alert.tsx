@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import styles from './dashboard.inventory-alert.module.css';
 import { inventoryApi } from '@inventory-platform/api';
 import { InventoryAlertDetails } from '@inventory-platform/ui';
+import { useLocation } from 'react-router';
 
 export function meta() {
   return [
@@ -11,6 +12,11 @@ export function meta() {
 }
 
 export default function InventoryAlertPage() {
+  const location = useLocation();
+  const inventoryId =
+    location.state?.fromNotification === true
+      ? location.state?.inventoryId
+      : undefined;
   const [alerts, setAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
@@ -32,6 +38,13 @@ export default function InventoryAlertPage() {
   useEffect(() => {
     InventoryAlertLoad();
   }, [page, size]);
+
+  useEffect(() => {
+    if (!inventoryId) return;
+
+    const found = alerts.find((a) => a.id === inventoryId);
+    if (found) setSelected(found.raw);
+  }, [inventoryId, alerts]);
 
   async function InventoryAlertLoad() {
     setLoading(true);
@@ -132,7 +145,8 @@ export default function InventoryAlertPage() {
                     setThresholdModal({
                       open: true,
                       item: alert.raw,
-                      threshold: alert.raw?.thresholdCount ?? alert.threshold ?? 10,
+                      threshold:
+                        alert.raw?.thresholdCount ?? alert.threshold ?? 10,
                     })
                   }
                 >
@@ -191,10 +205,7 @@ export default function InventoryAlertPage() {
             setThresholdModal({ open: false, item: null, threshold: 10 })
           }
         >
-          <div
-            className={styles.modal}
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3>Configure Threshold</h3>
               <button
