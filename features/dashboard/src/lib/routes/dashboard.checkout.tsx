@@ -44,15 +44,31 @@ export default function CheckoutPage() {
         return;
       }
       
-      setCheckoutData(cart);
+      // If status is PENDING, stay on checkout page
+      if (cart.status === 'PENDING') {
+        setCheckoutData(cart);
+        return;
+      }
+      
+      // For any other status, redirect to scan-sell
+      navigate('/dashboard/scan-sell');
     } catch (err) {
-      // On error, redirect to scan-sell page
+      // 404 or other error - cart API doesn't return COMPLETED carts
+      // If we already have checkout data (likely COMPLETED), stay on checkout page
+      // Otherwise, redirect to scan-sell
+      console.log('Cart API returned 404 (no active cart):', err);
+      if (checkoutData && checkoutData.status === 'COMPLETED') {
+        // Already showing completed order, stay on checkout page
+        setIsLoading(false);
+        return;
+      }
+      // No checkout data, redirect to scan-sell
       console.error('Error loading cart:', err);
       navigate('/dashboard/scan-sell');
     } finally {
       setIsLoading(false);
     }
-  }, [navigate]);
+  }, [navigate, checkoutData]);
 
   // Load cart data on mount
   useEffect(() => {
@@ -112,13 +128,22 @@ export default function CheckoutPage() {
 
       await cartApi.updateStatus(statusPayload);
       
+      // Update local checkout data status to COMPLETED
+      if (checkoutData) {
+        setCheckoutData({
+          ...checkoutData,
+          status: 'COMPLETED',
+          paymentMethod: method,
+        });
+      }
+      
       // Show success animation
       setShowSuccess(true);
       setIsProcessingPayment(false);
       
-      // Navigate to scan-sell page after 3 seconds
+      // After showing success overlay, hide it (don't call loadCart as it will return 404 for COMPLETED)
       setTimeout(() => {
-        navigate('/dashboard/scan-sell');
+        setShowSuccess(false);
       }, 3000);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to process payment';
@@ -207,7 +232,7 @@ export default function CheckoutPage() {
             Your payment has been processed successfully.
           </p>
           <p className={styles.successSubMessage}>
-            Redirecting to Scan and Sell...
+            Updating order status...
           </p>
         </div>
       </div>
@@ -234,8 +259,34 @@ export default function CheckoutPage() {
             <div>
               <h3 className={styles.invoiceTitle}>Invoice Details</h3>
             </div>
-            <div className={styles.statusBadge}>
-              <span className={styles.statusText}>{checkoutData.status}</span>
+            <div className={styles.headerActions}>
+              <div className={`${styles.statusBadge} ${checkoutData.status === 'COMPLETED' ? styles.statusBadgeCompleted : ''}`}>
+                <span className={styles.statusText}>{checkoutData.status}</span>
+              </div>
+              {checkoutData.status === 'COMPLETED' && (
+                <button
+                  className={styles.printBtn}
+                  onClick={() => window.print()}
+                  aria-label="Print Invoice"
+                  title="Print Invoice"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                    <rect x="6" y="14" width="12" height="8"></rect>
+                  </svg>
+                </button>
+              )}
             </div>
           </div>
 
@@ -344,27 +395,29 @@ export default function CheckoutPage() {
         </div>
 
         {/* Payment Options */}
-        <div className={styles.paymentSection}>
-          <h3 className={styles.sectionTitle}>Payment Options</h3>
-          <div className={styles.paymentButtons}>
-            <button
-              className={`${styles.paymentBtn} ${styles.cashBtn}`}
-              onClick={() => handlePayment('CASH')}
-              disabled={isProcessingPayment || isUpdating}
-            >
-              <span role="img" aria-label="Cash">💵</span> 
-              {isProcessingPayment ? 'Processing...' : 'Pay in Cash'}
-            </button>
-            <button
-              className={`${styles.paymentBtn} ${styles.onlineBtn}`}
-              onClick={() => handlePayment('ONLINE')}
-              disabled={isProcessingPayment || isUpdating}
-            >
-              <span role="img" aria-label="Online Payment">💳</span> 
-              {isProcessingPayment ? 'Processing...' : 'Pay Online'}
-            </button>
+        {checkoutData.status !== 'COMPLETED' && (
+          <div className={styles.paymentSection}>
+            <h3 className={styles.sectionTitle}>Payment Options</h3>
+            <div className={styles.paymentButtons}>
+              <button
+                className={`${styles.paymentBtn} ${styles.cashBtn}`}
+                onClick={() => handlePayment('CASH')}
+                disabled={isProcessingPayment || isUpdating}
+              >
+                <span role="img" aria-label="Cash">💵</span> 
+                {isProcessingPayment ? 'Processing...' : 'Pay in Cash'}
+              </button>
+              <button
+                className={`${styles.paymentBtn} ${styles.onlineBtn}`}
+                onClick={() => handlePayment('ONLINE')}
+                disabled={isProcessingPayment || isUpdating}
+              >
+                <span role="img" aria-label="Online Payment">💳</span> 
+                {isProcessingPayment ? 'Processing...' : 'Pay Online'}
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Actions */}
         <div className={styles.actionsSection}>

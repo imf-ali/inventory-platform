@@ -75,23 +75,39 @@ export default function ScanSellPage() {
     try {
       const cart = await cartApi.get();
       
+      // Only handle CREATED and PENDING statuses
       // If status is PENDING, redirect to checkout page
       if (cart.status === 'PENDING') {
         navigate('/dashboard/checkout');
         return;
       }
       
-      setCartData(cart);
-      // Load customer fields from cart
-      setCustomerName(cart.customerName || '');
-      setCustomerAddress(cart.customerAddress || '');
-      setCustomerPhone(cart.customerPhone || '');
-      setCustomerEmail(cart.customerEmail || '');
-      // Convert cart items to local format
-      // We need to fetch inventory items for the lotIds to get full details
-      await convertCartToLocalItems(cart);
+      // If status is CREATED, stay on scan-sell page
+      if (cart.status === 'CREATED') {
+        setCartData(cart);
+        // Load customer fields from cart
+        setCustomerName(cart.customerName || '');
+        setCustomerAddress(cart.customerAddress || '');
+        setCustomerPhone(cart.customerPhone || '');
+        setCustomerEmail(cart.customerEmail || '');
+        // Convert cart items to local format
+        await convertCartToLocalItems(cart);
+        return;
+      }
+      
+      // For COMPLETED or other statuses, clear cart and stay on scan-sell
+      setCartData(null);
+      setCartItems([]);
+      setCustomerName('');
+      setCustomerAddress('');
+      setCustomerPhone('');
+      setCustomerEmail('');
+      setIsRetailer(false);
+      setCustomerGstin('');
+      setCustomerDlNo('');
+      setCustomerPan('');
     } catch (err) {
-      // Cart might be empty, which is fine
+      // 404 or other error - no cart exists, stay on scan-sell page
       console.log('No existing cart or error loading cart:', err);
       setCartData(null);
       setCartItems([]);
@@ -526,7 +542,7 @@ export default function ScanSellPage() {
   };
 
   const calculateSGST = () => {
-    if (cartData?.sgstAmount !== undefined) {
+    if (cartData?.sgstAmount !== undefined && cartData?.sgstAmount !== null) {
       return cartData.sgstAmount;
     }
     // Fallback: calculate 4.5% if not provided
@@ -534,7 +550,7 @@ export default function ScanSellPage() {
   };
 
   const calculateCGST = () => {
-    if (cartData?.cgstAmount !== undefined) {
+    if (cartData?.cgstAmount !== undefined && cartData?.cgstAmount !== null) {
       return cartData.cgstAmount;
     }
     // Fallback: calculate 4.5% if not provided
@@ -542,7 +558,7 @@ export default function ScanSellPage() {
   };
 
   const calculateTax = () => {
-    if (cartData?.taxTotal !== undefined) {
+    if (cartData?.taxTotal !== undefined && cartData?.taxTotal !== null) {
       return cartData.taxTotal;
     }
     // Fallback: sum of SGST and CGST
@@ -550,7 +566,10 @@ export default function ScanSellPage() {
   };
 
   const calculateTotal = () => {
-    return cartData?.grandTotal ?? calculateSubtotal() + calculateTax();
+    if (cartData?.grandTotal !== undefined && cartData?.grandTotal !== null) {
+      return cartData.grandTotal;
+    }
+    return calculateSubtotal() + calculateTax();
   };
 
   const getSGSTPercentage = () => {
@@ -980,10 +999,10 @@ export default function ScanSellPage() {
                   <span>Subtotal</span>
                   <span>${calculateSubtotal().toFixed(2)}</span>
                 </div>
-                {cartData && cartData.discountTotal > 0 && (
+                {cartData && cartData.discountTotal && cartData.discountTotal > 0 && (
                   <div className={styles.summaryRow}>
                     <span>Discount</span>
-                    <span>-${cartData.discountTotal.toFixed(2)}</span>
+                    <span>-${(cartData.discountTotal ?? 0).toFixed(2)}</span>
                   </div>
                 )}
                 <div className={styles.summaryRow}>
