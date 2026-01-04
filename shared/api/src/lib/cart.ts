@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { apiClient } from './client';
 import { API_ENDPOINTS } from './endpoints';
 import type {
@@ -6,6 +7,9 @@ import type {
   AddToCartDto,
   UpdateCartStatusDto,
 } from '@inventory-platform/types';
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
 export const cartApi = {
   get: async (): Promise<CartResponse> => {
@@ -28,6 +32,25 @@ export const cartApi = {
       API_ENDPOINTS.CART.STATUS,
       data
     );
+    return response.data;
+  },
+
+  getInvoicePdf: async (purchaseId: string): Promise<Blob> => {
+    const token =
+      typeof window !== 'undefined'
+        ? localStorage.getItem('auth_token')
+        : null;
+
+    const response = await axios.get(
+      `${API_BASE_URL}${API_ENDPOINTS.INVOICES.PDF(purchaseId)}`,
+      {
+        responseType: 'blob',
+        headers: {
+          Authorization: token ? `Bearer ${token}` : '',
+        },
+      }
+    );
+
     return response.data;
   },
 };

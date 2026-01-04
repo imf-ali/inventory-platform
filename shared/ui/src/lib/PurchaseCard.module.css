@@ -12,6 +12,16 @@
   border-color: var(--border-hover);
 }
 
+.errorMessage {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 1rem;
+  color: #dc2626;
+  font-size: 0.85rem;
+}
+
 .header {
   margin-bottom: 1rem;
 }
@@ -42,6 +52,55 @@
   font-size: 0.85rem;
   color: var(--text-tertiary);
   font-family: monospace;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.printBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.375rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 32px;
+  height: 32px;
+}
+
+.printBtn:hover:not(:disabled) {
+  background: var(--hover-bg);
+  border-color: #10b981;
+  color: #10b981;
+}
+
+.printBtn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.printBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.printBtn .spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .status {
