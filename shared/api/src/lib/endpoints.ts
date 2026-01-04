@@ -122,4 +122,9 @@ export const API_ENDPOINTS = {
   DASHBOARD: {
     BASE: '/dashboard',
   },
+
+  // Invoice endpoints
+  INVOICES: {
+    PDF: (purchaseId: string) => `/invoices/${purchaseId}/pdf`,
+  },
 } as const;
