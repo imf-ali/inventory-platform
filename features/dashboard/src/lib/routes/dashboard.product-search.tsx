@@ -249,10 +249,10 @@ export default function ProductSearchPage() {
                       </div>
                       <div className={styles.priceInfo}>
                         <span className={styles.productPrice}>
-                          Selling: ${item.sellingPrice.toFixed(2)}
+                          Selling: ₹{item.sellingPrice.toFixed(2)}
                         </span>
                         <span className={styles.productPrice}>
-                          MRP: ${item.maximumRetailPrice.toFixed(2)}
+                          MRP: ₹{item.maximumRetailPrice.toFixed(2)}
                         </span>
                       </div>
                       <div className={styles.expiryInfo}>

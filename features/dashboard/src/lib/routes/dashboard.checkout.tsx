@@ -417,10 +417,10 @@ export default function CheckoutPage() {
                     <tr key={index}>
                       <td>{item.name}</td>
                       <td>{item.quantity}</td>
-                      <td>${item.maximumRetailPrice.toFixed(2)}</td>
-                      <td>${item.sellingPrice.toFixed(2)}</td>
+                      <td>₹{item.maximumRetailPrice.toFixed(2)}</td>
+                      <td>₹{item.sellingPrice.toFixed(2)}</td>
                       <td>{item.discount.toFixed(2)}%</td>
-                      <td>${itemTotal.toFixed(2)}</td>
+                      <td>₹{itemTotal.toFixed(2)}</td>
                     </tr>
                   );
                 })}
@@ -435,19 +435,19 @@ export default function CheckoutPage() {
           <div className={styles.summaryTable}>
             <div className={styles.summaryRow}>
               <span>Subtotal:</span>
-              <span>${checkoutData.subTotal.toFixed(2)}</span>
+              <span>₹{checkoutData.subTotal.toFixed(2)}</span>
             </div>
             <div className={styles.summaryRow}>
               <span>Tax ({taxPercentage}%):</span>
-              <span>${checkoutData.taxTotal.toFixed(2)}</span>
+              <span>₹{checkoutData.taxTotal.toFixed(2)}</span>
             </div>
             <div className={styles.summaryRow}>
               <span>Discount:</span>
-              <span>${checkoutData.discountTotal.toFixed(2)}</span>
+              <span>₹{checkoutData.discountTotal.toFixed(2)}</span>
             </div>
             <div className={styles.summaryRowTotal}>
               <span>Grand Total:</span>
-              <span>${checkoutData.grandTotal.toFixed(2)}</span>
+              <span>₹{checkoutData.grandTotal.toFixed(2)}</span>
             </div>
           </div>
         </div>
