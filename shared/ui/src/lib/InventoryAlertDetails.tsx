@@ -195,7 +195,7 @@ export function InventoryAlertDetails({
                 <div className={styles.detailContent}>
                   <span className={styles.detailLabel}>Selling Price</span>
                   <span className={`${styles.detailValue} ${styles.priceValue}`}>
-                    ${item?.sellingPrice?.toFixed(2) ?? '—'}
+                    ₹{item?.sellingPrice?.toFixed(2) ?? '—'}
                   </span>
                 </div>
               </div>
@@ -204,7 +204,7 @@ export function InventoryAlertDetails({
                 <div className={styles.detailContent}>
                   <span className={styles.detailLabel}>MRP</span>
                   <span className={`${styles.detailValue} ${styles.mrpValue}`}>
-                    ${item?.maximumRetailPrice?.toFixed(2) ?? '—'}
+                    ₹{item?.maximumRetailPrice?.toFixed(2) ?? '—'}
                   </span>
                 </div>
               </div>
@@ -214,7 +214,7 @@ export function InventoryAlertDetails({
                   <div className={styles.detailContent}>
                     <span className={styles.detailLabel}>Cost Price</span>
                     <span className={`${styles.detailValue} ${styles.costValue}`}>
-                      ${item.costPrice.toFixed(2)}
+                      ₹{item.costPrice.toFixed(2)}
                     </span>
                   </div>
                 </div>

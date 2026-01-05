@@ -176,11 +176,11 @@ export function PurchaseCard({ purchase }: PurchaseCardProps) {
                   </div>
                   <div className={styles.itemPricing}>
                     <span className={styles.itemPrice}>
-                      ${item.sellingPrice.toFixed(2)} × {item.quantity} = ${(item.sellingPrice * item.quantity).toFixed(2)}
+                      ₹{item.sellingPrice.toFixed(2)} × {item.quantity} = ₹{(item.sellingPrice * item.quantity).toFixed(2)}
                     </span>
                     {item.discount > 0 && (
                       <span className={styles.itemDiscount}>
-                        Discount: ${item.discount.toFixed(2)}
+                        Discount: ₹{item.discount.toFixed(2)}
                       </span>
                     )}
                   </div>
@@ -208,32 +208,32 @@ export function PurchaseCard({ purchase }: PurchaseCardProps) {
             <>
               <div className={styles.priceRow}>
                 <span className={styles.priceLabel}>Subtotal:</span>
-                <span className={styles.priceValue}>${purchase.subTotal.toFixed(2)}</span>
+                <span className={styles.priceValue}>₹{purchase.subTotal.toFixed(2)}</span>
               </div>
               {purchase.discountTotal > 0 && (
                 <div className={styles.priceRow}>
                   <span className={styles.priceLabel}>Discount:</span>
                   <span className={`${styles.priceValue} ${styles.discountValue}`}>
-                    -${purchase.discountTotal.toFixed(2)}
+                    -₹{purchase.discountTotal.toFixed(2)}
                   </span>
                 </div>
               )}
               {purchase.taxTotal > 0 && (
                 <div className={styles.priceRow}>
                   <span className={styles.priceLabel}>Tax:</span>
-                  <span className={styles.priceValue}>${purchase.taxTotal.toFixed(2)}</span>
+                  <span className={styles.priceValue}>₹{purchase.taxTotal.toFixed(2)}</span>
                 </div>
               )}
               <div className={`${styles.priceRow} ${styles.grandTotalRow}`}>
                 <span className={styles.priceLabel}>Grand Total:</span>
-                <span className={styles.grandTotalValue}>${purchase.grandTotal.toFixed(2)}</span>
+                <span className={styles.grandTotalValue}>₹{purchase.grandTotal.toFixed(2)}</span>
               </div>
             </>
           )}
           {!isPriceExpanded && (
             <div className={styles.priceRow}>
               <span className={styles.priceLabel}>Grand Total:</span>
-              <span className={styles.grandTotalValue}>${purchase.grandTotal.toFixed(2)}</span>
+              <span className={styles.grandTotalValue}>₹{purchase.grandTotal.toFixed(2)}</span>
             </div>
           )}
         </div>
