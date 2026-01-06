@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Play } from 'lucide-react';
 import styles from './Hero.module.css';
 
-// Use public assets - these will be served from /assets/logo/
+// Use public assets - these will be served from /assets/logo/ in the public folder
 const backgrounds = [
   '/assets/logo/inventory-pic.png',
   '/assets/logo/inventory-pic2.png',
