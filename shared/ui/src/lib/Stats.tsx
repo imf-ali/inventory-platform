@@ -3,8 +3,8 @@ import styles from './Stats.module.css';
 export function Stats() {
   const stats = [
     { value: '99.9%', label: 'Uptime' },
-    { value: '50K+', label: 'Active Users' },
-    { value: '10M+', label: 'Products Tracked' },
+    { value: '---', label: 'Active Users' },
+    { value: '---', label: 'Products Tracked' },
     { value: '24/7', label: 'Support' },
   ];
 
@@ -21,4 +21,3 @@ export function Stats() {
     </section>
   );
 }
-

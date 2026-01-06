@@ -6,7 +6,7 @@ export function Pricing() {
     {
       name: 'Starter',
       description: 'Perfect for small businesses',
-      price: '₹500',
+      price: '₹000',
       priceSuffix: '/month',
       features: [
         'Up to 1,000 products',
@@ -20,7 +20,7 @@ export function Pricing() {
       name: 'Professional',
       label: 'Most Popular',
       description: 'For growing businesses',
-      price: '₹700',
+      price: '₹000',
       priceSuffix: '/month',
       highlight: true,
       features: [
