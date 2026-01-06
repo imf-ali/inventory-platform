@@ -181,6 +181,7 @@ export function LoginForm() {
             onSuccess={handleGoogleSuccess}
             onError={handleGoogleError}
             useOneTap={false}
+            auto_select={false}
             theme="outline"
             size="large"
             text="continue_with"

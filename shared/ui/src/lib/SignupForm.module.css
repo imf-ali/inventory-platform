@@ -205,11 +205,19 @@
 }
 
 .googleButtonWrapper > div {
-  width: 100%;
+  width: 100% !important;
+  max-width: 100% !important;
 }
 
 .googleButtonWrapper > div > div {
   width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Ensure Google button is always full width, even with account selector */
+.googleButtonWrapper iframe {
+  width: 100% !important;
+  max-width: 100% !important;
 }
 
 @media (max-width: 640px) {

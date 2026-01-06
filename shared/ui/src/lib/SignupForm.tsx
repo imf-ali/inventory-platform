@@ -221,6 +221,7 @@ export function SignupForm() {
           onSuccess={handleGoogleSuccess}
           onError={handleGoogleError}
           useOneTap={false}
+          auto_select={false}
           theme="outline"
           size="large"
           text="signup_with"
