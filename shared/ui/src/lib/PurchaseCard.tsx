@@ -61,27 +61,30 @@ export function PurchaseCard({ purchase }: PurchaseCardProps) {
 
     try {
       const pdfBlob = await cartApi.getInvoicePdf(purchase.purchaseId);
-      
+
       // Create a blob URL and open it in a new window for viewing/printing
       const url = window.URL.createObjectURL(pdfBlob);
       const newWindow = window.open(url, '_blank');
-      
+
       if (!newWindow) {
         // If popup was blocked, fall back to download
         const link = document.createElement('a');
         link.href = url;
-        link.download = `invoice-${purchase.invoiceNo || purchase.purchaseId}.pdf`;
+        link.download = `invoice-${
+          purchase.invoiceNo || purchase.purchaseId
+        }.pdf`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
       }
-      
+
       // Clean up the blob URL after a delay
       setTimeout(() => {
         window.URL.revokeObjectURL(url);
       }, 1000);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to download invoice PDF';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to download invoice PDF';
       setError(errorMessage);
     } finally {
       setIsPrinting(false);
@@ -140,18 +143,16 @@ export function PurchaseCard({ purchase }: PurchaseCardProps) {
                 )}
               </button>
             )}
-            <span className={`${styles.status} ${getStatusColor(purchase.status)}`}>
+            <span
+              className={`${styles.status} ${getStatusColor(purchase.status)}`}
+            >
               {purchase.status}
             </span>
           </div>
         </div>
       </div>
 
-      {error && (
-        <div className={styles.errorMessage}>
-          {error}
-        </div>
-      )}
+      {error && <div className={styles.errorMessage}>{error}</div>}
 
       {purchase.items && purchase.items.length > 0 && (
         <div className={styles.itemsSection}>
@@ -172,7 +173,9 @@ export function PurchaseCard({ purchase }: PurchaseCardProps) {
                 <div key={index} className={styles.itemRow}>
                   <div className={styles.itemInfo}>
                     <span className={styles.itemName}>{item.name}</span>
-                    <span className={styles.itemQuantity}>Qty: {item.quantity}</span>
+                    <span className={styles.itemQuantity}>
+                      Qty: {item.quantity}
+                    </span>
                   </div>
                   <div className={styles.itemPricing}>
                     <span className={styles.itemPrice}>
@@ -197,7 +200,11 @@ export function PurchaseCard({ purchase }: PurchaseCardProps) {
             className={styles.expandButton}
             onClick={() => setIsPriceExpanded(!isPriceExpanded)}
             aria-expanded={isPriceExpanded}
-            aria-label={isPriceExpanded ? 'Collapse price details' : 'Expand price details'}
+            aria-label={
+              isPriceExpanded
+                ? 'Collapse price details'
+                : 'Expand price details'
+            }
           >
             <span className={styles.priceLabel}>Price Details</span>
             <span className={styles.expandIcon}>
@@ -242,7 +249,9 @@ export function PurchaseCard({ purchase }: PurchaseCardProps) {
 
         <div className={styles.detailRow}>
           <span className={styles.label}>Payment Method:</span>
-          <span className={styles.value}>{getPaymentMethodLabel(purchase.paymentMethod)}</span>
+          <span className={styles.value}>
+            {getPaymentMethodLabel(purchase.paymentMethod)}
+          </span>
         </div>
         <div className={styles.detailRow}>
           <span className={styles.label}>Sold At:</span>
@@ -270,4 +279,3 @@ export function PurchaseCard({ purchase }: PurchaseCardProps) {
     </div>
   );
 }
-

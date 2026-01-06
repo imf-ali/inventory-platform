@@ -12,7 +12,7 @@ export function Pricing() {
         'Up to 1,000 products',
         'Basic analytics',
         'Email support',
-        'Mobile app access',
+        'Single user access',
         'Barcode scanning',
       ],
     },
@@ -29,7 +29,7 @@ export function Pricing() {
         'Priority support',
         'Custom integrations',
         'Multi-location support',
-        'API access',
+        'Multi user access',
         'Team collaboration',
       ],
     },
@@ -67,9 +67,7 @@ export function Pricing() {
                 plan.highlight ? styles.cardHighlight : ''
               }`}
             >
-              {plan.label && (
-                <div className={styles.badge}>{plan.label}</div>
-              )}
+              {plan.label && <div className={styles.badge}>{plan.label}</div>}
 
               <div className={styles.cardHeader}>
                 <h3 className={styles.planName}>{plan.name}</h3>
@@ -108,4 +106,3 @@ export function Pricing() {
     </section>
   );
 }
-

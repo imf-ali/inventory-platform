@@ -1,12 +1,16 @@
 import { useState, FormEvent, useEffect, useRef, ChangeEvent } from 'react';
 import { useNavigate } from 'react-router';
 import { inventoryApi, cartApi, customersApi } from '@inventory-platform/api';
-import type { InventoryItem, CartResponse, CheckoutItemResponse } from '@inventory-platform/types';
+import type {
+  InventoryItem,
+  CartResponse,
+  CheckoutItemResponse,
+} from '@inventory-platform/types';
 import styles from './dashboard.scan-sell.module.css';
 
 export function meta() {
   return [
-    { title: 'Scan and Sell - InventoryPro' },
+    { title: 'Scan and Sell - StockKart' },
     { name: 'description', content: 'Speed up sales with barcode scanning' },
   ];
 }
@@ -69,19 +73,19 @@ export default function ScanSellPage() {
     if (isUpdatingRef.current) {
       return;
     }
-    
+
     setIsLoadingCart(true);
     setError(null);
     try {
       const cart = await cartApi.get();
-      
+
       // Only handle CREATED and PENDING statuses
       // If status is PENDING, redirect to checkout page
       if (cart.status === 'PENDING') {
         navigate('/dashboard/checkout');
         return;
       }
-      
+
       // If status is CREATED, stay on scan-sell page
       if (cart.status === 'CREATED') {
         setCartData(cart);
@@ -94,7 +98,7 @@ export default function ScanSellPage() {
         await convertCartToLocalItems(cart);
         return;
       }
-      
+
       // For COMPLETED or other statuses, clear cart and stay on scan-sell
       setCartData(null);
       setCartItems([]);
@@ -130,19 +134,19 @@ export default function ScanSellPage() {
       // Create minimal inventory items from cart data
       // We'll try to fetch full details, but use cart data as fallback
       const localItems: CartItem[] = [];
-      
+
       for (const cartItem of cart.items) {
         // Try to fetch full inventory details to get accurate stock count
         let inventoryItem: InventoryItem | null = null;
         try {
           const searchResult = await inventoryApi.search(cartItem.inventoryId);
-          inventoryItem = searchResult.data?.find(
-            (inv) => inv.id === cartItem.inventoryId
-          ) || null;
+          inventoryItem =
+            searchResult.data?.find((inv) => inv.id === cartItem.inventoryId) ||
+            null;
         } catch {
           // If search fails, we'll create a minimal item
         }
-        
+
         if (inventoryItem) {
           // Use the actual inventory item with correct stock count
           localItems.push({
@@ -184,64 +188,86 @@ export default function ScanSellPage() {
     }
   };
 
-  const syncCartToAPI = async (items: CartItem[], changedItemId?: string, quantityDelta?: number, originalItem?: CartItem) => {
+  const syncCartToAPI = async (
+    items: CartItem[],
+    changedItemId?: string,
+    quantityDelta?: number,
+    originalItem?: CartItem
+  ) => {
     // Prevent duplicate calls
     if (isUpdatingRef.current) {
       return;
     }
-    
+
     isUpdatingRef.current = true;
     setIsUpdatingCart(true);
     try {
       // If a specific item changed, only send that item with quantity: 1 (the increment)
       // Otherwise, send all items (for initial load or bulk updates)
-      let itemsToSend: Array<{ id: string; quantity: number; sellingPrice: number }>;
-      
+      let itemsToSend: Array<{
+        id: string;
+        quantity: number;
+        sellingPrice: number;
+      }>;
+
       if (changedItemId && quantityDelta !== undefined) {
         // Only send the changed item with the delta quantity (1 for increment, -1 for decrement)
-        const changedItem = items.find((item) => item.inventoryItem.id === changedItemId);
+        const changedItem = items.find(
+          (item) => item.inventoryItem.id === changedItemId
+        );
         if (changedItem) {
           // Send the actual delta value (1 for +, -1 for -)
-          itemsToSend = [{
-            id: changedItem.inventoryItem.id,
-            quantity: quantityDelta, // Send the actual delta: 1 for increment, -1 for decrement
-            sellingPrice: changedItem.price,
-          }];
+          itemsToSend = [
+            {
+              id: changedItem.inventoryItem.id,
+              quantity: quantityDelta, // Send the actual delta: 1 for increment, -1 for decrement
+              sellingPrice: changedItem.price,
+            },
+          ];
         } else {
           // Item was removed from local state (quantity became 0)
           // We still need to send it to API with -1 to remove it from cart
           // Use the originalItem passed as parameter, or find it from cartData
-          const itemToRemove = originalItem || (() => {
-            const cartItem = cartData?.items.find((cartItem: CheckoutItemResponse) => cartItem.inventoryId === changedItemId);
-            return cartItem ? {
-              inventoryItem: {
-                id: changedItemId,
-                lotId: '',
-                barcode: null,
-                name: cartItem.name,
-                description: null,
-                companyName: null,
-                maximumRetailPrice: cartItem.maximumRetailPrice,
-                costPrice: 0,
-                sellingPrice: cartItem.sellingPrice,
-                receivedCount: 0,
-                soldCount: 0,
-                currentCount: 0,
-                location: '',
-                expiryDate: '',
-                shopId: '',
-              },
-              quantity: 0,
-              price: cartItem.sellingPrice,
-            } : null;
-          })();
-          
+          const itemToRemove =
+            originalItem ||
+            (() => {
+              const cartItem = cartData?.items.find(
+                (cartItem: CheckoutItemResponse) =>
+                  cartItem.inventoryId === changedItemId
+              );
+              return cartItem
+                ? {
+                    inventoryItem: {
+                      id: changedItemId,
+                      lotId: '',
+                      barcode: null,
+                      name: cartItem.name,
+                      description: null,
+                      companyName: null,
+                      maximumRetailPrice: cartItem.maximumRetailPrice,
+                      costPrice: 0,
+                      sellingPrice: cartItem.sellingPrice,
+                      receivedCount: 0,
+                      soldCount: 0,
+                      currentCount: 0,
+                      location: '',
+                      expiryDate: '',
+                      shopId: '',
+                    },
+                    quantity: 0,
+                    price: cartItem.sellingPrice,
+                  }
+                : null;
+            })();
+
           if (itemToRemove) {
-            itemsToSend = [{
-              id: changedItemId,
-              quantity: quantityDelta, // Send -1 to remove the item
-              sellingPrice: itemToRemove.price,
-            }];
+            itemsToSend = [
+              {
+                id: changedItemId,
+                quantity: quantityDelta, // Send -1 to remove the item
+                sellingPrice: itemToRemove.price,
+              },
+            ];
           } else {
             // Fallback: send all remaining items
             itemsToSend = items.map((item) => ({
@@ -280,7 +306,8 @@ export default function ScanSellPage() {
       setError(null);
     } catch (err) {
       // Handle API errors - might include stock validation errors
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update cart';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to update cart';
       setError(errorMessage);
       // Revert to previous cart state on error by reloading cart
       try {
@@ -296,7 +323,11 @@ export default function ScanSellPage() {
     }
   };
 
-  const handleSearch = async (e?: FormEvent<HTMLFormElement>, pageNum?: number, pageSize?: number) => {
+  const handleSearch = async (
+    e?: FormEvent<HTMLFormElement>,
+    pageNum?: number,
+    pageSize?: number
+  ) => {
     e?.preventDefault();
     if (!searchQuery.trim()) {
       setSearchResults([]);
@@ -308,11 +339,11 @@ export default function ScanSellPage() {
 
     const currentPage = pageNum !== undefined ? pageNum : 0;
     const currentPageSize = pageSize !== undefined ? pageSize : searchPageSize;
-    
+
     if (pageNum === undefined && pageSize === undefined) {
       setSearchPage(0); // Reset to first page on new search
     }
-    
+
     if (pageSize !== undefined) {
       setSearchPageSize(pageSize);
     }
@@ -325,19 +356,22 @@ export default function ScanSellPage() {
         currentPage,
         currentPageSize
       );
-      
+
       if (import.meta.env.DEV) {
         console.log('Raw search response from API:', response);
         console.log('Response type:', typeof response);
         console.log('Response.data:', response?.data);
         console.log('Response.page:', response?.page);
-        console.log('Is response.data an array?', Array.isArray(response?.data));
+        console.log(
+          'Is response.data an array?',
+          Array.isArray(response?.data)
+        );
       }
-      
+
       // Response should be InventoryListResponse: { data: InventoryItem[], meta: unknown | null, page: {...} }
       // So response.data should be the array of InventoryItem[]
       let items: InventoryItem[] = [];
-      
+
       if (response) {
         if (Array.isArray(response)) {
           // If response is directly an array
@@ -346,21 +380,26 @@ export default function ScanSellPage() {
           if (Array.isArray(response.data)) {
             // response.data is the array - this is the expected case
             items = response.data;
-          } else if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+          } else if (
+            response.data &&
+            typeof response.data === 'object' &&
+            'data' in response.data
+          ) {
             // Handle nested structure: { data: { data: [...] } }
-            const nestedData = (response.data as { data?: InventoryItem[] }).data;
+            const nestedData = (response.data as { data?: InventoryItem[] })
+              .data;
             items = Array.isArray(nestedData) ? nestedData : [];
           }
         }
       }
-      
+
       // Update pagination info
       if (response?.page) {
         setSearchTotalPages(response.page.totalPages);
         setSearchTotalItems(response.page.totalItems);
         setSearchPage(response.page.page);
       }
-      
+
       if (import.meta.env.DEV) {
         console.log('Final extracted items:', items);
         console.log('Items count:', items.length);
@@ -368,10 +407,11 @@ export default function ScanSellPage() {
           console.log('First item:', items[0]);
         }
       }
-      
+
       setSearchResults(items);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to search products';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to search products';
       setError(errorMessage);
       setSearchResults([]);
       if (import.meta.env.DEV) {
@@ -385,7 +425,7 @@ export default function ScanSellPage() {
   const handleAddToCart = async (item: InventoryItem, price?: number) => {
     // Use sellingPrice as default, or override with provided price
     const finalPrice = price !== undefined ? price : item.sellingPrice;
-    
+
     if (finalPrice <= 0) {
       setError('Please enter a valid price');
       return;
@@ -397,8 +437,10 @@ export default function ScanSellPage() {
     }
 
     setCartItems((prev) => {
-      const existingItem = prev.find((cartItem) => cartItem.inventoryItem.id === item.id);
-      
+      const existingItem = prev.find(
+        (cartItem) => cartItem.inventoryItem.id === item.id
+      );
+
       let updatedItems: CartItem[];
       if (existingItem) {
         // Update quantity if item already in cart
@@ -420,7 +462,10 @@ export default function ScanSellPage() {
           setError('Product is out of stock');
           return prev;
         }
-        updatedItems = [...prev, { inventoryItem: item, quantity: 1, price: finalPrice }];
+        updatedItems = [
+          ...prev,
+          { inventoryItem: item, quantity: 1, price: finalPrice },
+        ];
       }
 
       // Sync to API - only send the changed item with quantity: 1
@@ -439,20 +484,27 @@ export default function ScanSellPage() {
       }
 
       const newQuantity = originalItem.quantity + delta;
-      
+
       // If quantity would become 0 or less, we still need to send -1 to API for removal
       // But we'll filter it out from local state
       if (newQuantity <= 0) {
         // Item will be removed - send -1 to API with original item info, then filter out from local state
-        const remainingItems = prev.filter((item) => item.inventoryItem.id !== id);
+        const remainingItems = prev.filter(
+          (item) => item.inventoryItem.id !== id
+        );
         syncCartToAPI(remainingItems, id, delta, originalItem);
         return remainingItems;
       }
 
       // Only validate stock if we have accurate inventory data (not a minimal item)
       // Minimal items have currentCount set to 999999, so skip validation for those
-      if (originalItem.inventoryItem.currentCount < 999999 && newQuantity > originalItem.inventoryItem.currentCount) {
-        setError(`Only ${originalItem.inventoryItem.currentCount} items available in stock`);
+      if (
+        originalItem.inventoryItem.currentCount < 999999 &&
+        newQuantity > originalItem.inventoryItem.currentCount
+      ) {
+        setError(
+          `Only ${originalItem.inventoryItem.currentCount} items available in stock`
+        );
         return prev;
       }
 
@@ -480,7 +532,7 @@ export default function ScanSellPage() {
 
       // Remove from local state
       const updatedItems = prev.filter((item) => item.inventoryItem.id !== id);
-      
+
       // Sync to API - send the item with negative quantity (remove all)
       syncCartToAPI(updatedItems, id, -itemToRemove.quantity, itemToRemove);
       return updatedItems;
@@ -490,11 +542,11 @@ export default function ScanSellPage() {
   const handleClearCart = async () => {
     // Get current cart items before clearing
     const currentItems = [...cartItems];
-    
+
     // Clear local state
     setCartItems([]);
     setError(null);
-    
+
     // Send all items with negative quantities to remove them from cart
     if (currentItems.length > 0) {
       setIsUpdatingCart(true);
@@ -520,7 +572,8 @@ export default function ScanSellPage() {
         const updatedCart = await cartApi.add(cartPayload);
         setCartData(updatedCart);
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to clear cart';
+        const errorMessage =
+          err instanceof Error ? err.message : 'Failed to clear cart';
         setError(errorMessage);
         // Reload cart on error to restore state
         try {
@@ -538,7 +591,10 @@ export default function ScanSellPage() {
   };
 
   const calculateSubtotal = () => {
-    return cartData?.subTotal ?? cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+    return (
+      cartData?.subTotal ??
+      cartItems.reduce((total, item) => total + item.price * item.quantity, 0)
+    );
   };
 
   const calculateSGST = () => {
@@ -601,9 +657,13 @@ export default function ScanSellPage() {
         setCustomerEmail(customer.email || '');
         setCustomerAddress(customer.address || '');
         // Phone is already set from the search input
-        
+
         // Check if retailer fields are present
-        const hasRetailerFields = !!(customer.gstin || customer.dlNo || customer.pan);
+        const hasRetailerFields = !!(
+          customer.gstin ||
+          customer.dlNo ||
+          customer.pan
+        );
         if (hasRetailerFields) {
           setIsRetailer(true);
           setCustomerGstin(customer.gstin || '');
@@ -627,7 +687,8 @@ export default function ScanSellPage() {
       }
     } catch (err) {
       // On error (404 or any other error), clear all fields
-      const errorMessage = err instanceof Error ? err.message : 'Failed to search customer';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to search customer';
       setError(errorMessage);
       setCustomerName('');
       setCustomerEmail('');
@@ -659,8 +720,10 @@ export default function ScanSellPage() {
         ...(customerAddress && { customerAddress }),
         ...(customerPhone && { customerPhone: customerPhone.trim() }),
         ...(customerEmail && { customerEmail: customerEmail.trim() }),
-        ...(isRetailer && customerGstin && { customerGstin: customerGstin.trim() }),
-        ...(isRetailer && customerDlNo && { customerDlNo: customerDlNo.trim() }),
+        ...(isRetailer &&
+          customerGstin && { customerGstin: customerGstin.trim() }),
+        ...(isRetailer &&
+          customerDlNo && { customerDlNo: customerDlNo.trim() }),
         ...(isRetailer && customerPan && { customerPan: customerPan.trim() }),
       };
 
@@ -668,7 +731,7 @@ export default function ScanSellPage() {
 
       // Get purchaseId from upsert response or cartData
       const purchaseId = upsertResponse.purchaseId || cartData?.purchaseId;
-      
+
       if (!purchaseId) {
         throw new Error('Purchase ID not found');
       }
@@ -681,11 +744,12 @@ export default function ScanSellPage() {
       };
 
       await cartApi.updateStatus(statusPayload);
-      
+
       // Navigate to checkout page (it will load data via GET cart API)
       navigate('/dashboard/checkout');
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to process payment';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to process payment';
       setError(errorMessage);
     } finally {
       setIsProcessing(false);
@@ -698,11 +762,7 @@ export default function ScanSellPage() {
         <h2 className={styles.title}>Scan and Sell</h2>
         <p className={styles.subtitle}>Speed up sales with barcode scanning</p>
       </div>
-      {error && (
-        <div className={styles.errorMessage}>
-          {error}
-        </div>
-      )}
+      {error && <div className={styles.errorMessage}>{error}</div>}
       {/* Customer Information Section */}
       <div className={styles.customerSection}>
         <h4 className={styles.customerTitle}>Customer Information</h4>
@@ -780,7 +840,7 @@ export default function ScanSellPage() {
             />
           </div>
         </div>
-        
+
         {/* Retailer Checkbox */}
         <div className={styles.retailerCheckboxContainer}>
           <label className={styles.retailerCheckboxLabel}>
@@ -805,7 +865,9 @@ export default function ScanSellPage() {
         {/* Retailer Information Section */}
         {isRetailer && (
           <div className={styles.retailerSection}>
-            <h5 className={styles.retailerSectionTitle}>Retailer Information</h5>
+            <h5 className={styles.retailerSectionTitle}>
+              Retailer Information
+            </h5>
             <div className={styles.customerFields}>
               <div className={styles.customerField}>
                 <label htmlFor="customerGstin" className={styles.customerLabel}>
@@ -862,22 +924,34 @@ export default function ScanSellPage() {
           <h3 className={styles.sectionTitle}>Product Search</h3>
           <form onSubmit={handleSearch} className={styles.searchForm}>
             <div className={styles.searchInputWrapper}>
-              <span className={styles.searchIcon} role="img" aria-label="Search">🔍</span>
+              <span
+                className={styles.searchIcon}
+                role="img"
+                aria-label="Search"
+              >
+                🔍
+              </span>
               <input
                 type="text"
                 className={styles.searchInput}
                 placeholder="Search by product name, company, or barcode..."
                 value={searchQuery}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchQuery(e.currentTarget.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setSearchQuery(e.currentTarget.value)
+                }
                 disabled={isSearching}
                 autoFocus
               />
-              <button type="submit" className={styles.searchBtn} disabled={isSearching}>
+              <button
+                type="submit"
+                className={styles.searchBtn}
+                disabled={isSearching}
+              >
                 {isSearching ? 'Searching...' : 'Search'}
               </button>
             </div>
           </form>
-          
+
           <div className={styles.resultsContainer}>
             {isSearching ? (
               <div className={styles.loading}>Searching...</div>
@@ -904,11 +978,14 @@ export default function ScanSellPage() {
                       Previous
                     </button>
                     <span className={styles.pageInfo}>
-                      Page {searchPage + 1} of {searchTotalPages} • {searchTotalItems} items
+                      Page {searchPage + 1} of {searchTotalPages} •{' '}
+                      {searchTotalItems} items
                     </span>
                     <button
                       className={styles.pageBtn}
-                      disabled={searchPage >= searchTotalPages - 1 || isSearching}
+                      disabled={
+                        searchPage >= searchTotalPages - 1 || isSearching
+                      }
                       onClick={() => handleSearch(undefined, searchPage + 1)}
                     >
                       Next
@@ -930,7 +1007,9 @@ export default function ScanSellPage() {
                 )}
               </>
             ) : (
-              <div className={styles.emptyState}>Enter a search query to find products</div>
+              <div className={styles.emptyState}>
+                Enter a search query to find products
+              </div>
             )}
           </div>
         </div>
@@ -945,19 +1024,30 @@ export default function ScanSellPage() {
               <div className={styles.emptyCart}>Cart is empty</div>
             ) : (
               cartItems.map((cartItem) => (
-                <div key={cartItem.inventoryItem.id} className={styles.cartItem}>
+                <div
+                  key={cartItem.inventoryItem.id}
+                  className={styles.cartItem}
+                >
                   <div className={styles.itemInfo}>
                     <span className={styles.itemName}>
                       {cartItem.inventoryItem.name || 'Unnamed Product'}
                     </span>
                     {cartItem.inventoryItem.companyName && (
-                      <span className={styles.itemCompany}>{cartItem.inventoryItem.companyName}</span>
+                      <span className={styles.itemCompany}>
+                        {cartItem.inventoryItem.companyName}
+                      </span>
                     )}
                     <div className={styles.itemPriceInfo}>
                       <span className={styles.itemPrice}>₹{cartItem.price.toFixed(2)} each</span>
                       {cartItem.inventoryItem.maximumRetailPrice > cartItem.price && (
                         <span className={styles.itemDiscount}>
-                          {((cartItem.inventoryItem.maximumRetailPrice - cartItem.price) / cartItem.inventoryItem.maximumRetailPrice * 100).toFixed(1)}% off MRP
+                          {(
+                            ((cartItem.inventoryItem.maximumRetailPrice -
+                              cartItem.price) /
+                              cartItem.inventoryItem.maximumRetailPrice) *
+                            100
+                          ).toFixed(1)}
+                          % off MRP
                         </span>
                       )}
                     </div>
@@ -965,7 +1055,9 @@ export default function ScanSellPage() {
                   <div className={styles.itemActions}>
                     <button
                       className={styles.qtyBtn}
-                      onClick={() => handleUpdateQuantity(cartItem.inventoryItem.id, -1)}
+                      onClick={() =>
+                        handleUpdateQuantity(cartItem.inventoryItem.id, -1)
+                      }
                       disabled={isUpdatingCart}
                     >
                       -
@@ -973,14 +1065,18 @@ export default function ScanSellPage() {
                     <span className={styles.qty}>{cartItem.quantity}</span>
                     <button
                       className={styles.qtyBtn}
-                      onClick={() => handleUpdateQuantity(cartItem.inventoryItem.id, 1)}
+                      onClick={() =>
+                        handleUpdateQuantity(cartItem.inventoryItem.id, 1)
+                      }
                       disabled={isUpdatingCart}
                     >
                       +
                     </button>
                     <button
                       className={styles.removeBtn}
-                      onClick={() => handleRemoveItem(cartItem.inventoryItem.id)}
+                      onClick={() =>
+                        handleRemoveItem(cartItem.inventoryItem.id)
+                      }
                       disabled={isUpdatingCart}
                     >
                       ×
@@ -1031,9 +1127,18 @@ export default function ScanSellPage() {
             <button
               className={styles.checkoutBtn}
               onClick={handleProcessPayment}
-              disabled={cartItems.length === 0 || isProcessing || isUpdatingCart || isLoadingCart}
+              disabled={
+                cartItems.length === 0 ||
+                isProcessing ||
+                isUpdatingCart ||
+                isLoadingCart
+              }
             >
-              {isProcessing ? 'Processing...' : isUpdatingCart ? 'Updating...' : 'Process Payment'}
+              {isProcessing
+                ? 'Processing...'
+                : isUpdatingCart
+                ? 'Updating...'
+                : 'Process Payment'}
             </button>
           </div>
         </div>
@@ -1054,10 +1159,10 @@ function ProductResultItem({ item, onAddToCart }: ProductResultItemProps) {
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
       });
     } catch {
       return dateString;
@@ -1082,16 +1187,18 @@ function ProductResultItem({ item, onAddToCart }: ProductResultItemProps) {
   return (
     <div className={styles.resultItem}>
       <div className={styles.resultItemInfo}>
-        <h4 className={styles.resultItemName}>{item.name || 'Unnamed Product'}</h4>
+        <h4 className={styles.resultItemName}>
+          {item.name || 'Unnamed Product'}
+        </h4>
         {item.companyName && (
-          <p className={styles.resultItemCompany}>Company: {item.companyName}</p>
+          <p className={styles.resultItemCompany}>
+            Company: {item.companyName}
+          </p>
         )}
         {item.barcode && (
           <p className={styles.resultItemBarcode}>Barcode: {item.barcode}</p>
         )}
-        <p className={styles.resultItemStock}>
-          Current: {item.currentCount}
-        </p>
+        <p className={styles.resultItemStock}>Current: {item.currentCount}</p>
         <p className={styles.resultItemMRP}>
           MRP: ₹{item.maximumRetailPrice.toFixed(2)}
         </p>
@@ -1107,7 +1214,9 @@ function ProductResultItem({ item, onAddToCart }: ProductResultItemProps) {
             className={styles.priceInput}
             placeholder={item.sellingPrice.toString()}
             value={price}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => setPrice(e.currentTarget.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setPrice(e.currentTarget.value)
+            }
             step="0.01"
             min="0"
           />
@@ -1127,4 +1236,3 @@ function ProductResultItem({ item, onAddToCart }: ProductResultItemProps) {
     </div>
   );
 }
-

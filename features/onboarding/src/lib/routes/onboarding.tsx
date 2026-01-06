@@ -25,7 +25,7 @@ const STEP_LABELS: Record<OnboardingStep, string> = {
 
 export function meta() {
   return [
-    { title: 'Onboarding - InventoryPro' },
+    { title: 'Onboarding - StockKart' },
     { name: 'description', content: 'Complete your shop registration' },
   ];
 }
@@ -71,7 +71,7 @@ export default function OnboardingPage() {
 
     // Update email if user email is available
     if (user?.email && !formData.contactEmail) {
-      setFormData(prev => ({ ...prev, contactEmail: user.email || '' }));
+      setFormData((prev) => ({ ...prev, contactEmail: user.email || '' }));
     }
   }, [isAuthenticated, user, navigate, formData.contactEmail]);
 
@@ -97,7 +97,7 @@ export default function OnboardingPage() {
     } else if (step === 'businessDetails') {
       setFormData({ ...formData, [name]: value });
     }
-    
+
     if (error) {
       setError(null);
     }
@@ -110,17 +110,19 @@ export default function OnboardingPage() {
     if (step === 'contactPhone') return formData.contactPhone;
     if (step === 'contactEmail') return formData.contactEmail;
     if (step === 'location' && fieldName) {
-      return formData.location[fieldName as keyof typeof formData.location] || '';
+      return (
+        formData.location[fieldName as keyof typeof formData.location] || ''
+      );
     }
     if (step === 'businessDetails' && fieldName) {
-      return formData[fieldName as keyof typeof formData] as string || '';
+      return (formData[fieldName as keyof typeof formData] as string) || '';
     }
     return '';
   };
 
   const handleContinue = () => {
     const step = STEPS[currentStep];
-    
+
     // Validate location step - check all required fields
     if (step === 'location') {
       if (!formData.location.primaryAddress.trim()) {
@@ -165,7 +167,7 @@ export default function OnboardingPage() {
         return;
       }
     }
-    
+
     // If it's the last step, submit the form
     if (currentStep === STEPS.length - 1) {
       handleSubmit();
@@ -214,14 +216,17 @@ export default function OnboardingPage() {
       if (response && response.shopId) {
         // Update user's shopId in the store by fetching current user
         await fetchCurrentUser();
-        
+
         // Redirect to dashboard immediately after success
         navigate('/dashboard');
       } else {
         throw new Error('Shop registration failed - invalid response');
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to register shop. Please try again.';
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Failed to register shop. Please try again.';
       setError(errorMessage);
       setIsLoading(false);
     }
@@ -239,12 +244,14 @@ export default function OnboardingPage() {
   // Show loading state if checking auth
   if (!isAuthenticated && !user) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh' 
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+        }}
+      >
         <div>Loading...</div>
       </div>
     );
@@ -260,7 +267,9 @@ export default function OnboardingPage() {
       <div className={styles.sidebar}>
         <div className={styles.userInfo}>
           <div className={styles.userAvatar}>
-            {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
+            {user?.name?.[0]?.toUpperCase() ||
+              user?.email?.[0]?.toUpperCase() ||
+              'U'}
           </div>
           <div className={styles.userName}>
             {user?.name || user?.email || 'User'}
@@ -272,7 +281,9 @@ export default function OnboardingPage() {
             {STEPS.map((step, index) => (
               <div
                 key={step}
-                className={`${styles.step} ${index === currentStep ? styles.stepActive : ''} ${index < currentStep ? styles.stepCompleted : ''}`}
+                className={`${styles.step} ${
+                  index === currentStep ? styles.stepActive : ''
+                } ${index < currentStep ? styles.stepCompleted : ''}`}
               >
                 <span className={styles.stepNumber}>
                   {index < currentStep ? '✓' : index + 1}
@@ -283,10 +294,7 @@ export default function OnboardingPage() {
           </div>
         </div>
         <div className={styles.sidebarFooter}>
-          <button 
-            onClick={handleLogout}
-            className={styles.logoutBtn}
-          >
+          <button onClick={handleLogout} className={styles.logoutBtn}>
             Logout
           </button>
           <button className={styles.helpBtn}>?</button>
@@ -299,27 +307,26 @@ export default function OnboardingPage() {
             ← Back
           </button>
           <div className={styles.logo}>
-            <span className={styles.logoText}>InventoryPro</span>
+            <span className={styles.logoText}>StockKart</span>
           </div>
         </div>
 
         <div className={styles.formWrapper}>
           <h1 className={styles.title}>Verify your Contact Details</h1>
           <p className={styles.subtitle}>
-            We require this to verify your identity. Your details will remain safe.
+            We require this to verify your identity. Your details will remain
+            safe.
           </p>
 
-          {error && (
-            <div className={styles.errorMessage}>
-              {error}
-            </div>
-          )}
+          {error && <div className={styles.errorMessage}>{error}</div>}
 
           <div className={styles.form}>
             {STEPS[currentStep] === 'location' ? (
               <>
                 <div className={styles.formGroup}>
-                  <label htmlFor="primaryAddress" className={styles.label}>Primary Address *</label>
+                  <label htmlFor="primaryAddress" className={styles.label}>
+                    Primary Address *
+                  </label>
                   <input
                     type="text"
                     id="primaryAddress"
@@ -332,7 +339,9 @@ export default function OnboardingPage() {
                   />
                 </div>
                 <div className={styles.formGroup}>
-                  <label htmlFor="secondaryAddress" className={styles.label}>Secondary Address</label>
+                  <label htmlFor="secondaryAddress" className={styles.label}>
+                    Secondary Address
+                  </label>
                   <input
                     type="text"
                     id="secondaryAddress"
@@ -346,7 +355,9 @@ export default function OnboardingPage() {
                 </div>
                 <div className={styles.formRow}>
                   <div className={styles.formGroup}>
-                    <label htmlFor="city" className={styles.label}>City *</label>
+                    <label htmlFor="city" className={styles.label}>
+                      City *
+                    </label>
                     <input
                       type="text"
                       id="city"
@@ -359,7 +370,9 @@ export default function OnboardingPage() {
                     />
                   </div>
                   <div className={styles.formGroup}>
-                    <label htmlFor="state" className={styles.label}>State *</label>
+                    <label htmlFor="state" className={styles.label}>
+                      State *
+                    </label>
                     <input
                       type="text"
                       id="state"
@@ -374,7 +387,9 @@ export default function OnboardingPage() {
                 </div>
                 <div className={styles.formRow}>
                   <div className={styles.formGroup}>
-                    <label htmlFor="pin" className={styles.label}>PIN Code *</label>
+                    <label htmlFor="pin" className={styles.label}>
+                      PIN Code *
+                    </label>
                     <input
                       type="text"
                       id="pin"
@@ -387,7 +402,9 @@ export default function OnboardingPage() {
                     />
                   </div>
                   <div className={styles.formGroup}>
-                    <label htmlFor="country" className={styles.label}>Country *</label>
+                    <label htmlFor="country" className={styles.label}>
+                      Country *
+                    </label>
                     <input
                       type="text"
                       id="country"
@@ -403,12 +420,18 @@ export default function OnboardingPage() {
               </>
             ) : STEPS[currentStep] === 'businessDetails' ? (
               <>
-                <p className={styles.subtitle} style={{ marginBottom: '1.5rem', fontSize: '0.9rem' }}>
-                  These fields are optional. You can skip this step or fill them later.
+                <p
+                  className={styles.subtitle}
+                  style={{ marginBottom: '1.5rem', fontSize: '0.9rem' }}
+                >
+                  These fields are optional. You can skip this step or fill them
+                  later.
                 </p>
                 <div className={styles.formRow}>
                   <div className={styles.formGroup}>
-                    <label htmlFor="gstinNo" className={styles.label}>GSTIN No</label>
+                    <label htmlFor="gstinNo" className={styles.label}>
+                      GSTIN No
+                    </label>
                     <input
                       type="text"
                       id="gstinNo"
@@ -421,7 +444,9 @@ export default function OnboardingPage() {
                     />
                   </div>
                   <div className={styles.formGroup}>
-                    <label htmlFor="fssai" className={styles.label}>FSSAI</label>
+                    <label htmlFor="fssai" className={styles.label}>
+                      FSSAI
+                    </label>
                     <input
                       type="text"
                       id="fssai"
@@ -436,7 +461,9 @@ export default function OnboardingPage() {
                 </div>
                 <div className={styles.formRow}>
                   <div className={styles.formGroup}>
-                    <label htmlFor="dlNo" className={styles.label}>Drug License No (DL No)</label>
+                    <label htmlFor="dlNo" className={styles.label}>
+                      Drug License No (DL No)
+                    </label>
                     <input
                       type="text"
                       id="dlNo"
@@ -449,7 +476,9 @@ export default function OnboardingPage() {
                     />
                   </div>
                   <div className={styles.formGroup}>
-                    <label htmlFor="panNo" className={styles.label}>PAN No</label>
+                    <label htmlFor="panNo" className={styles.label}>
+                      PAN No
+                    </label>
                     <input
                       type="text"
                       id="panNo"
@@ -464,7 +493,9 @@ export default function OnboardingPage() {
                 </div>
                 <div className={styles.formRow}>
                   <div className={styles.formGroup}>
-                    <label htmlFor="sgst" className={styles.label}>SGST (%)</label>
+                    <label htmlFor="sgst" className={styles.label}>
+                      SGST (%)
+                    </label>
                     <input
                       type="text"
                       id="sgst"
@@ -477,7 +508,9 @@ export default function OnboardingPage() {
                     />
                   </div>
                   <div className={styles.formGroup}>
-                    <label htmlFor="cgst" className={styles.label}>CGST (%)</label>
+                    <label htmlFor="cgst" className={styles.label}>
+                      CGST (%)
+                    </label>
                     <input
                       type="text"
                       id="cgst"
@@ -497,14 +530,23 @@ export default function OnboardingPage() {
                   {STEP_LABELS[STEPS[currentStep]]} *
                 </label>
                 <input
-                  type={STEPS[currentStep] === 'contactEmail' ? 'email' : STEPS[currentStep] === 'contactPhone' ? 'tel' : 'text'}
+                  type={
+                    STEPS[currentStep] === 'contactEmail'
+                      ? 'email'
+                      : STEPS[currentStep] === 'contactPhone'
+                      ? 'tel'
+                      : 'text'
+                  }
                   id="currentInput"
                   className={styles.input}
                   placeholder={
-                    STEPS[currentStep] === 'name' ? 'Enter shop name' :
-                    STEPS[currentStep] === 'businessId' ? 'Enter business ID' :
-                    STEPS[currentStep] === 'contactPhone' ? '+91 1234 567890' :
-                    'Enter contact email'
+                    STEPS[currentStep] === 'name'
+                      ? 'Enter shop name'
+                      : STEPS[currentStep] === 'businessId'
+                      ? 'Enter business ID'
+                      : STEPS[currentStep] === 'contactPhone'
+                      ? '+91 1234 567890'
+                      : 'Enter contact email'
                   }
                   value={getCurrentValue()}
                   onChange={handleChange}
@@ -528,7 +570,11 @@ export default function OnboardingPage() {
                 className={styles.continueButton}
                 disabled={isLoading}
               >
-                {isLoading ? 'Registering...' : currentStep === STEPS.length - 1 ? 'Complete' : 'Continue'}
+                {isLoading
+                  ? 'Registering...'
+                  : currentStep === STEPS.length - 1
+                  ? 'Complete'
+                  : 'Continue'}
               </button>
             </div>
           </div>
@@ -537,4 +583,3 @@ export default function OnboardingPage() {
     </div>
   );
 }
-

@@ -3,8 +3,8 @@ import styles from './login.module.css';
 
 export function meta() {
   return [
-    { title: 'Login - InventoryPro' },
-    { name: 'description', content: 'Sign in to your InventoryPro account' },
+    { title: 'Login - StockKart' },
+    { name: 'description', content: 'Sign in to your StockKart account' },
   ];
 }
 
@@ -20,4 +20,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

@@ -5,7 +5,7 @@ import styles from './dashboard.shop-users.module.css';
 
 export function meta() {
   return [
-    { title: 'Shop Users - InventoryPro' },
+    { title: 'Shop Users - StockKart' },
     { name: 'description', content: 'View and manage shop users' },
   ];
 }
@@ -51,9 +51,12 @@ export default function ShopUsersPage() {
       </div>
 
       <div className={styles.content}>
-        <ShopUsersList key={refreshKey} shopId={shopId} onUserChange={handleUserChange} />
+        <ShopUsersList
+          key={refreshKey}
+          shopId={shopId}
+          onUserChange={handleUserChange}
+        />
       </div>
     </div>
   );
 }
-

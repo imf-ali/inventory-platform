@@ -9,7 +9,7 @@ const AVAILABLE_ROLES: UserRole[] = ['ADMIN', 'MANAGER', 'CASHIER'];
 
 export function meta() {
   return [
-    { title: 'Request to Join Shop - InventoryPro' },
+    { title: 'Request to Join Shop - StockKart' },
     { name: 'description', content: 'Request to join an existing shop' },
   ];
 }

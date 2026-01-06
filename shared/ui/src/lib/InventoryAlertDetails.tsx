@@ -21,20 +21,20 @@ export function InventoryAlertDetails({
   useEffect(() => {
     if (open && item) {
       const vendorId = item.vendorId;
-      
+
       if (import.meta.env.DEV) {
         console.log('InventoryAlertDetails opened with item:', item);
         console.log('Vendor ID:', vendorId);
       }
-      
+
       if (vendorId) {
         setLoadingVendor(true);
         setVendorError(null);
-        
+
         if (import.meta.env.DEV) {
           console.log('Fetching vendor details for ID:', vendorId);
         }
-        
+
         vendorsApi
           .getById(vendorId)
           .then((vendorData) => {
@@ -44,7 +44,8 @@ export function InventoryAlertDetails({
             setVendor(vendorData);
           })
           .catch((err) => {
-            const errorMessage = err?.message || 'Failed to load vendor details';
+            const errorMessage =
+              err?.message || 'Failed to load vendor details';
             setVendorError(errorMessage);
             console.error('Error fetching vendor:', err);
           })
@@ -79,7 +80,11 @@ export function InventoryAlertDetails({
               )}
             </div>
           </div>
-          <button className={styles.closeBtn} onClick={onClose} aria-label="Close">
+          <button
+            className={styles.closeBtn}
+            onClick={onClose}
+            aria-label="Close"
+          >
             ✕
           </button>
         </div>
@@ -96,7 +101,9 @@ export function InventoryAlertDetails({
                 <div className={styles.detailIcon}>🏷️</div>
                 <div className={styles.detailContent}>
                   <span className={styles.detailLabel}>Product Name</span>
-                  <span className={styles.detailValue}>{item?.name ?? '—'}</span>
+                  <span className={styles.detailValue}>
+                    {item?.name ?? '—'}
+                  </span>
                 </div>
               </div>
               {item?.companyName && (
@@ -104,7 +111,9 @@ export function InventoryAlertDetails({
                   <div className={styles.detailIcon}>🏢</div>
                   <div className={styles.detailContent}>
                     <span className={styles.detailLabel}>Company</span>
-                    <span className={styles.detailValue}>{item.companyName}</span>
+                    <span className={styles.detailValue}>
+                      {item.companyName}
+                    </span>
                   </div>
                 </div>
               )}
@@ -176,7 +185,9 @@ export function InventoryAlertDetails({
                   <div className={styles.detailIcon}>📝</div>
                   <div className={styles.detailContent}>
                     <span className={styles.detailLabel}>Description</span>
-                    <span className={styles.detailValue}>{item.description}</span>
+                    <span className={styles.detailValue}>
+                      {item.description}
+                    </span>
                   </div>
                 </div>
               )}
@@ -210,7 +221,7 @@ export function InventoryAlertDetails({
               </div>
               {item?.costPrice && (
                 <div className={`${styles.detailCard} ${styles.pricingCard}`}>
-                  <div className={styles.detailIcon}>💲</div>
+                  <div className={styles.detailIcon}>₹</div>
                   <div className={styles.detailContent}>
                     <span className={styles.detailLabel}>Cost Price</span>
                     <span className={`${styles.detailValue} ${styles.costValue}`}>
@@ -253,7 +264,9 @@ export function InventoryAlertDetails({
                       <div className={styles.detailIcon}>🏢</div>
                       <div className={styles.detailContent}>
                         <span className={styles.detailLabel}>Company</span>
-                        <span className={styles.detailValue}>{vendor.companyName}</span>
+                        <span className={styles.detailValue}>
+                          {vendor.companyName}
+                        </span>
                       </div>
                     </div>
                   )}
@@ -263,7 +276,10 @@ export function InventoryAlertDetails({
                       <div className={styles.detailContent}>
                         <span className={styles.detailLabel}>Email</span>
                         <span className={styles.detailValue}>
-                          <a href={`mailto:${vendor.contactEmail}`} className={styles.link}>
+                          <a
+                            href={`mailto:${vendor.contactEmail}`}
+                            className={styles.link}
+                          >
                             {vendor.contactEmail}
                           </a>
                         </span>
@@ -276,7 +292,10 @@ export function InventoryAlertDetails({
                       <div className={styles.detailContent}>
                         <span className={styles.detailLabel}>Phone</span>
                         <span className={styles.detailValue}>
-                          <a href={`tel:${vendor.contactPhone}`} className={styles.link}>
+                          <a
+                            href={`tel:${vendor.contactPhone}`}
+                            className={styles.link}
+                          >
                             {vendor.contactPhone}
                           </a>
                         </span>
@@ -288,7 +307,9 @@ export function InventoryAlertDetails({
                       <div className={styles.detailIcon}>📍</div>
                       <div className={styles.detailContent}>
                         <span className={styles.detailLabel}>Address</span>
-                        <span className={styles.detailValue}>{vendor.address}</span>
+                        <span className={styles.detailValue}>
+                          {vendor.address}
+                        </span>
                       </div>
                     </div>
                   )}
@@ -296,8 +317,12 @@ export function InventoryAlertDetails({
                     <div className={styles.detailCard}>
                       <div className={styles.detailIcon}>🏭</div>
                       <div className={styles.detailContent}>
-                        <span className={styles.detailLabel}>Business Type</span>
-                        <span className={styles.detailValue}>{vendor.businessType}</span>
+                        <span className={styles.detailLabel}>
+                          Business Type
+                        </span>
+                        <span className={styles.detailValue}>
+                          {vendor.businessType}
+                        </span>
                       </div>
                     </div>
                   )}

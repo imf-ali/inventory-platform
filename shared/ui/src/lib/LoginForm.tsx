@@ -7,7 +7,8 @@ import styles from './LoginForm.module.css';
 export function LoginForm() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, isAuthenticated, isLoading, error, clearError } = useAuthStore();
+  const { login, isAuthenticated, isLoading, error, clearError } =
+    useAuthStore();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -50,12 +51,15 @@ export function LoginForm() {
       const from = (location.state as { from?: string })?.from || '/dashboard';
       navigate(from, { replace: true });
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Login failed. Please try again.';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Login failed. Please try again.';
       setLocalError(errorMessage);
     }
   };
 
-  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+  const handleGoogleSuccess = async (
+    credentialResponse: CredentialResponse
+  ) => {
     try {
       setLocalError(null);
       clearError();
@@ -64,13 +68,17 @@ export function LoginForm() {
           idToken: credentialResponse.credential,
         });
         // Redirect to the original location if available, otherwise go to dashboard
-        const from = (location.state as { from?: string })?.from || '/dashboard';
+        const from =
+          (location.state as { from?: string })?.from || '/dashboard';
         navigate(from, { replace: true });
       } else {
         setLocalError('Google login failed. No credential received.');
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Google login failed. Please try again.';
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Google login failed. Please try again.';
       setLocalError(errorMessage);
     }
   };
@@ -96,18 +104,18 @@ export function LoginForm() {
     <div className={styles.formContainer}>
       <div className={styles.header}>
         <h1 className={styles.title}>Welcome Back</h1>
-        <p className={styles.subtitle}>Sign in to your InventoryPro account</p>
+        <p className={styles.subtitle}>Sign in to your StockKart account</p>
       </div>
-      
+
       {displayError && (
-        <div className={styles.errorMessage}>
-          {displayError}
-        </div>
+        <div className={styles.errorMessage}>{displayError}</div>
       )}
-      
+
       <div className={styles.form}>
         <div className={styles.formGroup}>
-          <label htmlFor="email" className={styles.label}>Email</label>
+          <label htmlFor="email" className={styles.label}>
+            Email
+          </label>
           <input
             type="email"
             id="email"
@@ -119,9 +127,11 @@ export function LoginForm() {
             disabled={isLoading}
           />
         </div>
-        
+
         <div className={styles.formGroup}>
-          <label htmlFor="password" className={styles.label}>Password</label>
+          <label htmlFor="password" className={styles.label}>
+            Password
+          </label>
           <input
             type="password"
             id="password"
@@ -138,17 +148,19 @@ export function LoginForm() {
             }}
           />
         </div>
-        
+
         <div className={styles.options}>
           <label className={styles.checkboxLabel}>
             <input type="checkbox" className={styles.checkbox} />
             <span>Remember me</span>
           </label>
-          <Link to="/forgot-password" className={styles.forgotLink}>Forgot password?</Link>
+          <Link to="/forgot-password" className={styles.forgotLink}>
+            Forgot password?
+          </Link>
         </div>
-        
-        <button 
-          type="button" 
+
+        <button
+          type="button"
           className={styles.submitButton}
           onClick={(e) => {
             e.preventDefault();
@@ -177,14 +189,15 @@ export function LoginForm() {
           />
         </div>
       </div>
-      
+
       <div className={styles.footer}>
         <p className={styles.footerText}>
           Don&apos;t have an account?{' '}
-          <Link to="/signup" className={styles.link}>Sign up</Link>
+          <Link to="/signup" className={styles.link}>
+            Sign up
+          </Link>
         </p>
       </div>
     </div>
   );
 }
-

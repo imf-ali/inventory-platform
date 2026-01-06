@@ -6,7 +6,7 @@ import styles from './dashboard.module.css';
 
 export function meta() {
   return [
-    { title: 'Dashboard - InventoryPro' },
+    { title: 'Dashboard - StockKart' },
     { name: 'description', content: 'Inventory management dashboard' },
   ];
 }
@@ -24,10 +24,11 @@ function formatNumber(value: number): string {
   return new Intl.NumberFormat('en-US').format(value);
 }
 
-
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -81,14 +82,18 @@ export default function DashboardPage() {
         <div className={styles.statCard}>
           <div className={styles.statIcon}>📦</div>
           <div className={styles.statInfo}>
-            <div className={styles.statValue}>{formatNumber(keyMetrics.totalProducts)}</div>
+            <div className={styles.statValue}>
+              {formatNumber(keyMetrics.totalProducts)}
+            </div>
             <div className={styles.statLabel}>Total Products</div>
           </div>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statIcon}>💰</div>
           <div className={styles.statInfo}>
-            <div className={styles.statValue}>{formatCurrency(keyMetrics.totalRevenueToday)}</div>
+            <div className={styles.statValue}>
+              {formatCurrency(keyMetrics.totalRevenueToday)}
+            </div>
             <div className={styles.statLabel}>Revenue Today</div>
             {revenueBreakdown.percentageChangeToday !== 0 && (
               <div className={styles.statChange}>
@@ -101,7 +106,9 @@ export default function DashboardPage() {
         <div className={styles.statCard}>
           <div className={styles.statIcon}>🛒</div>
           <div className={styles.statInfo}>
-            <div className={styles.statValue}>{formatNumber(keyMetrics.ordersToday)}</div>
+            <div className={styles.statValue}>
+              {formatNumber(keyMetrics.ordersToday)}
+            </div>
             <div className={styles.statLabel}>Orders Today</div>
             <div className={styles.statSubtext}>
               Avg: {formatCurrency(keyMetrics.averageOrderValue)}
@@ -111,7 +118,9 @@ export default function DashboardPage() {
         <div className={styles.statCard}>
           <div className={styles.statIcon}>⚠️</div>
           <div className={styles.statInfo}>
-            <div className={styles.statValue}>{formatNumber(keyMetrics.lowStockItemsCount)}</div>
+            <div className={styles.statValue}>
+              {formatNumber(keyMetrics.lowStockItemsCount)}
+            </div>
             <div className={styles.statLabel}>Low Stock Items</div>
           </div>
         </div>

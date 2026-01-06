@@ -5,8 +5,11 @@ import styles from './dashboard.my-invitations.module.css';
 
 export function meta() {
   return [
-    { title: 'My Invitations - InventoryPro' },
-    { name: 'description', content: 'View and accept your pending invitations' },
+    { title: 'My Invitations - StockKart' },
+    {
+      name: 'description',
+      content: 'View and accept your pending invitations',
+    },
   ];
 }
 
@@ -42,7 +45,3 @@ export default function MyInvitationsPage() {
     </div>
   );
 }
-
-
-
-

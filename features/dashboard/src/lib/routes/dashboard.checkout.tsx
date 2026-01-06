@@ -6,7 +6,7 @@ import styles from './dashboard.checkout.module.css';
 
 export function meta() {
   return [
-    { title: 'Checkout - InventoryPro' },
+    { title: 'Checkout - StockKart' },
     { name: 'description', content: 'Review and complete your purchase' },
   ];
 }
@@ -25,10 +25,10 @@ export default function CheckoutPage() {
   const loadCart = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const cart = await cartApi.get();
-      
+
       // Debug: Log cart data to verify retailer fields
       if (import.meta.env.DEV) {
         console.log('Cart data:', cart);
@@ -38,19 +38,19 @@ export default function CheckoutPage() {
           customerPan: cart.customerPan,
         });
       }
-      
+
       // If status is CREATED, redirect to scan-sell page
       if (cart.status === 'CREATED') {
         navigate('/dashboard/scan-sell');
         return;
       }
-      
+
       // If status is PENDING, stay on checkout page
       if (cart.status === 'PENDING') {
         setCheckoutData(cart);
         return;
       }
-      
+
       // For any other status, redirect to scan-sell
       navigate('/dashboard/scan-sell');
     } catch (err) {
@@ -96,7 +96,10 @@ export default function CheckoutPage() {
         <div className={styles.errorContainer}>
           <h2>No checkout data found</h2>
           <p>Please start a new transaction from the Scan and Sell page.</p>
-          <button className={styles.backBtn} onClick={() => navigate('/dashboard/scan-sell')}>
+          <button
+            className={styles.backBtn}
+            onClick={() => navigate('/dashboard/scan-sell')}
+          >
             Go to Scan and Sell
           </button>
         </div>
@@ -115,7 +118,7 @@ export default function CheckoutPage() {
 
     try {
       const purchaseId = checkoutData.purchaseId;
-      
+
       if (!purchaseId) {
         throw new Error('Purchase ID not found in checkout data');
       }
@@ -128,7 +131,7 @@ export default function CheckoutPage() {
       };
 
       await cartApi.updateStatus(statusPayload);
-      
+
       // Update local checkout data status to COMPLETED
       if (checkoutData) {
         setCheckoutData({
@@ -137,17 +140,18 @@ export default function CheckoutPage() {
           paymentMethod: method,
         });
       }
-      
+
       // Show success animation
       setShowSuccess(true);
       setIsProcessingPayment(false);
-      
+
       // After showing success overlay, hide it (don't call loadCart as it will return 404 for COMPLETED)
       setTimeout(() => {
         setShowSuccess(false);
       }, 3000);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to process payment';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to process payment';
       setError(errorMessage);
       setIsProcessingPayment(false);
     }
@@ -164,7 +168,7 @@ export default function CheckoutPage() {
 
     try {
       const purchaseId = checkoutData.purchaseId;
-      
+
       if (!purchaseId) {
         throw new Error('Purchase ID not found in checkout data');
       }
@@ -177,11 +181,12 @@ export default function CheckoutPage() {
       };
 
       await cartApi.updateStatus(statusPayload);
-      
+
       // Navigate back to scan-sell page
       navigate('/dashboard/scan-sell');
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update cart status';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to update cart status';
       setError(errorMessage);
       setIsUpdating(false);
     }
@@ -198,27 +203,30 @@ export default function CheckoutPage() {
 
     try {
       const pdfBlob = await cartApi.getInvoicePdf(checkoutData.purchaseId);
-      
+
       // Create a blob URL and open it in a new window for viewing/printing
       const url = window.URL.createObjectURL(pdfBlob);
       const newWindow = window.open(url, '_blank');
-      
+
       if (!newWindow) {
         // If popup was blocked, fall back to download
         const link = document.createElement('a');
         link.href = url;
-        link.download = `invoice-${checkoutData.invoiceNo || checkoutData.purchaseId}.pdf`;
+        link.download = `invoice-${
+          checkoutData.invoiceNo || checkoutData.purchaseId
+        }.pdf`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
       }
-      
+
       // Clean up the blob URL after a delay
       setTimeout(() => {
         window.URL.revokeObjectURL(url);
       }, 1000);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to download invoice PDF';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to download invoice PDF';
       setError(errorMessage);
     } finally {
       setIsPrinting(false);
@@ -226,9 +234,10 @@ export default function CheckoutPage() {
   };
 
   // Calculate tax percentage
-  const taxPercentage = checkoutData.subTotal > 0 
-    ? ((checkoutData.taxTotal / checkoutData.subTotal) * 100).toFixed(1)
-    : '0';
+  const taxPercentage =
+    checkoutData.subTotal > 0
+      ? ((checkoutData.taxTotal / checkoutData.subTotal) * 100).toFixed(1)
+      : '0';
 
   // Get current date
   const currentDate = new Date().toLocaleDateString('en-US', {
@@ -236,7 +245,7 @@ export default function CheckoutPage() {
     month: 'long',
     day: 'numeric',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   });
 
   // Show success overlay
@@ -270,9 +279,7 @@ export default function CheckoutPage() {
           <p className={styles.successMessage}>
             Your payment has been processed successfully.
           </p>
-          <p className={styles.successSubMessage}>
-            Updating order status...
-          </p>
+          <p className={styles.successSubMessage}>Updating order status...</p>
         </div>
       </div>
     );
@@ -285,11 +292,7 @@ export default function CheckoutPage() {
         <p className={styles.subtitle}>Invoice #{checkoutData.invoiceNo}</p>
       </div>
 
-      {error && (
-        <div className={styles.errorMessage}>
-          {error}
-        </div>
-      )}
+      {error && <div className={styles.errorMessage}>{error}</div>}
 
       <div className={styles.container}>
         {/* Invoice Details */}
@@ -299,7 +302,13 @@ export default function CheckoutPage() {
               <h3 className={styles.invoiceTitle}>Invoice Details</h3>
             </div>
             <div className={styles.headerActions}>
-              <div className={`${styles.statusBadge} ${checkoutData.status === 'COMPLETED' ? styles.statusBadgeCompleted : ''}`}>
+              <div
+                className={`${styles.statusBadge} ${
+                  checkoutData.status === 'COMPLETED'
+                    ? styles.statusBadgeCompleted
+                    : ''
+                }`}
+              >
                 <span className={styles.statusText}>{checkoutData.status}</span>
               </div>
               {checkoutData.status === 'COMPLETED' && (
@@ -352,40 +361,55 @@ export default function CheckoutPage() {
             {checkoutData.customerName && (
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>Customer Name:</span>
-                <span className={styles.infoValue}>{checkoutData.customerName}</span>
+                <span className={styles.infoValue}>
+                  {checkoutData.customerName}
+                </span>
               </div>
             )}
             {checkoutData.customerPhone && (
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>Customer Phone:</span>
-                <span className={styles.infoValue}>{checkoutData.customerPhone}</span>
+                <span className={styles.infoValue}>
+                  {checkoutData.customerPhone}
+                </span>
               </div>
             )}
             <div className={styles.infoItem}>
               <span className={styles.infoLabel}>Address:</span>
-              <span className={styles.infoValue}>{checkoutData.customerAddress || 'Not specified'}</span>
+              <span className={styles.infoValue}>
+                {checkoutData.customerAddress || 'Not specified'}
+              </span>
             </div>
-            {checkoutData.customerGstin && checkoutData.customerGstin.trim() && (
-              <div className={styles.infoItem}>
-                <span className={styles.infoLabel}>Customer GSTIN:</span>
-                <span className={styles.infoValue}>{checkoutData.customerGstin}</span>
-              </div>
-            )}
+            {checkoutData.customerGstin &&
+              checkoutData.customerGstin.trim() && (
+                <div className={styles.infoItem}>
+                  <span className={styles.infoLabel}>Customer GSTIN:</span>
+                  <span className={styles.infoValue}>
+                    {checkoutData.customerGstin}
+                  </span>
+                </div>
+              )}
             {checkoutData.customerDlNo && checkoutData.customerDlNo.trim() && (
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>Customer DL No:</span>
-                <span className={styles.infoValue}>{checkoutData.customerDlNo}</span>
+                <span className={styles.infoValue}>
+                  {checkoutData.customerDlNo}
+                </span>
               </div>
             )}
             {checkoutData.customerPan && checkoutData.customerPan.trim() && (
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>Customer PAN:</span>
-                <span className={styles.infoValue}>{checkoutData.customerPan}</span>
+                <span className={styles.infoValue}>
+                  {checkoutData.customerPan}
+                </span>
               </div>
             )}
             <div className={styles.infoItem}>
               <span className={styles.infoLabel}>Payment Method:</span>
-              <span className={styles.infoValue}>{checkoutData.paymentMethod || 'Not specified'}</span>
+              <span className={styles.infoValue}>
+                {checkoutData.paymentMethod || 'Not specified'}
+              </span>
             </div>
             <div className={styles.infoItem}>
               <span className={styles.infoLabel}>Date:</span>
@@ -462,7 +486,9 @@ export default function CheckoutPage() {
                 onClick={() => handlePayment('CASH')}
                 disabled={isProcessingPayment || isUpdating}
               >
-                <span role="img" aria-label="Cash">💵</span> 
+                <span role="img" aria-label="Cash">
+                  💵
+                </span>
                 {isProcessingPayment ? 'Processing...' : 'Pay in Cash'}
               </button>
               <button
@@ -470,7 +496,9 @@ export default function CheckoutPage() {
                 onClick={() => handlePayment('ONLINE')}
                 disabled={isProcessingPayment || isUpdating}
               >
-                <span role="img" aria-label="Online Payment">💳</span> 
+                <span role="img" aria-label="Online Payment">
+                  💳
+                </span>
                 {isProcessingPayment ? 'Processing...' : 'Pay Online'}
               </button>
             </div>
@@ -479,8 +507,8 @@ export default function CheckoutPage() {
 
         {/* Actions */}
         <div className={styles.actionsSection}>
-          <button 
-            className={styles.backBtn} 
+          <button
+            className={styles.backBtn}
             onClick={handleGoBack}
             disabled={isUpdating}
           >
@@ -491,4 +519,3 @@ export default function CheckoutPage() {
     </div>
   );
 }
-

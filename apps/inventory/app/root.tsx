@@ -13,11 +13,12 @@ import '../styles.css';
 
 export const meta: MetaFunction = () => [
   {
-    title: 'InventoryPro - Complete Inventory Management Solution',
+    title: 'StockKart - Complete Inventory Management Solution',
   },
   {
     name: 'description',
-    content: 'Streamline your business operations with our comprehensive inventory management platform.',
+    content:
+      'Streamline your business operations with our comprehensive inventory management platform.',
   },
 ];
 
@@ -61,12 +62,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
         />
       </head>
       <body>
-        <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ''}>
-        <ThemeProvider>
-          <AuthInitializer>
-            {children}
-          </AuthInitializer>
-        </ThemeProvider>
+        <GoogleOAuthProvider
+          clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ''}
+        >
+          <ThemeProvider>
+            <AuthInitializer>{children}</AuthInitializer>
+          </ThemeProvider>
         </GoogleOAuthProvider>
         <ScrollRestoration />
         <Scripts />

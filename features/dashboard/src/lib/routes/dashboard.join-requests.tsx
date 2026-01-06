@@ -4,7 +4,7 @@ import styles from './dashboard.join-requests.module.css';
 
 export function meta() {
   return [
-    { title: 'Join Requests - InventoryPro' },
+    { title: 'Join Requests - StockKart' },
     { name: 'description', content: 'Manage join requests for your shop' },
   ];
 }
@@ -50,4 +50,3 @@ export default function JoinRequestsPage() {
     </div>
   );
 }
-
