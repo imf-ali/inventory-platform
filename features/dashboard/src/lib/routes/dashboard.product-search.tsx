@@ -6,8 +6,11 @@ import styles from './dashboard.product-search.module.css';
 
 export function meta() {
   return [
-    { title: 'Product Search - InventoryPro' },
-    { name: 'description', content: 'Quickly find products with powerful search and filtering' },
+    { title: 'Product Search - StockKart' },
+    {
+      name: 'description',
+      content: 'Quickly find products with powerful search and filtering',
+    },
   ];
 }
 
@@ -47,7 +50,8 @@ export default function ProductSearchPage() {
         setSearchPage(0);
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch inventory';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to fetch inventory';
       setError(errorMessage);
       setInventory([]);
     } finally {
@@ -55,16 +59,20 @@ export default function ProductSearchPage() {
     }
   };
 
-  const handleSearch = async (e?: FormEvent<HTMLFormElement>, pageNum?: number, pageSize?: number) => {
+  const handleSearch = async (
+    e?: FormEvent<HTMLFormElement>,
+    pageNum?: number,
+    pageSize?: number
+  ) => {
     e?.preventDefault();
-    
+
     const currentPage = pageNum !== undefined ? pageNum : 0;
     const currentPageSize = pageSize !== undefined ? pageSize : searchPageSize;
-    
+
     if (pageNum === undefined && pageSize === undefined) {
       setSearchPage(0); // Reset to first page on new search
     }
-    
+
     if (pageSize !== undefined) {
       setSearchPageSize(pageSize);
     }
@@ -77,7 +85,11 @@ export default function ProductSearchPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await inventoryApi.search(searchQuery.trim(), currentPage, currentPageSize);
+      const response = await inventoryApi.search(
+        searchQuery.trim(),
+        currentPage,
+        currentPageSize
+      );
       setInventory(response.data || []);
       // Update pagination info
       if (response.page) {
@@ -86,7 +98,8 @@ export default function ProductSearchPage() {
         setSearchPage(response.page.page);
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to search inventory';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to search inventory';
       setError(errorMessage);
       setInventory([]);
     } finally {
@@ -105,10 +118,10 @@ export default function ProductSearchPage() {
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
       });
     } catch {
       return dateString;
@@ -138,14 +151,17 @@ export default function ProductSearchPage() {
       };
 
       await cartApi.add(cartPayload);
-      setSuccessMessage(`Added "${item.name || 'Product'}" to cart successfully!`);
-      
+      setSuccessMessage(
+        `Added "${item.name || 'Product'}" to cart successfully!`
+      );
+
       // Clear success message after 3 seconds
       setTimeout(() => {
         setSuccessMessage(null);
       }, 3000);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to add item to cart';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to add item to cart';
       setError(errorMessage);
     } finally {
       setAddingToCart(null);
@@ -156,11 +172,15 @@ export default function ProductSearchPage() {
     <div className={styles.page}>
       <div className={styles.header}>
         <h2 className={styles.title}>Product Search</h2>
-        <p className={styles.subtitle}>Search products by name, company, or barcode</p>
+        <p className={styles.subtitle}>
+          Search products by name, company, or barcode
+        </p>
       </div>
       <div className={styles.searchContainer}>
         <form className={styles.searchBar} onSubmit={handleSearch}>
-          <span className={styles.searchIcon} role="img" aria-label="Search">🔍</span>
+          <span className={styles.searchIcon} role="img" aria-label="Search">
+            🔍
+          </span>
           <input
             type="text"
             className={styles.searchInput}
@@ -169,13 +189,17 @@ export default function ProductSearchPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
             disabled={isLoading}
           />
-          <button type="submit" className={styles.searchBtn} disabled={isLoading}>
+          <button
+            type="submit"
+            className={styles.searchBtn}
+            disabled={isLoading}
+          >
             {isLoading ? 'Searching...' : 'Search'}
           </button>
           {searchQuery && (
-            <button 
-              type="button" 
-              className={styles.clearBtn} 
+            <button
+              type="button"
+              className={styles.clearBtn}
               onClick={handleClearSearch}
               disabled={isLoading}
             >
@@ -184,22 +208,18 @@ export default function ProductSearchPage() {
           )}
         </form>
       </div>
-      {error && (
-        <div className={styles.errorMessage}>
-          {error}
-        </div>
-      )}
+      {error && <div className={styles.errorMessage}>{error}</div>}
       {successMessage && (
-        <div className={styles.successMessage}>
-          {successMessage}
-        </div>
+        <div className={styles.successMessage}>{successMessage}</div>
       )}
       <div className={styles.results}>
         <div className={styles.resultsHeader}>
           <span className={styles.resultsCount}>
-            {isLoading 
-              ? 'Loading...' 
-              : `Showing ${inventory.length} ${inventory.length === 1 ? 'result' : 'results'}`}
+            {isLoading
+              ? 'Loading...'
+              : `Showing ${inventory.length} ${
+                  inventory.length === 1 ? 'result' : 'results'
+                }`}
           </span>
         </div>
         {isLoading && inventory.length === 0 ? (
@@ -218,7 +238,13 @@ export default function ProductSearchPage() {
             <div className={styles.productsGrid}>
               {inventory.map((item) => (
                 <div key={item.id || item.lotId} className={styles.productCard}>
-                  <div className={styles.productImage} role="img" aria-label="Product">📦</div>
+                  <div
+                    className={styles.productImage}
+                    role="img"
+                    aria-label="Product"
+                  >
+                    📦
+                  </div>
                   <div className={styles.productInfo}>
                     <h3 className={styles.productName}>
                       {item.name || 'Unnamed Product'}
@@ -244,15 +270,16 @@ export default function ProductSearchPage() {
                           Current: {item.currentCount}
                         </span>
                         <span className={styles.productStock}>
-                          Received: {item.receivedCount} | Sold: {item.soldCount}
+                          Received: {item.receivedCount} | Sold:{' '}
+                          {item.soldCount}
                         </span>
                       </div>
                       <div className={styles.priceInfo}>
                         <span className={styles.productPrice}>
-                          Selling: ${item.sellingPrice.toFixed(2)}
+                          Selling: ₹{item.sellingPrice.toFixed(2)}
                         </span>
                         <span className={styles.productPrice}>
-                          MRP: ${item.maximumRetailPrice.toFixed(2)}
+                          MRP: ₹{item.maximumRetailPrice.toFixed(2)}
                         </span>
                       </div>
                       <div className={styles.expiryInfo}>
@@ -277,9 +304,17 @@ export default function ProductSearchPage() {
                       <button
                         className={styles.addToSellBtn}
                         onClick={() => handleAddToSell(item)}
-                        disabled={isLoading || addingToCart === item.id || item.currentCount <= 0}
+                        disabled={
+                          isLoading ||
+                          addingToCart === item.id ||
+                          item.currentCount <= 0
+                        }
                       >
-                        {addingToCart === item.id ? 'Adding...' : item.currentCount <= 0 ? 'Out of Stock' : 'Add to Sell'}
+                        {addingToCart === item.id
+                          ? 'Adding...'
+                          : item.currentCount <= 0
+                          ? 'Out of Stock'
+                          : 'Add to Sell'}
                       </button>
                     </div>
                   </div>
@@ -296,7 +331,8 @@ export default function ProductSearchPage() {
                   Previous
                 </button>
                 <span className={styles.pageInfo}>
-                  Page {searchPage + 1} of {searchTotalPages} • {searchTotalItems} items
+                  Page {searchPage + 1} of {searchTotalPages} •{' '}
+                  {searchTotalItems} items
                 </span>
                 <button
                   className={styles.pageBtn}
@@ -331,4 +367,3 @@ export default function ProductSearchPage() {
     </div>
   );
 }
-

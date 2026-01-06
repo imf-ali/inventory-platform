@@ -6,7 +6,8 @@ import styles from './SignupForm.module.css';
 
 export function SignupForm() {
   const navigate = useNavigate();
-  const { signup, isAuthenticated, isLoading, error, clearError } = useAuthStore();
+  const { signup, isAuthenticated, isLoading, error, clearError } =
+    useAuthStore();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -32,7 +33,12 @@ export function SignupForm() {
     setLocalError(null);
     clearError();
 
-    if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
+    if (
+      !formData.name ||
+      !formData.email ||
+      !formData.password ||
+      !formData.confirmPassword
+    ) {
       setLocalError('Please fill in all required fields');
       return;
     }
@@ -51,12 +57,15 @@ export function SignupForm() {
       });
       navigate('/shop-selection');
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Signup failed. Please try again.';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Signup failed. Please try again.';
       setLocalError(errorMessage);
     }
   };
 
-  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+  const handleGoogleSuccess = async (
+    credentialResponse: CredentialResponse
+  ) => {
     try {
       setLocalError(null);
       clearError();
@@ -70,7 +79,10 @@ export function SignupForm() {
         setLocalError('Google signup failed. No credential received.');
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Google signup failed. Please try again.';
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Google signup failed. Please try again.';
       setLocalError(errorMessage);
     }
   };
@@ -79,7 +91,9 @@ export function SignupForm() {
     setLocalError('Google signup failed. Please try again.');
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const target = e.target as HTMLInputElement | HTMLSelectElement;
     setFormData({
       ...formData,
@@ -97,18 +111,18 @@ export function SignupForm() {
     <div className={styles.formContainer}>
       <div className={styles.header}>
         <h1 className={styles.title}>Create Account</h1>
-        <p className={styles.subtitle}>Get started with InventoryPro today</p>
+        <p className={styles.subtitle}>Get started with StockKart today</p>
       </div>
-      
+
       {displayError && (
-        <div className={styles.errorMessage}>
-          {displayError}
-        </div>
+        <div className={styles.errorMessage}>{displayError}</div>
       )}
-      
+
       <form className={styles.form} onSubmit={handleSubmit}>
         <div className={styles.formGroup}>
-          <label htmlFor="name" className={styles.label}>Full Name</label>
+          <label htmlFor="name" className={styles.label}>
+            Full Name
+          </label>
           <input
             type="text"
             id="name"
@@ -121,9 +135,11 @@ export function SignupForm() {
             disabled={isLoading}
           />
         </div>
-        
+
         <div className={styles.formGroup}>
-          <label htmlFor="email" className={styles.label}>Email</label>
+          <label htmlFor="email" className={styles.label}>
+            Email
+          </label>
           <input
             type="email"
             id="email"
@@ -136,9 +152,11 @@ export function SignupForm() {
             disabled={isLoading}
           />
         </div>
-        
+
         <div className={styles.formGroup}>
-          <label htmlFor="password" className={styles.label}>Password</label>
+          <label htmlFor="password" className={styles.label}>
+            Password
+          </label>
           <input
             type="password"
             id="password"
@@ -151,9 +169,11 @@ export function SignupForm() {
             disabled={isLoading}
           />
         </div>
-        
+
         <div className={styles.formGroup}>
-          <label htmlFor="confirmPassword" className={styles.label}>Confirm Password</label>
+          <label htmlFor="confirmPassword" className={styles.label}>
+            Confirm Password
+          </label>
           <input
             type="password"
             id="confirmPassword"
@@ -166,16 +186,25 @@ export function SignupForm() {
             disabled={isLoading}
           />
         </div>
-        
+
         <div className={styles.checkboxGroup}>
           <label className={styles.checkboxLabel}>
             <input type="checkbox" className={styles.checkbox} required />
-            <span>I agree to the <a href="#terms" className={styles.termsLink}>Terms of Service</a> and <a href="#privacy" className={styles.termsLink}>Privacy Policy</a></span>
+            <span>
+              I agree to the{' '}
+              <a href="#terms" className={styles.termsLink}>
+                Terms of Service
+              </a>{' '}
+              and{' '}
+              <a href="#privacy" className={styles.termsLink}>
+                Privacy Policy
+              </a>
+            </span>
           </label>
         </div>
-        
-        <button 
-          type="submit" 
+
+        <button
+          type="submit"
           className={styles.submitButton}
           disabled={isLoading}
         >
@@ -199,14 +228,15 @@ export function SignupForm() {
           width="100%"
         />
       </div>
-      
+
       <div className={styles.footer}>
         <p className={styles.footerText}>
           Already have an account?{' '}
-          <Link to="/login" className={styles.link}>Sign in</Link>
+          <Link to="/login" className={styles.link}>
+            Sign in
+          </Link>
         </p>
       </div>
     </div>
   );
 }
-

@@ -14,7 +14,7 @@ import styles from './dashboard.reminders.module.css';
 
 export function meta() {
   return [
-    { title: 'Reminders - InventoryPro' },
+    { title: 'Reminders - StockKart' },
     { name: 'description', content: 'Manage your inventory reminders' },
   ];
 }
@@ -44,7 +44,8 @@ export default function RemindersPage() {
     null
   );
   const [customSnoozeDays, setCustomSnoozeDays] = useState<number | ''>(''); // 👈 for manual days
-  const [selectedInventory, setSelectedInventory] = useState<ReminderInventorySummary | null>(null);
+  const [selectedInventory, setSelectedInventory] =
+    useState<ReminderInventorySummary | null>(null);
 
   const handleSnooze = async (reminderId: string, snoozeDays: number) => {
     if (!snoozeDays || snoozeDays <= 0) {
@@ -530,7 +531,9 @@ export default function RemindersPage() {
                             <button
                               type="button"
                               className={styles.viewDetailsBtn}
-                              onClick={() => setSelectedInventory(reminder.inventory)}
+                              onClick={() =>
+                                setSelectedInventory(reminder.inventory)
+                              }
                             >
                               View Details
                             </button>
@@ -555,7 +558,9 @@ export default function RemindersPage() {
                           {reminder.inventory && (
                             <button
                               className={styles.viewDetailsBtn}
-                              onClick={() => setSelectedInventory(reminder.inventory)}
+                              onClick={() =>
+                                setSelectedInventory(reminder.inventory)
+                              }
                             >
                               View Details
                             </button>

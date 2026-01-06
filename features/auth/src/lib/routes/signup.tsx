@@ -3,8 +3,8 @@ import styles from './signup.module.css';
 
 export function meta() {
   return [
-    { title: 'Sign Up - InventoryPro' },
-    { name: 'description', content: 'Create your InventoryPro account' },
+    { title: 'Sign Up - StockKart' },
+    { name: 'description', content: 'Create your StockKart account' },
   ];
 }
 

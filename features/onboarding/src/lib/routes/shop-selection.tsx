@@ -5,15 +5,20 @@ import styles from './shop-selection.module.css';
 
 export function meta() {
   return [
-    { title: 'Shop Selection - InventoryPro' },
-    { name: 'description', content: 'Choose how to get started with your shop' },
+    { title: 'Shop Selection - StockKart' },
+    {
+      name: 'description',
+      content: 'Choose how to get started with your shop',
+    },
   ];
 }
 
 export default function ShopSelectionPage() {
   const navigate = useNavigate();
   const { user, isAuthenticated, fetchCurrentUser } = useAuthStore();
-  const [selectedOption, setSelectedOption] = useState<'onboard' | 'request' | null>(null);
+  const [selectedOption, setSelectedOption] = useState<
+    'onboard' | 'request' | null
+  >(null);
 
   // Periodically check if user has been added to a shop
   useEffect(() => {
@@ -73,40 +78,43 @@ export default function ShopSelectionPage() {
       <div className={styles.header}>
         <h1 className={styles.title}>Get Started</h1>
         <p className={styles.subtitle}>
-          Choose how you'd like to get started with InventoryPro
+          Choose how you'd like to get started with StockKart
         </p>
       </div>
 
       <div className={styles.options}>
         <div
-          className={`${styles.optionCard} ${selectedOption === 'onboard' ? styles.selected : ''}`}
+          className={`${styles.optionCard} ${
+            selectedOption === 'onboard' ? styles.selected : ''
+          }`}
           onClick={() => handleOptionSelect('onboard')}
         >
           <div className={styles.optionIcon}>🏪</div>
           <h2 className={styles.optionTitle}>Onboard a New Shop</h2>
           <p className={styles.optionDescription}>
-            Create and register your own shop. You'll be the owner and can invite others to join.
+            Create and register your own shop. You'll be the owner and can
+            invite others to join.
           </p>
         </div>
 
         <div
-          className={`${styles.optionCard} ${selectedOption === 'request' ? styles.selected : ''}`}
+          className={`${styles.optionCard} ${
+            selectedOption === 'request' ? styles.selected : ''
+          }`}
           onClick={() => handleOptionSelect('request')}
         >
           <div className={styles.optionIcon}>👥</div>
           <h2 className={styles.optionTitle}>Request to Join a Shop</h2>
           <p className={styles.optionDescription}>
-            Request to join an existing shop. The shop owner will review and approve your request.
+            Request to join an existing shop. The shop owner will review and
+            approve your request.
           </p>
         </div>
       </div>
 
       {selectedOption && (
         <div className={styles.actions}>
-          <button
-            className={styles.continueButton}
-            onClick={handleContinue}
-          >
+          <button className={styles.continueButton} onClick={handleContinue}>
             Continue
           </button>
         </div>
@@ -114,4 +122,3 @@ export default function ShopSelectionPage() {
     </div>
   );
 }
-

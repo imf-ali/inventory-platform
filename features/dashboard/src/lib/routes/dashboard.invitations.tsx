@@ -5,7 +5,7 @@ import styles from './dashboard.invitations.module.css';
 
 export function meta() {
   return [
-    { title: 'Invitations - InventoryPro' },
+    { title: 'Invitations - StockKart' },
     { name: 'description', content: 'Manage shop invitations' },
   ];
 }
@@ -46,7 +46,8 @@ export default function InvitationsPage() {
       <div className={styles.header}>
         <h1 className={styles.title}>Manage Invitations</h1>
         <p className={styles.subtitle}>
-          Send invitations to users to join your shop and manage existing invitations
+          Send invitations to users to join your shop and manage existing
+          invitations
         </p>
       </div>
 

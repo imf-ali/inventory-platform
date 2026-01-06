@@ -3,7 +3,7 @@ import styles from './dashboard.history.module.css';
 
 export function meta() {
   return [
-    { title: 'Purchase History - InventoryPro' },
+    { title: 'Purchase History - StockKart' },
     { name: 'description', content: 'View all purchase history' },
   ];
 }
@@ -13,9 +13,7 @@ export default function HistoryPage() {
     <div className={styles.container}>
       <div className={styles.header}>
         <h1 className={styles.title}>Purchase History</h1>
-        <p className={styles.subtitle}>
-          View all purchases made in your shop
-        </p>
+        <p className={styles.subtitle}>View all purchases made in your shop</p>
       </div>
 
       <div className={styles.content}>
@@ -24,4 +22,3 @@ export default function HistoryPage() {
     </div>
   );
 }
-

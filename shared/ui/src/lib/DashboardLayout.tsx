@@ -15,11 +15,11 @@ const MENU_ITEMS = [
   },
   { path: '/dashboard/product-search', label: 'Product Search', icon: '🔍' },
   { path: '/dashboard/scan-sell', label: 'Scan and Sell', icon: '📱' },
-  {
-    path: '/dashboard/payment-billing',
-    label: 'Payment & Billing',
-    icon: '💳',
-  },
+  // {
+  //   path: '/dashboard/payment-billing',
+  //   label: 'Payment & Billing',
+  //   icon: '💳',
+  // },
   { path: '/dashboard/analytics', label: 'Analytics Dashboard', icon: '📈' },
   {
     path: '/dashboard/inventory-alert',
@@ -121,7 +121,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className={styles.sidebarHeader}>
           <Link to="/dashboard" className={styles.logo}>
             <div className={styles.logoIcon} />
-            <span className={styles.logoText}>InventoryPro</span>
+            <span className={styles.logoText}>StockKart</span>
           </Link>
 
           <button

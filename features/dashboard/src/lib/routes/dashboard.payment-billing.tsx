@@ -2,7 +2,7 @@ import styles from './dashboard.payment-billing.module.css';
 
 export function meta() {
   return [
-    { title: 'Payment & Billing - InventoryPro' },
+    { title: 'Payment & Billing - StockKart' },
     { name: 'description', content: 'Process payments and manage invoices' },
   ];
 }
@@ -21,21 +21,35 @@ export default function PaymentBillingPage() {
             <label className={styles.paymentOption}>
               <input type="radio" name="payment" defaultChecked />
               <div className={styles.paymentCard}>
-                <span className={styles.cardIcon} role="img" aria-label="Credit card">💳</span>
+                <span
+                  className={styles.cardIcon}
+                  role="img"
+                  aria-label="Credit card"
+                >
+                  💳
+                </span>
                 <span>Credit/Debit Card</span>
               </div>
             </label>
             <label className={styles.paymentOption}>
               <input type="radio" name="payment" />
               <div className={styles.paymentCard}>
-                <span className={styles.cardIcon} role="img" aria-label="Cash">💵</span>
+                <span className={styles.cardIcon} role="img" aria-label="Cash">
+                  💵
+                </span>
                 <span>Cash</span>
               </div>
             </label>
             <label className={styles.paymentOption}>
               <input type="radio" name="payment" />
               <div className={styles.paymentCard}>
-                <span className={styles.cardIcon} role="img" aria-label="Mobile payment">📱</span>
+                <span
+                  className={styles.cardIcon}
+                  role="img"
+                  aria-label="Mobile payment"
+                >
+                  📱
+                </span>
                 <span>Mobile Payment</span>
               </div>
             </label>
@@ -43,12 +57,20 @@ export default function PaymentBillingPage() {
           <div className={styles.cardForm}>
             <div className={styles.formGroup}>
               <label className={styles.label}>Card Number</label>
-              <input type="text" className={styles.input} placeholder="1234 5678 9012 3456" />
+              <input
+                type="text"
+                className={styles.input}
+                placeholder="1234 5678 9012 3456"
+              />
             </div>
             <div className={styles.formRow}>
               <div className={styles.formGroup}>
                 <label className={styles.label}>Expiry Date</label>
-                <input type="text" className={styles.input} placeholder="MM/YY" />
+                <input
+                  type="text"
+                  className={styles.input}
+                  placeholder="MM/YY"
+                />
               </div>
               <div className={styles.formGroup}>
                 <label className={styles.label}>CVV</label>
@@ -107,4 +129,3 @@ export default function PaymentBillingPage() {
     </div>
   );
 }
-
