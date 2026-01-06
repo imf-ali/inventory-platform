@@ -205,9 +205,7 @@ export function InventoryAlertDetails({
                 <div className={styles.detailIcon}>💵</div>
                 <div className={styles.detailContent}>
                   <span className={styles.detailLabel}>Selling Price</span>
-                  <span
-                    className={`${styles.detailValue} ${styles.priceValue}`}
-                  >
+                  <span className={`${styles.detailValue} ${styles.priceValue}`}>
                     ₹{item?.sellingPrice?.toFixed(2) ?? '—'}
                   </span>
                 </div>
@@ -226,9 +224,7 @@ export function InventoryAlertDetails({
                   <div className={styles.detailIcon}>₹</div>
                   <div className={styles.detailContent}>
                     <span className={styles.detailLabel}>Cost Price</span>
-                    <span
-                      className={`${styles.detailValue} ${styles.costValue}`}
-                    >
+                    <span className={`${styles.detailValue} ${styles.costValue}`}>
                       ₹{item.costPrice.toFixed(2)}
                     </span>
                   </div>

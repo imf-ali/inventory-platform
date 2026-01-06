@@ -441,10 +441,10 @@ export default function CheckoutPage() {
                     <tr key={index}>
                       <td>{item.name}</td>
                       <td>{item.quantity}</td>
-                      <td>${item.maximumRetailPrice.toFixed(2)}</td>
-                      <td>${item.sellingPrice.toFixed(2)}</td>
+                      <td>₹{item.maximumRetailPrice.toFixed(2)}</td>
+                      <td>₹{item.sellingPrice.toFixed(2)}</td>
                       <td>{item.discount.toFixed(2)}%</td>
-                      <td>${itemTotal.toFixed(2)}</td>
+                      <td>₹{itemTotal.toFixed(2)}</td>
                     </tr>
                   );
                 })}
