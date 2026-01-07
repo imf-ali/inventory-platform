@@ -203,11 +203,115 @@
 }
 
 .googleButtonWrapper > div {
-  width: 100%;
+  width: 100% !important;
+  max-width: 100% !important;
 }
 
 .googleButtonWrapper > div > div {
   width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Ensure Google button is always full width, even with account selector */
+.googleButtonWrapper iframe {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Google Account Modal */
+.googleAccountModal {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.modalContent {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 1.5rem;
+  min-width: 320px;
+  max-width: 400px;
+  position: relative;
+}
+
+.modalClose {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.modalClose:hover {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.modalHeader {
+  margin-bottom: 1rem;
+  padding-right: 2rem;
+}
+
+.modalTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.modalBody {
+  width: 100%;
+}
+
+.modalBody > div {
+  width: 100% !important;
+}
+
+.modalBody > div > div {
+  width: 100% !important;
+}
+
+.modalBody iframe {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+@media (max-width: 640px) {
+  .googleAccountModal {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+  }
+
+  .modalContent {
+    min-width: auto;
+    max-width: 100%;
+  }
 }
 
 @media (max-width: 640px) {
