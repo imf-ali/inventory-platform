@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router';
 import { GoogleLogin, type CredentialResponse } from '@react-oauth/google';
 import { useAuthStore } from '@inventory-platform/store';
@@ -15,6 +15,59 @@ export function SignupForm() {
     confirmPassword: '',
   });
   const [localError, setLocalError] = useState<string | null>(null);
+  const [showAccountModal, setShowAccountModal] = useState(false);
+  const googleLoginRef = useRef<HTMLDivElement>(null);
+  const hiddenButtonRef = useRef<HTMLDivElement>(null);
+
+  // Check for Google account detection
+  useEffect(() => {
+    const checkForAccount = () => {
+      if (!hiddenButtonRef.current) return;
+      
+      // Check all divs within the hidden button container
+      const allDivs = hiddenButtonRef.current.querySelectorAll('div');
+      allDivs.forEach((div) => {
+        const text = div.textContent || '';
+        // If button shows account info (name/email), show modal
+        if (text.includes('@') || text.includes('Sign in as') || text.includes('Sign in with')) {
+          setShowAccountModal(true);
+        }
+      });
+
+      // Also check iframe content if accessible
+      const iframes = hiddenButtonRef.current.querySelectorAll('iframe');
+      if (iframes.length > 0) {
+        // Iframe exists, might have account info - check after a delay
+        setTimeout(() => {
+          const allText = hiddenButtonRef.current?.textContent || '';
+          if (allText.includes('@') || allText.includes('Sign in as')) {
+            setShowAccountModal(true);
+          }
+        }, 500);
+      }
+    };
+
+    // Check after a delay to allow Google button to render
+    const timer = setTimeout(checkForAccount, 2000);
+    
+    // Also use MutationObserver to watch for changes
+    const observer = new MutationObserver(() => {
+      setTimeout(checkForAccount, 100);
+    });
+    
+    if (hiddenButtonRef.current) {
+      observer.observe(hiddenButtonRef.current, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
+    }
+
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -216,7 +269,8 @@ export function SignupForm() {
         <span className={styles.dividerText}>or</span>
       </div>
 
-      <div className={styles.googleButtonWrapper}>
+      {/* Hidden button to detect account */}
+      <div ref={hiddenButtonRef} style={{ position: 'absolute', left: '-9999px', opacity: 0, pointerEvents: 'none' }}>
         <GoogleLogin
           onSuccess={handleGoogleSuccess}
           onError={handleGoogleError}
@@ -230,6 +284,22 @@ export function SignupForm() {
         />
       </div>
 
+      {!showAccountModal && (
+        <div className={styles.googleButtonWrapper}>
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+            useOneTap={false}
+            auto_select={false}
+            theme="outline"
+            size="large"
+            text="signup_with"
+            shape="rectangular"
+            width="100%"
+          />
+        </div>
+      )}
+
       <div className={styles.footer}>
         <p className={styles.footerText}>
           Already have an account?{' '}
@@ -238,6 +308,37 @@ export function SignupForm() {
           </Link>
         </p>
       </div>
+
+      {/* Google Account Modal in top right */}
+      {showAccountModal && (
+        <div className={styles.googleAccountModal}>
+          <div className={styles.modalContent}>
+            <button
+              className={styles.modalClose}
+              onClick={() => setShowAccountModal(false)}
+              aria-label="Close"
+            >
+              ×
+            </button>
+            <div className={styles.modalHeader}>
+              <p className={styles.modalTitle}>Sign up with Google</p>
+            </div>
+            <div className={styles.modalBody} ref={googleLoginRef}>
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                useOneTap={false}
+                auto_select={false}
+                theme="outline"
+                size="large"
+                text="signup_with"
+                shape="rectangular"
+                width="100%"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
