@@ -1016,7 +1016,7 @@ export default function ScanSellPage() {
 
         {/* Cart and Total Section */}
         <div className={styles.cartSection}>
-          <h3 className={styles.cartTitle}>Shopping Cart</h3>
+          <h3 className={styles.cartTitle}>Cart</h3>
           <div className={styles.cartItems}>
             {isLoadingCart ? (
               <div className={styles.loading}>Loading cart...</div>
@@ -1038,8 +1038,11 @@ export default function ScanSellPage() {
                       </span>
                     )}
                     <div className={styles.itemPriceInfo}>
-                      <span className={styles.itemPrice}>₹{cartItem.price.toFixed(2)} each</span>
-                      {cartItem.inventoryItem.maximumRetailPrice > cartItem.price && (
+                      <span className={styles.itemPrice}>
+                        ₹{cartItem.price.toFixed(2)} each
+                      </span>
+                      {cartItem.inventoryItem.maximumRetailPrice >
+                        cartItem.price && (
                         <span className={styles.itemDiscount}>
                           {(
                             ((cartItem.inventoryItem.maximumRetailPrice -
@@ -1095,12 +1098,14 @@ export default function ScanSellPage() {
                   <span>Subtotal</span>
                   <span>₹{calculateSubtotal().toFixed(2)}</span>
                 </div>
-                {cartData && cartData.discountTotal && cartData.discountTotal > 0 && (
-                  <div className={styles.summaryRow}>
-                    <span>Discount</span>
-                    <span>-₹{(cartData.discountTotal ?? 0).toFixed(2)}</span>
-                  </div>
-                )}
+                {cartData &&
+                  cartData.discountTotal &&
+                  cartData.discountTotal > 0 && (
+                    <div className={styles.summaryRow}>
+                      <span>Discount</span>
+                      <span>-₹{(cartData.discountTotal ?? 0).toFixed(2)}</span>
+                    </div>
+                  )}
                 <div className={styles.summaryRow}>
                   <span>SGST ({getSGSTPercentage()}%)</span>
                   <span>₹{calculateSGST().toFixed(2)}</span>

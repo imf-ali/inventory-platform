@@ -23,11 +23,22 @@ export function CustomReminderInputItem({
     });
   };
 
+  // Convert ISO (UTC) → datetime-local (local time)
+  const isoToLocalDateTime = (iso: string) => {
+    const date = new Date(iso);
+    const tzOffset = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() - tzOffset).toISOString().slice(0, 16);
+  };
+
+  // Convert datetime-local → ISO (UTC)
+  const localDateTimeToIso = (local: string) => {
+    return new Date(local).toISOString();
+  };
+
   const formatDateForInput = (isoString: string) => {
     if (!isoString) return '';
     try {
-      const date = new Date(isoString);
-      return date.toISOString().slice(0, 16);
+      return isoToLocalDateTime(isoString);
     } catch {
       return '';
     }
@@ -35,7 +46,7 @@ export function CustomReminderInputItem({
 
   const handleDateChange = (field: 'reminderAt' | 'endDate', value: string) => {
     if (value) {
-      const isoDate = new Date(value).toISOString();
+      const isoDate = localDateTimeToIso(value);
       handleChange(field, isoDate);
     } else {
       handleChange(field, '');
@@ -139,7 +150,9 @@ export function CustomRemindersSection({
         </button>
       </div>
       {reminders.length === 0 ? (
-        <p className={styles.emptyMessage}>No custom reminders added. Click "Add Reminder" to create one.</p>
+        <p className={styles.emptyMessage}>
+          No custom reminders added. Click "Add Reminder" to create one.
+        </p>
       ) : (
         <div className={styles.remindersList}>
           {reminders.map((reminder, index) => (
@@ -157,4 +170,3 @@ export function CustomRemindersSection({
     </div>
   );
 }
-
