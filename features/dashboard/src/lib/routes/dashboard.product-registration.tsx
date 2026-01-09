@@ -89,16 +89,6 @@ export default function ProductRegistrationPage() {
     setSuccess(null);
   };
 
-  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value === '' ? 0 : parseFloat(value) || 0,
-    }));
-    setError(null);
-    setSuccess(null);
-  };
-
   const handleIntegerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
