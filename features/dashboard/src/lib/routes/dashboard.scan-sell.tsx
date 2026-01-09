@@ -18,7 +18,57 @@ export function meta() {
 interface CartItem {
   inventoryItem: InventoryItem;
   quantity: number;
-  price: number; // Selling price per unit
+  price: number;
+}
+
+function CartQuantityInput({
+  value,
+  onCommit,
+  disabled,
+}: {
+  value: number;
+  onCommit: (newQty: number) => Promise<void>;
+  disabled: boolean;
+}) {
+  const [draft, setDraft] = useState(value.toString());
+
+  useEffect(() => {
+    setDraft(value.toString());
+  }, [value]);
+
+  const commit = async () => {
+    const qty = Number(draft);
+
+    if (!qty || qty <= 0 || qty === value) {
+      setDraft(value.toString());
+      return;
+    }
+
+    try {
+      await onCommit(qty);
+    } catch {
+      setDraft(value.toString());
+    }
+  };
+
+  return (
+    <input
+      type="number"
+      className={styles.qtyInput}
+      value={draft}
+      min={1}
+      disabled={disabled}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          commit();
+          e.currentTarget.blur();
+        }
+      }}
+      onFocus={(e) => e.currentTarget.select()}
+    />
+  );
 }
 
 export default function ScanSellPage() {
@@ -69,7 +119,6 @@ export default function ScanSellPage() {
   }, [error]);
 
   const loadCart = async (): Promise<void> => {
-    // Prevent duplicate calls
     if (isUpdatingRef.current) {
       return;
     }
@@ -317,6 +366,7 @@ export default function ScanSellPage() {
       } catch {
         // If reload fails, just show the error
       }
+      throw err;
     } finally {
       setIsUpdatingCart(false);
       isUpdatingRef.current = false;
@@ -475,51 +525,30 @@ export default function ScanSellPage() {
     setError(null);
   };
 
-  const handleUpdateQuantity = (id: string, delta: number) => {
-    setCartItems((prev) => {
-      // Find the item before updating to track if it will be removed
-      const originalItem = prev.find((item) => item.inventoryItem.id === id);
-      if (!originalItem) {
-        return prev;
-      }
+  const handleUpdateQuantity = async (id: string, delta: number) => {
+    const originalItem = cartItems.find((item) => item.inventoryItem.id === id);
 
-      const newQuantity = originalItem.quantity + delta;
+    if (!originalItem) return;
 
-      // If quantity would become 0 or less, we still need to send -1 to API for removal
-      // But we'll filter it out from local state
-      if (newQuantity <= 0) {
-        // Item will be removed - send -1 to API with original item info, then filter out from local state
-        const remainingItems = prev.filter(
-          (item) => item.inventoryItem.id !== id
-        );
-        syncCartToAPI(remainingItems, id, delta, originalItem);
-        return remainingItems;
-      }
+    const newQuantity = originalItem.quantity + delta;
 
-      // Only validate stock if we have accurate inventory data (not a minimal item)
-      // Minimal items have currentCount set to 999999, so skip validation for those
-      if (
-        originalItem.inventoryItem.currentCount < 999999 &&
-        newQuantity > originalItem.inventoryItem.currentCount
-      ) {
-        setError(
-          `Only ${originalItem.inventoryItem.currentCount} items available in stock`
-        );
-        return prev;
-      }
+    if (
+      originalItem.inventoryItem.currentCount < 999999 &&
+      newQuantity > originalItem.inventoryItem.currentCount
+    ) {
+      setError(
+        `Only ${originalItem.inventoryItem.currentCount} items available in stock`
+      );
+      throw new Error('Stock exceeded');
+    }
 
-      const updatedItems = prev.map((item) => {
-        if (item.inventoryItem.id === id) {
-          return { ...item, quantity: newQuantity };
-        }
-        return item;
-      });
+    await syncCartToAPI(cartItems, id, delta);
 
-      // Sync to API - only send the changed item with the delta quantity
-      syncCartToAPI(updatedItems, id, delta);
-      return updatedItems;
-    });
-    setError(null);
+    setCartItems((prev) =>
+      prev.map((item) =>
+        item.inventoryItem.id === id ? { ...item, quantity: newQuantity } : item
+      )
+    );
   };
 
   const handleRemoveItem = (id: string) => {
@@ -1065,7 +1094,20 @@ export default function ScanSellPage() {
                     >
                       -
                     </button>
-                    <span className={styles.qty}>{cartItem.quantity}</span>
+                    <CartQuantityInput
+                      value={cartItem.quantity}
+                      disabled={isUpdatingCart}
+                      onCommit={async (newQty) => {
+                        const delta = newQty - cartItem.quantity;
+                        if (delta !== 0) {
+                          await handleUpdateQuantity(
+                            cartItem.inventoryItem.id,
+                            delta
+                          );
+                        }
+                      }}
+                    />
+
                     <button
                       className={styles.qtyBtn}
                       onClick={() =>
