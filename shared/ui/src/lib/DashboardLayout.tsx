@@ -191,7 +191,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <div className={styles.notificationMenu}>
                     {notifications.length === 0 ? (
                       <div className={styles.notificationEmpty}>
-                        No reminders due
+                        No notifications
                       </div>
                     ) : (
                       notifications.map((n) => (

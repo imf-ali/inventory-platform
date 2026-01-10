@@ -89,14 +89,40 @@ export default function ProductRegistrationPage() {
     setSuccess(null);
   };
 
-  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleIntegerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+
+    // Allow empty while typing
+    if (value === '') {
+      setFormData((prev) => ({ ...prev, [name]: 0 }));
+      return;
+    }
+
+    // Allow only digits
+    if (!/^\d+$/.test(value)) return;
+
     setFormData((prev) => ({
       ...prev,
-      [name]: value === '' ? 0 : parseFloat(value) || 0,
+      [name]: parseInt(value, 10),
     }));
-    setError(null);
-    setSuccess(null);
+  };
+
+  const handleDecimalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+
+    // Allow empty
+    if (value === '') {
+      setFormData((prev) => ({ ...prev, [name]: 0 }));
+      return;
+    }
+
+    // Allow only digits + one dot
+    if (!/^\d*\.?\d*$/.test(value)) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: parseFloat(value) || 0,
+    }));
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -247,6 +273,18 @@ export default function ProductRegistrationPage() {
     setVendorSearchQuery(vendor.name);
     setShowVendorDropdown(false);
     setVendorSearchResults([]);
+  };
+
+  // Convert ISO (UTC) → datetime-local (local time)
+  const isoToLocalDateTime = (iso: string) => {
+    const date = new Date(iso);
+    const tzOffset = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() - tzOffset).toISOString().slice(0, 16);
+  };
+
+  // Convert datetime-local → ISO (UTC)
+  const localDateTimeToIso = (local: string) => {
+    return new Date(local).toISOString();
   };
 
   const handleCreateVendor = async () => {
@@ -466,14 +504,14 @@ export default function ProductRegistrationPage() {
                 Count *
               </label>
               <input
-                type="number"
-                id="count"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 name="count"
                 className={styles.input}
                 placeholder="0"
-                min="1"
-                value={formData.count}
-                onChange={handleNumberChange}
+                value={formData.count === 0 ? '' : formData.count}
+                onChange={handleIntegerChange}
                 required
                 disabled={isLoading}
               />
@@ -607,15 +645,18 @@ export default function ProductRegistrationPage() {
                 MRP *
               </label>
               <input
-                type="number"
-                id="maximumRetailPrice"
+                type="text"
+                inputMode="decimal"
+                pattern="[0-9]*\.?[0-9]*"
                 name="maximumRetailPrice"
                 className={styles.input}
                 placeholder="0.00"
-                step="0.01"
-                min="0"
-                value={formData.maximumRetailPrice}
-                onChange={handleNumberChange}
+                value={
+                  formData.maximumRetailPrice === 0
+                    ? ''
+                    : formData.maximumRetailPrice
+                }
+                onChange={handleDecimalChange}
                 required
                 disabled={isLoading}
               />
@@ -625,15 +666,14 @@ export default function ProductRegistrationPage() {
                 Cost Price *
               </label>
               <input
-                type="number"
-                id="costPrice"
+                type="text"
+                inputMode="decimal" // numeric keyboard on mobile
+                pattern="[0-9]*\.?[0-9]*"
                 name="costPrice"
                 className={styles.input}
                 placeholder="0.00"
-                step="0.01"
-                min="0"
-                value={formData.costPrice}
-                onChange={handleNumberChange}
+                value={formData.costPrice === 0 ? '' : formData.costPrice}
+                onChange={handleDecimalChange}
                 required
                 disabled={isLoading}
               />
@@ -645,15 +685,14 @@ export default function ProductRegistrationPage() {
                 Selling Price *
               </label>
               <input
-                type="number"
-                id="sellingPrice"
+                type="text"
+                inputMode="decimal"
+                pattern="[0-9]*\.?[0-9]*"
                 name="sellingPrice"
                 className={styles.input}
                 placeholder="0.00"
-                step="0.01"
-                min="0"
-                value={formData.sellingPrice}
-                onChange={handleNumberChange}
+                value={formData.sellingPrice === 0 ? '' : formData.sellingPrice}
+                onChange={handleDecimalChange}
                 required
                 disabled={isLoading}
               />
@@ -798,13 +837,13 @@ export default function ProductRegistrationPage() {
                   className={styles.input}
                   value={
                     formData.reminderAt
-                      ? new Date(formData.reminderAt).toISOString().slice(0, 16)
+                      ? isoToLocalDateTime(formData.reminderAt)
                       : ''
                   }
                   onChange={(e) => {
                     const dateValue = e.target.value;
                     if (dateValue) {
-                      const isoDate = new Date(dateValue).toISOString();
+                      const isoDate = localDateTimeToIso(dateValue);
                       setFormData((prev) => ({
                         ...prev,
                         reminderAt: isoDate,

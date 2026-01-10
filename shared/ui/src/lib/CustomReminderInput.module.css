@@ -137,8 +137,8 @@
 
 [data-theme='dark'] .input,
 [data-theme='dark'] .textarea {
-  background-color: #020617;
-  border-color: #1e293b;
+  background-color: #161c34;
+  border-color: #161c34;
 }
 
 .input:focus,
@@ -174,4 +174,3 @@
     width: 100%;
   }
 }
-
