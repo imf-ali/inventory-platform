@@ -509,6 +509,47 @@ export interface InventoryResponse {
   reminderCreated: boolean;
 }
 
+export interface BulkCreateInventoryItem {
+  barcode: string;
+  name: string;
+  description?: string;
+  companyName: string;
+  maximumRetailPrice: number;
+  costPrice: number;
+  sellingPrice: number;
+  businessType: string;
+  location: string;
+  count: number;
+  thresholdCount?: number;
+  expiryDate: string;
+  reminderAt?: string;
+  customReminders?: Array<{
+    daysBefore: number;
+    message: string;
+  }> | null;
+  hsn?: string | null;
+  sac?: string | null;
+  batchNo?: string | null;
+  scheme?: string | null;
+}
+
+export interface BulkCreateInventoryDto {
+  vendorId: string;
+  lotId?: string | null;
+  items: BulkCreateInventoryItem[];
+}
+
+export interface BulkCreateInventoryResponse {
+  success: boolean;
+  lotId?: string | null;
+  createdCount: number;
+  items: Array<{
+    id: string;
+    barcode: string;
+    reminderCreated: boolean;
+  }>;
+}
+
 export interface InventoryItem {
   id: string;
   lotId: string;

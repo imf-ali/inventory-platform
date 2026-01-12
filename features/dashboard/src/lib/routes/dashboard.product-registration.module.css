@@ -23,31 +23,37 @@
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 12px;
-  padding: 2rem;
+  padding: 2.5rem;
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2rem;
 }
 
 .formRow {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
+  margin-bottom: 1.75rem;
+}
+
+.formRow:last-child {
+  margin-bottom: 0;
 }
 
 .formGroup {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.625rem;
 }
 
 .label {
   font-size: 0.9rem;
   font-weight: 500;
   color: var(--text-secondary);
+  margin-bottom: 0;
 }
 
 .input,
@@ -77,7 +83,9 @@
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
-  margin-top: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
 }
 
 .cancelBtn {
@@ -140,16 +148,27 @@
 }
 
 .reminderSection {
-  margin-top: 2rem;
-  padding-top: 2rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
   border-top: 1px solid var(--border-color);
+}
+
+.accordionContent .reminderSection {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+}
+
+.accordionContent .subsectionTitle {
+  margin-top: 0;
+  margin-bottom: 1rem;
 }
 
 .sectionTitle {
   font-size: 1.25rem;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
+  margin-top: 0;
 }
 
 .helperText {
@@ -172,7 +191,7 @@
 }
 
 .vendorInfo {
-  margin-top: 1rem;
+  margin-top: 1.25rem;
 }
 
 .vendorCard {
@@ -454,4 +473,204 @@
 
 [data-theme='light'] .input[type='date'] {
   color-scheme: light;
+}
+
+/* Shared Section */
+.sharedSection {
+  margin-bottom: 2.5rem;
+  padding-bottom: 2rem;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.subsectionTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  margin-top: 0;
+}
+
+.sharedSection .vendorSection {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.sharedSection .formGroup {
+  margin-bottom: 0;
+}
+
+/* Products Section */
+.productsSection {
+  margin-top: 0;
+}
+
+.productsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.productsHeader .sectionTitle {
+  margin-bottom: 0;
+}
+
+.addProductBtn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.addProductBtn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.addProductBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.emptyState {
+  padding: 3rem 2rem;
+  text-align: center;
+  background: var(--bg-primary);
+  border: 2px dashed var(--border-color);
+  border-radius: 12px;
+  color: var(--text-secondary);
+  margin-top: 0;
+}
+
+.emptyState p {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.productsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Product Accordion */
+.productAccordion {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.2s;
+}
+
+.productAccordion:hover {
+  border-color: var(--border-hover);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.accordionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  background: var(--bg-primary);
+  cursor: pointer;
+  transition: background 0.2s;
+  user-select: none;
+}
+
+.accordionHeader:hover {
+  background: var(--hover-bg);
+}
+
+.accordionTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.accordionIcon {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  transition: transform 0.2s;
+  width: 1rem;
+  display: inline-block;
+}
+
+.accordionSubtitle {
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+  margin-left: 0.5rem;
+}
+
+.removeProductBtn {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #dc2626;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.removeProductBtn:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.removeProductBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.accordionContent {
+  padding: 1.5rem;
+  border-top: 1px solid var(--border-color);
+  animation: slideDown 0.2s ease-out;
+}
+
+.accordionContent .formRow {
+  margin-bottom: 1.75rem;
+}
+
+.accordionContent .formRow:last-child {
+  margin-bottom: 0;
+}
+
+.accordionContent .formGroup {
+  margin-bottom: 0;
+}
+
+.accordionContent > *:not(.formRow):not(:last-child) {
+  margin-bottom: 1.5rem;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 5000px;
+  }
 }

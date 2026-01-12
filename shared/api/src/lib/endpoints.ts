@@ -83,6 +83,7 @@ export const API_ENDPOINTS = {
   // Inventory endpoints
   INVENTORY: {
     BASE: '/inventory',
+    BULK: '/inventory/bulk',
     SEARCH: '/inventory/search',
     LOTS: '/inventory/lots',
     LOW_STOCK: '/inventory/low-stock',

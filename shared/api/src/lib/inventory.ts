@@ -7,6 +7,8 @@ import type {
   InventoryListResponse,
   LotsListResponse,
   PaginationInventoryResponse,
+  BulkCreateInventoryDto,
+  BulkCreateInventoryResponse,
 } from '@inventory-platform/types';
 
 export const inventoryApi = {
@@ -15,6 +17,18 @@ export const inventoryApi = {
       API_ENDPOINTS.INVENTORY.BASE,
       data
     );
+    return response.data;
+  },
+
+  createBulk: async (
+    data: BulkCreateInventoryDto
+  ): Promise<BulkCreateInventoryResponse> => {
+    const response = await apiClient.post<
+      ApiResponse<BulkCreateInventoryResponse>
+    >(API_ENDPOINTS.INVENTORY.BULK, data);
+    // apiClient.post returns ApiResponse<T> directly
+    // So response is ApiResponse<BulkCreateInventoryResponse> = { success: true, data: BulkCreateInventoryResponse }
+    // We need to return response.data to get the actual BulkCreateInventoryResponse
     return response.data;
   },
 
