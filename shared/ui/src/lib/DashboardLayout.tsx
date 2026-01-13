@@ -15,6 +15,7 @@ const MENU_ITEMS = [
   },
   { path: '/dashboard/product-search', label: 'Product Search', icon: '🔍' },
   { path: '/dashboard/scan-sell', label: 'Scan and Sell', icon: '📱' },
+  { path: '/dashboard/refund', label: 'Refund', icon: '↩️' },
   // {
   //   path: '/dashboard/payment-billing',
   //   label: 'Payment & Billing',

@@ -22,5 +22,6 @@ export default [
     route('shop-users', './routes/dashboard.shop-users.tsx'),
     route('join-requests', './routes/dashboard.join-requests.tsx'),
     route('history', './routes/dashboard.history.tsx'),
+    route('refund', './routes/dashboard.refund.tsx'),
   ]),
 ] satisfies RouteConfig;

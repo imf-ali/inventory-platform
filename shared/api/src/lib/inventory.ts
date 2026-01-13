@@ -7,7 +7,11 @@ import type {
   InventoryListResponse,
   LotsListResponse,
   PaginationInventoryResponse,
+  BulkCreateInventoryDto,
+  BulkCreateInventoryResponse,
+  ParseInvoiceResponse,
 } from '@inventory-platform/types';
+import axios from 'axios';
 
 export const inventoryApi = {
   create: async (data: CreateInventoryDto): Promise<InventoryResponse> => {
@@ -15,6 +19,18 @@ export const inventoryApi = {
       API_ENDPOINTS.INVENTORY.BASE,
       data
     );
+    return response.data;
+  },
+
+  createBulk: async (
+    data: BulkCreateInventoryDto
+  ): Promise<BulkCreateInventoryResponse> => {
+    const response = await apiClient.post<
+      ApiResponse<BulkCreateInventoryResponse>
+    >(API_ENDPOINTS.INVENTORY.BULK, data);
+    // apiClient.post returns ApiResponse<T> directly
+    // So response is ApiResponse<BulkCreateInventoryResponse> = { success: true, data: BulkCreateInventoryResponse }
+    // We need to return response.data to get the actual BulkCreateInventoryResponse
     return response.data;
   },
 
@@ -84,5 +100,27 @@ export const inventoryApi = {
       API_ENDPOINTS.INVENTORY.BY_ID(inventoryId),
       { thresholdCount }
     );
+  },
+
+  parseInvoice: async (imageFile: File): Promise<ParseInvoiceResponse> => {
+    const token = localStorage.getItem('auth_token');
+    const API_BASE_URL =
+      import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
+
+    const formData = new FormData();
+    formData.append('image', imageFile);
+
+    const response = await axios.post<ApiResponse<ParseInvoiceResponse>>(
+      `${API_BASE_URL}${API_ENDPOINTS.INVENTORY.PARSE_INVOICE}`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: token ? `Bearer ${token}` : '',
+        },
+      }
+    );
+
+    return response.data.data;
   },
 };
