@@ -15,6 +15,7 @@ export * from './lib/inventory';
 export * from './lib/checkout';
 export * from './lib/cart';
 export * from './lib/purchases';
+export * from './lib/refunds';
 export * from './lib/vendors';
 export * from './lib/customers';
 export * from './lib/dashboard';

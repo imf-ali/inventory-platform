@@ -84,6 +84,7 @@ export const API_ENDPOINTS = {
   INVENTORY: {
     BASE: '/inventory',
     BULK: '/inventory/bulk',
+    PARSE_INVOICE: '/inventory/parse-invoice',
     SEARCH: '/inventory/search',
     LOTS: '/inventory/lots',
     LOW_STOCK: '/inventory/low-stock',
@@ -105,6 +106,12 @@ export const API_ENDPOINTS = {
   // Purchase endpoints
   PURCHASES: {
     BASE: '/purchases',
+    SEARCH: '/purchases/search',
+  },
+
+  // Refund endpoints
+  REFUNDS: {
+    BASE: '/refund',
   },
 
   // Vendor endpoints

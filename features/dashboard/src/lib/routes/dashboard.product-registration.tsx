@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { inventoryApi, vendorsApi } from '@inventory-platform/api';
 import type {
@@ -8,6 +8,7 @@ import type {
   CreateVendorDto,
   VendorBusinessType,
   BulkCreateInventoryDto,
+  ParseInvoiceItem,
 } from '@inventory-platform/types';
 import { CustomRemindersSection } from '@inventory-platform/ui';
 import styles from './dashboard.product-registration.module.css';
@@ -60,6 +61,11 @@ export default function ProductRegistrationPage() {
   // Multiple products state
   const [products, setProducts] = useState<ProductFormData[]>([]);
 
+  // Image upload state
+  const [isUploading, setIsUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const createEmptyProduct = (): ProductFormData => ({
     id: `product-${Date.now()}-${Math.random()}`,
     isExpanded: true,
@@ -85,6 +91,109 @@ export default function ProductRegistrationPage() {
 
   const handleAddProduct = () => {
     setProducts([...products, createEmptyProduct()]);
+    setError(null);
+  };
+
+  const transformParsedItemToProduct = (
+    item: ParseInvoiceItem
+  ): ProductFormData => {
+    // Transform customReminders from API format to form format
+    const customReminders: CustomReminderInput[] =
+      item.customReminders && item.customReminders.length > 0
+        ? item.customReminders
+            .filter((reminder) => reminder && reminder.reminderAt)
+            .map((reminder) => ({
+              reminderAt: reminder.reminderAt || '',
+              endDate: reminder.endDate || '',
+              notes: reminder.notes || '',
+            }))
+        : [];
+
+    return {
+      id: `product-${Date.now()}-${Math.random()}`,
+      isExpanded: true,
+      barcode: item.barcode || '',
+      name: item.name || '',
+      companyName: item.companyName || '',
+      price: item.sellingPrice || 0,
+      maximumRetailPrice: item.maximumRetailPrice || 0,
+      costPrice: item.costPrice || 0,
+      sellingPrice: item.sellingPrice || 0,
+      businessType: item.businessType?.toLowerCase() || 'pharmacy',
+      location: item.location || '',
+      count: item.count || 0,
+      expiryDate: item.expiryDate || '',
+      description: item.description || '',
+      reminderAt: item.reminderAt || undefined,
+      customReminders,
+      hsn: item.hsn || '',
+      sac: item.sac || '',
+      batchNo: item.batchNo || '',
+      scheme: item.scheme || '',
+    };
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setError('Please select an image file');
+        return;
+      }
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        setError('File size must be less than 10MB');
+        return;
+      }
+      setSelectedFile(file);
+      setError(null);
+    }
+  };
+
+  const handleUploadInvoice = async () => {
+    if (!selectedFile) {
+      setError('Please select an image file');
+      return;
+    }
+
+    setIsUploading(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const response = await inventoryApi.parseInvoice(selectedFile);
+
+      if (response && response.items && response.items.length > 0) {
+        // Transform parsed items to product form data
+        const parsedProducts = response.items.map(transformParsedItemToProduct);
+        setProducts(parsedProducts);
+        setSuccess(
+          `Successfully parsed invoice! Found ${response.totalItems} item(s). Please review and fill in any missing information.`
+        );
+        setSelectedFile(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      } else {
+        setError('No items found in the invoice image. Please try a different image.');
+      }
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Failed to parse invoice. Please try again.';
+      setError(errorMessage);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleClearUpload = () => {
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
     setError(null);
   };
 
@@ -661,6 +770,54 @@ export default function ProductRegistrationPage() {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Invoice Upload Section */}
+          <div className={styles.uploadSection}>
+            <h3 className={styles.sectionTitle}>Upload Invoice Image (Optional)</h3>
+            <p className={styles.helperText}>
+              Upload an invoice image to automatically parse and prefill product information.
+              You can also manually add products below.
+            </p>
+            <div className={styles.uploadContainer}>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className={styles.fileInput}
+                id="invoice-upload"
+                disabled={isUploading || isLoading}
+              />
+              <div className={styles.uploadControls}>
+                <label
+                  htmlFor="invoice-upload"
+                  className={styles.fileInputLabel}
+                >
+                  {selectedFile ? selectedFile.name : 'Choose Image File'}
+                </label>
+                {selectedFile && (
+                  <div className={styles.uploadActions}>
+                    <button
+                      type="button"
+                      className={styles.uploadBtn}
+                      onClick={handleUploadInvoice}
+                      disabled={isUploading || isLoading}
+                    >
+                      {isUploading ? 'Parsing...' : 'Parse Invoice'}
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.clearUploadBtn}
+                      onClick={handleClearUpload}
+                      disabled={isUploading || isLoading}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

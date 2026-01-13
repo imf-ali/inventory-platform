@@ -29,7 +29,7 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
 }
 
 .formRow {
@@ -179,8 +179,8 @@
 
 /* Vendor Section */
 .vendorSection {
-  margin-top: 2rem;
-  padding-top: 2rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
   border-top: 1px solid var(--border-color);
 }
 
@@ -477,9 +477,8 @@
 
 /* Shared Section */
 .sharedSection {
-  margin-bottom: 2.5rem;
-  padding-bottom: 2rem;
-  border-bottom: 2px solid var(--border-color);
+  margin-bottom: 0;
+  padding-bottom: 0;
 }
 
 .subsectionTitle {
@@ -491,8 +490,8 @@
 }
 
 .sharedSection .vendorSection {
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
   border-top: 1px solid var(--border-color);
 }
 
@@ -503,6 +502,8 @@
 /* Products Section */
 .productsSection {
   margin-top: 0;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
 }
 
 .productsHeader {
@@ -673,4 +674,98 @@
     opacity: 1;
     max-height: 5000px;
   }
+}
+
+/* Upload Section */
+.uploadSection {
+  margin-top: 0;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.uploadContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.fileInput {
+  display: none;
+}
+
+.fileInputLabel {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background: var(--bg-primary);
+  border: 2px dashed var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+  min-height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fileInputLabel:hover:not(:disabled) {
+  border-color: #3b82f6;
+  background: var(--hover-bg);
+}
+
+.uploadControls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.uploadActions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.uploadBtn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+  color: white;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  flex: 1;
+}
+
+.uploadBtn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.uploadBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.clearUploadBtn {
+  padding: 0.75rem 1.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.clearUploadBtn:hover:not(:disabled) {
+  background: var(--hover-bg);
+  border-color: var(--border-hover);
+}
+
+.clearUploadBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }

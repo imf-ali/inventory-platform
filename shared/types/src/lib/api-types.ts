@@ -550,6 +550,32 @@ export interface BulkCreateInventoryResponse {
   }>;
 }
 
+export interface ParseInvoiceItem {
+  barcode: string;
+  name: string;
+  description?: string | null;
+  companyName?: string | null;
+  maximumRetailPrice: number;
+  costPrice?: number | null;
+  sellingPrice: number;
+  businessType: string;
+  location?: string | null;
+  count?: number | null;
+  thresholdCount?: number | null;
+  expiryDate?: string | null;
+  reminderAt?: string | null;
+  customReminders?: CustomReminderInput[] | null;
+  hsn?: string | null;
+  sac?: string | null;
+  batchNo?: string | null;
+  scheme?: string | null;
+}
+
+export interface ParseInvoiceResponse {
+  items: ParseInvoiceItem[];
+  totalItems: number;
+}
+
 export interface InventoryItem {
   id: string;
   lotId: string;
@@ -722,6 +748,82 @@ export interface GetPurchasesParams {
   page?: number;
   limit?: number;
   order?: string; // e.g., "soldAt:desc"
+}
+
+export interface SearchPurchasesParams {
+  customerEmail?: string;
+  customerPhone?: string;
+  customerName?: string;
+  invoiceNo?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface SearchPurchasesResponse {
+  purchases: Purchase[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+// Refund types
+export interface RefundItem {
+  inventoryId: string;
+  quantity: number;
+}
+
+export interface CreateRefundDto {
+  purchaseId: string;
+  items: RefundItem[];
+}
+
+export interface RefundedItem {
+  inventoryId: string;
+  name: string;
+  quantity: number;
+  sellingPrice: number;
+  itemRefundAmount: number;
+}
+
+export interface RefundResponse {
+  refundId: string;
+  purchaseId: string;
+  refundedItems: RefundedItem[];
+  refundAmount: number;
+  totalItemsRefunded: number;
+  createdAt: string;
+}
+
+export interface Refund {
+  refundId: string;
+  purchaseId: string;
+  invoiceNo: string;
+  customerId: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string | null;
+  refundAmount: number;
+  totalItemsRefunded: number;
+  reason: string | null;
+  createdAt: string;
+}
+
+export interface GetRefundsParams {
+  page?: number;
+  limit?: number;
+  invoiceNo?: string;
+  customerPhone?: string;
+  customerId?: string;
+  customerEmail?: string;
+}
+
+export interface GetRefundsResponse {
+  refunds: Refund[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
 }
 
 // Invitation types
