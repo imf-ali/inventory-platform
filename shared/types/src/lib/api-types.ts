@@ -531,6 +531,8 @@ export interface BulkCreateInventoryItem {
   sac?: string | null;
   batchNo?: string | null;
   scheme?: string | null;
+  sgst?: string | null;
+  cgst?: string | null;
 }
 
 export interface BulkCreateInventoryDto {
@@ -569,6 +571,8 @@ export interface ParseInvoiceItem {
   sac?: string | null;
   batchNo?: string | null;
   scheme?: string | null;
+  sgst?: string | null;
+  cgst?: string | null;
 }
 
 export interface ParseInvoiceResponse {
@@ -598,6 +602,9 @@ export interface InventoryItem {
   sac?: string | null;
   batchNo?: string | null;
   scheme?: string | null;
+  sgst?: string | null;
+  cgst?: string | null;
+  createdAt?: string;
 }
 
 export interface InventoryListResponse {

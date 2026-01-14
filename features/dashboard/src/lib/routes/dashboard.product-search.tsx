@@ -287,6 +287,13 @@ export default function ProductSearchPage() {
                           Expires: {formatDate(item.expiryDate)}
                         </span>
                       </div>
+                      {item.createdAt && (
+                        <div className={styles.createdInfo}>
+                          <span className={styles.createdDate}>
+                            Created: {formatDate(item.createdAt)}
+                          </span>
+                        </div>
+                      )}
                     </div>
                     {item.description && (
                       <p className={styles.productDescription}>
