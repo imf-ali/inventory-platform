@@ -171,6 +171,23 @@ export function InventoryAlertDetails({
                   </div>
                 </div>
               )}
+              {item?.createdAt && (
+                <div className={styles.detailCard}>
+                  <div className={styles.detailIcon}>📅</div>
+                  <div className={styles.detailContent}>
+                    <span className={styles.detailLabel}>Created At</span>
+                    <span className={styles.detailValue}>
+                      {new Date(item.createdAt).toLocaleDateString('en-IN', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  </div>
+                </div>
+              )}
               {item?.scheme && (
                 <div className={styles.detailCard}>
                   <div className={styles.detailIcon}>🎁</div>
@@ -226,6 +243,28 @@ export function InventoryAlertDetails({
                     <span className={styles.detailLabel}>Cost Price</span>
                     <span className={`${styles.detailValue} ${styles.costValue}`}>
                       ₹{item.costPrice.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              )}
+              {item?.sgst && (
+                <div className={`${styles.detailCard} ${styles.pricingCard}`}>
+                  <div className={styles.detailIcon}>📊</div>
+                  <div className={styles.detailContent}>
+                    <span className={styles.detailLabel}>SGST</span>
+                    <span className={styles.detailValue}>
+                      {item.sgst}%
+                    </span>
+                  </div>
+                </div>
+              )}
+              {item?.cgst && (
+                <div className={`${styles.detailCard} ${styles.pricingCard}`}>
+                  <div className={styles.detailIcon}>📊</div>
+                  <div className={styles.detailContent}>
+                    <span className={styles.detailLabel}>CGST</span>
+                    <span className={styles.detailValue}>
+                      {item.cgst}%
                     </span>
                   </div>
                 </div>

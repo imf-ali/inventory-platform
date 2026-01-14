@@ -26,6 +26,8 @@ export function meta() {
 interface ProductFormData extends Omit<CreateInventoryDto, 'vendorId' | 'lotId'> {
   id: string; // Unique ID for each product form
   isExpanded: boolean;
+  sgst?: string;
+  cgst?: string;
 }
 
 export default function ProductRegistrationPage() {
@@ -84,9 +86,10 @@ export default function ProductRegistrationPage() {
     reminderAt: undefined,
     customReminders: [],
     hsn: '',
-    sac: '',
     batchNo: '',
     scheme: '',
+    sgst: '',
+    cgst: '',
   });
 
   const handleAddProduct = () => {
@@ -127,9 +130,10 @@ export default function ProductRegistrationPage() {
       reminderAt: item.reminderAt || undefined,
       customReminders,
       hsn: item.hsn || '',
-      sac: item.sac || '',
       batchNo: item.batchNo || '',
       scheme: item.scheme || '',
+      sgst: item.sgst || '',
+      cgst: item.cgst || '',
     };
   };
 
@@ -344,9 +348,10 @@ export default function ProductRegistrationPage() {
           reminderAt: reminderAtISO,
           customReminders: customReminders,
           hsn: product.hsn || null,
-          sac: product.sac || null,
           batchNo: product.batchNo || null,
           scheme: product.scheme || null,
+          ...(product.sgst && product.sgst.trim() ? { sgst: product.sgst.trim() } : {}),
+          ...(product.cgst && product.cgst.trim() ? { cgst: product.cgst.trim() } : {}),
         };
       });
 
@@ -1228,23 +1233,6 @@ function ProductAccordion({
               />
             </div>
             <div className={styles.formGroup}>
-              <label htmlFor={`sac-${product.id}`} className={styles.label}>
-                SAC Code
-              </label>
-              <input
-                type="text"
-                id={`sac-${product.id}`}
-                className={styles.input}
-                placeholder="Enter the SAC code"
-                value={product.sac || ''}
-                onChange={(e) => onChange(product.id, 'sac', e.target.value)}
-                disabled={isLoading}
-              />
-            </div>
-          </div>
-
-          <div className={styles.formRow}>
-            <div className={styles.formGroup}>
               <label htmlFor={`batchNo-${product.id}`} className={styles.label}>
                 Batch Number
               </label>
@@ -1258,6 +1246,9 @@ function ProductAccordion({
                 disabled={isLoading}
               />
             </div>
+          </div>
+
+          <div className={styles.formRow}>
             <div className={styles.formGroup}>
               <label htmlFor={`scheme-${product.id}`} className={styles.label}>
                 Scheme/Promotion
@@ -1269,6 +1260,23 @@ function ProductAccordion({
                 placeholder="Enter the scheme/promotion"
                 value={product.scheme || ''}
                 onChange={(e) => onChange(product.id, 'scheme', e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label htmlFor={`sellingPrice-${product.id}`} className={styles.label}>
+                Selling Price *
+              </label>
+              <input
+                type="text"
+                inputMode="decimal"
+                pattern="[0-9]*\.?[0-9]*"
+                id={`sellingPrice-${product.id}`}
+                className={styles.input}
+                placeholder="0.00"
+                value={product.sellingPrice === 0 ? '' : product.sellingPrice}
+                onChange={(e) => onDecimalChange(product.id, 'sellingPrice', e.target.value)}
+                required
                 disabled={isLoading}
               />
             </div>
@@ -1317,36 +1325,52 @@ function ProductAccordion({
 
           <div className={styles.formRow}>
             <div className={styles.formGroup}>
-              <label htmlFor={`sellingPrice-${product.id}`} className={styles.label}>
-                Selling Price *
+              <label htmlFor={`sgst-${product.id}`} className={styles.label}>
+                SGST (%)
               </label>
               <input
                 type="text"
                 inputMode="decimal"
                 pattern="[0-9]*\.?[0-9]*"
-                id={`sellingPrice-${product.id}`}
+                id={`sgst-${product.id}`}
                 className={styles.input}
-                placeholder="0.00"
-                value={product.sellingPrice === 0 ? '' : product.sellingPrice}
-                onChange={(e) => onDecimalChange(product.id, 'sellingPrice', e.target.value)}
-                required
+                placeholder="Leave empty for shop default"
+                value={product.sgst || ''}
+                onChange={(e) => onChange(product.id, 'sgst', e.target.value)}
                 disabled={isLoading}
               />
             </div>
             <div className={styles.formGroup}>
-              <label htmlFor={`description-${product.id}`} className={styles.label}>
-                Description
+              <label htmlFor={`cgst-${product.id}`} className={styles.label}>
+                CGST (%)
               </label>
-              <textarea
-                id={`description-${product.id}`}
-                className={styles.textarea}
-                placeholder="Enter product description (optional)"
-                value={product.description || ''}
-                onChange={(e) => onChange(product.id, 'description', e.target.value)}
+              <input
+                type="text"
+                inputMode="decimal"
+                pattern="[0-9]*\.?[0-9]*"
+                id={`cgst-${product.id}`}
+                className={styles.input}
+                placeholder="Leave empty for shop default"
+                value={product.cgst || ''}
+                onChange={(e) => onChange(product.id, 'cgst', e.target.value)}
                 disabled={isLoading}
-                rows={3}
               />
             </div>
+          </div>
+
+          <div className={styles.formGroup}>
+            <label htmlFor={`description-${product.id}`} className={styles.label}>
+              Description
+            </label>
+            <textarea
+              id={`description-${product.id}`}
+              className={styles.textarea}
+              placeholder="Enter product description (optional)"
+              value={product.description || ''}
+              onChange={(e) => onChange(product.id, 'description', e.target.value)}
+              disabled={isLoading}
+              rows={3}
+            />
           </div>
 
           {/* Reminder Section */}
