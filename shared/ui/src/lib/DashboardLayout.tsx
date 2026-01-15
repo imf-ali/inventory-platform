@@ -33,6 +33,7 @@ const MENU_ITEMS = [
   { path: '/dashboard/join-requests', label: 'Join Requests', icon: '🤝' },
   { path: '/dashboard/shop-users', label: 'Shop Users', icon: '👥' },
   { path: '/dashboard/history', label: 'History', icon: '📜' },
+  { path: '/dashboard/gst', label: 'GST Tax Filing', icon: '🧾' },
 ];
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {

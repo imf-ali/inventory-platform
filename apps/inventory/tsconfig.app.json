@@ -24,7 +24,10 @@
         "../../features/onboarding/src/index.ts"
       ],
       "@inventory-platform/auth": ["../../features/auth/src/index.ts"],
-      "@inventory-platform/analytics": ["../../features/analytics/src/index.ts"]
+      "@inventory-platform/analytics": [
+        "../../features/analytics/src/index.ts"
+      ],
+      "@inventory-platform/gst": ["../../features/gst/src/index.ts"]
     }
   },
   "include": [

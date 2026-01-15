@@ -135,4 +135,14 @@ export const API_ENDPOINTS = {
   INVOICES: {
     PDF: (purchaseId: string) => `/invoices/${purchaseId}/pdf`,
   },
+
+  // GST endpoints
+  GST: {
+    SUMMARY: '/gst/summary',
+    GSTR1: '/gst/gstr1',
+    GSTR3B: '/gst/gstr3b',
+    RETURNS: '/gst/returns',
+    BY_ID: (returnId: string) => `/gst/returns/${returnId}`,
+    FILE: (returnId: string) => `/gst/returns/${returnId}/file`,
+  },
 } as const;

@@ -32,6 +32,9 @@
     },
     {
       "path": "./features/auth"
+    },
+    {
+      "path": "./features/gst"
     }
   ]
 }
