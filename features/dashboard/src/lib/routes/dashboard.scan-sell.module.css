@@ -267,6 +267,20 @@
   font-weight: 500;
 }
 
+.resultItemPTR {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+  font-weight: 500;
+}
+
+.resultItemDiscount {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+  font-weight: 500;
+}
+
 .resultItemPrice {
   font-size: 0.85rem;
   color: var(--text-secondary);

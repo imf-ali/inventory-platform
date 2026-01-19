@@ -28,6 +28,7 @@ interface ProductFormData extends Omit<CreateInventoryDto, 'vendorId' | 'lotId'>
   isExpanded: boolean;
   sgst?: string;
   cgst?: string;
+  additionalDiscount?: number | null;
 }
 
 export default function ProductRegistrationPage() {
@@ -51,6 +52,8 @@ export default function ProductRegistrationPage() {
     address: '',
     businessType: 'WHOLESALE',
   });
+  const [customBusinessType, setCustomBusinessType] = useState('');
+  const [showCustomBusinessType, setShowCustomBusinessType] = useState(false);
 
   const [lotId, setLotId] = useState('');
   const [lotIdSearchQuery, setLotIdSearchQuery] = useState('');
@@ -90,6 +93,7 @@ export default function ProductRegistrationPage() {
     scheme: '',
     sgst: '',
     cgst: '',
+    additionalDiscount: null,
   });
 
   const handleAddProduct = () => {
@@ -134,6 +138,7 @@ export default function ProductRegistrationPage() {
       scheme: item.scheme || '',
       sgst: item.sgst || '',
       cgst: item.cgst || '',
+      additionalDiscount: item.additionalDiscount ?? null,
     };
   };
 
@@ -352,6 +357,9 @@ export default function ProductRegistrationPage() {
           scheme: product.scheme || null,
           ...(product.sgst && product.sgst.trim() ? { sgst: product.sgst.trim() } : {}),
           ...(product.cgst && product.cgst.trim() ? { cgst: product.cgst.trim() } : {}),
+          ...(product.additionalDiscount !== null && product.additionalDiscount !== undefined
+            ? { additionalDiscount: product.additionalDiscount }
+            : {}),
         };
       });
 
@@ -474,6 +482,19 @@ export default function ProductRegistrationPage() {
     setVendorSearchResults([]);
   };
 
+  const handleCloseVendorModal = () => {
+    setShowVendorModal(false);
+    setShowCustomBusinessType(false);
+    setCustomBusinessType('');
+    setVendorFormData({
+      name: '',
+      contactEmail: '',
+      contactPhone: '',
+      address: '',
+      businessType: 'WHOLESALE',
+    });
+  };
+
   const handleCreateVendor = async () => {
     setIsCreatingVendor(true);
     setError(null);
@@ -484,10 +505,18 @@ export default function ProductRegistrationPage() {
         return;
       }
 
+      if (showCustomBusinessType && !customBusinessType.trim()) {
+        setError('Please enter a custom business type');
+        setIsCreatingVendor(false);
+        return;
+      }
+
       const vendorPayload: CreateVendorDto = {
         name: vendorFormData.name,
         contactPhone: vendorFormData.contactPhone,
-        businessType: vendorFormData.businessType,
+        businessType: showCustomBusinessType
+          ? (customBusinessType.trim().toUpperCase() as VendorBusinessType)
+          : vendorFormData.businessType,
         ...(vendorFormData.contactEmail && {
           contactEmail: vendorFormData.contactEmail,
         }),
@@ -495,8 +524,8 @@ export default function ProductRegistrationPage() {
       };
       const vendor = await vendorsApi.create(vendorPayload);
       setSelectedVendor(vendor);
-      setShowVendorModal(false);
       setVendorSearchQuery(vendor.contactPhone);
+      handleCloseVendorModal();
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to create vendor';
@@ -518,6 +547,8 @@ export default function ProductRegistrationPage() {
       address: '',
       businessType: 'WHOLESALE',
     });
+    setShowCustomBusinessType(false);
+    setCustomBusinessType('');
   };
 
   const handleLotIdSearch = async () => {
@@ -896,7 +927,7 @@ export default function ProductRegistrationPage() {
       {showVendorModal && (
         <div
           className={styles.modalOverlay}
-          onClick={() => !isCreatingVendor && setShowVendorModal(false)}
+                onClick={() => !isCreatingVendor && handleCloseVendorModal()}
         >
           <div
             className={styles.modalContent}
@@ -907,7 +938,7 @@ export default function ProductRegistrationPage() {
               <button
                 type="button"
                 className={styles.modalCloseBtn}
-                onClick={() => setShowVendorModal(false)}
+                onClick={handleCloseVendorModal}
                 disabled={isCreatingVendor}
               >
                 ×
@@ -999,13 +1030,20 @@ export default function ProductRegistrationPage() {
                 <select
                   id="vendorBusinessType"
                   className={styles.input}
-                  value={vendorFormData.businessType}
-                  onChange={(e) =>
-                    setVendorFormData((prev) => ({
-                      ...prev,
-                      businessType: e.target.value as VendorBusinessType,
-                    }))
-                  }
+                  value={showCustomBusinessType ? 'OTHER' : vendorFormData.businessType}
+                  onChange={(e) => {
+                    if (e.target.value === 'OTHER') {
+                      setShowCustomBusinessType(true);
+                      setCustomBusinessType('');
+                    } else {
+                      setShowCustomBusinessType(false);
+                      setCustomBusinessType('');
+                      setVendorFormData((prev) => ({
+                        ...prev,
+                        businessType: e.target.value as VendorBusinessType,
+                      }));
+                    }
+                  }}
                   disabled={isCreatingVendor}
                   required
                 >
@@ -1013,14 +1051,33 @@ export default function ProductRegistrationPage() {
                   <option value="RETAIL">Retail</option>
                   <option value="MANUFACTURER">Manufacturer</option>
                   <option value="DISTRIBUTOR">Distributor</option>
+                  <option value="C&F">C&F</option>
+                  <option value="OTHER">Other</option>
                 </select>
               </div>
+              {showCustomBusinessType && (
+                <div className={styles.formGroup}>
+                  <label htmlFor="customBusinessType" className={styles.label}>
+                    Custom Business Type *
+                  </label>
+                  <input
+                    type="text"
+                    id="customBusinessType"
+                    className={styles.input}
+                    placeholder="Enter custom business type"
+                    value={customBusinessType}
+                    onChange={(e) => setCustomBusinessType(e.target.value)}
+                    disabled={isCreatingVendor}
+                    required
+                  />
+                </div>
+              )}
             </div>
             <div className={styles.modalFooter}>
               <button
                 type="button"
                 className={styles.cancelBtn}
-                onClick={() => setShowVendorModal(false)}
+                onClick={handleCloseVendorModal}
                 disabled={isCreatingVendor}
               >
                 Cancel
@@ -1264,8 +1321,38 @@ function ProductAccordion({
               />
             </div>
             <div className={styles.formGroup}>
+              <label htmlFor={`additionalDiscount-${product.id}`} className={styles.label}>
+                Additional Discount (%)
+              </label>
+              <input
+                type="number"
+                id={`additionalDiscount-${product.id}`}
+                className={styles.input}
+                placeholder="Enter discount percentage"
+                step="0.01"
+                min="0"
+                max="100"
+                value={product.additionalDiscount === null || product.additionalDiscount === undefined ? '' : product.additionalDiscount}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '') {
+                    onChange(product.id, 'additionalDiscount', null);
+                  } else {
+                    const numValue = parseFloat(value);
+                    if (!isNaN(numValue) && numValue >= 0 && numValue <= 100) {
+                      onChange(product.id, 'additionalDiscount', numValue);
+                    }
+                  }
+                }}
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+
+          <div className={styles.formRow}>
+            <div className={styles.formGroup}>
               <label htmlFor={`sellingPrice-${product.id}`} className={styles.label}>
-                Selling Price *
+                Price to Retailer (PTR) *
               </label>
               <input
                 type="text"
@@ -1276,6 +1363,23 @@ function ProductAccordion({
                 placeholder="0.00"
                 value={product.sellingPrice === 0 ? '' : product.sellingPrice}
                 onChange={(e) => onDecimalChange(product.id, 'sellingPrice', e.target.value)}
+                required
+                disabled={isLoading}
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label htmlFor={`costPrice-${product.id}`} className={styles.label}>
+                Price from stockist (PTS) *
+              </label>
+              <input
+                type="text"
+                inputMode="decimal"
+                pattern="[0-9]*\.?[0-9]*"
+                id={`costPrice-${product.id}`}
+                className={styles.input}
+                placeholder="0.00"
+                value={product.costPrice === 0 ? '' : product.costPrice}
+                onChange={(e) => onDecimalChange(product.id, 'costPrice', e.target.value)}
                 required
                 disabled={isLoading}
               />
@@ -1305,19 +1409,18 @@ function ProductAccordion({
               />
             </div>
             <div className={styles.formGroup}>
-              <label htmlFor={`costPrice-${product.id}`} className={styles.label}>
-                Cost Price *
+              <label htmlFor={`cgst-${product.id}`} className={styles.label}>
+                CGST (%)
               </label>
               <input
                 type="text"
                 inputMode="decimal"
                 pattern="[0-9]*\.?[0-9]*"
-                id={`costPrice-${product.id}`}
+                id={`cgst-${product.id}`}
                 className={styles.input}
-                placeholder="0.00"
-                value={product.costPrice === 0 ? '' : product.costPrice}
-                onChange={(e) => onDecimalChange(product.id, 'costPrice', e.target.value)}
-                required
+                placeholder="Leave empty for shop default"
+                value={product.cgst || ''}
+                onChange={(e) => onChange(product.id, 'cgst', e.target.value)}
                 disabled={isLoading}
               />
             </div>
@@ -1337,22 +1440,6 @@ function ProductAccordion({
                 placeholder="Leave empty for shop default"
                 value={product.sgst || ''}
                 onChange={(e) => onChange(product.id, 'sgst', e.target.value)}
-                disabled={isLoading}
-              />
-            </div>
-            <div className={styles.formGroup}>
-              <label htmlFor={`cgst-${product.id}`} className={styles.label}>
-                CGST (%)
-              </label>
-              <input
-                type="text"
-                inputMode="decimal"
-                pattern="[0-9]*\.?[0-9]*"
-                id={`cgst-${product.id}`}
-                className={styles.input}
-                placeholder="Leave empty for shop default"
-                value={product.cgst || ''}
-                onChange={(e) => onChange(product.id, 'cgst', e.target.value)}
                 disabled={isLoading}
               />
             </div>

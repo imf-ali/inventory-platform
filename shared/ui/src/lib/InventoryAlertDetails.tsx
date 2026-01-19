@@ -221,7 +221,7 @@ export function InventoryAlertDetails({
               <div className={`${styles.detailCard} ${styles.pricingCard}`}>
                 <div className={styles.detailIcon}>💵</div>
                 <div className={styles.detailContent}>
-                  <span className={styles.detailLabel}>Selling Price</span>
+                  <span className={styles.detailLabel}>Price to Retailer (PTR)</span>
                   <span className={`${styles.detailValue} ${styles.priceValue}`}>
                     ₹{item?.sellingPrice?.toFixed(2) ?? '—'}
                   </span>
@@ -240,7 +240,7 @@ export function InventoryAlertDetails({
                 <div className={`${styles.detailCard} ${styles.pricingCard}`}>
                   <div className={styles.detailIcon}>₹</div>
                   <div className={styles.detailContent}>
-                    <span className={styles.detailLabel}>Cost Price</span>
+                    <span className={styles.detailLabel}>Price to stockist (PTS)</span>
                     <span className={`${styles.detailValue} ${styles.costValue}`}>
                       ₹{item.costPrice.toFixed(2)}
                     </span>
@@ -265,6 +265,17 @@ export function InventoryAlertDetails({
                     <span className={styles.detailLabel}>CGST</span>
                     <span className={styles.detailValue}>
                       {item.cgst}%
+                    </span>
+                  </div>
+                </div>
+              )}
+              {item?.additionalDiscount !== null && item?.additionalDiscount !== undefined && (
+                <div className={`${styles.detailCard} ${styles.pricingCard}`}>
+                  <div className={styles.detailIcon}>🎯</div>
+                  <div className={styles.detailContent}>
+                    <span className={styles.detailLabel}>Additional Discount</span>
+                    <span className={styles.detailValue}>
+                      {item.additionalDiscount.toFixed(2)}%
                     </span>
                   </div>
                 </div>

@@ -500,6 +500,7 @@ export interface CreateInventoryDto {
   sac?: string;
   batchNo?: string;
   scheme?: string;
+  additionalDiscount?: number | null;
 }
 
 export interface InventoryResponse {
@@ -533,6 +534,7 @@ export interface BulkCreateInventoryItem {
   scheme?: string | null;
   sgst?: string | null;
   cgst?: string | null;
+  additionalDiscount?: number | null;
 }
 
 export interface BulkCreateInventoryDto {
@@ -573,6 +575,7 @@ export interface ParseInvoiceItem {
   scheme?: string | null;
   sgst?: string | null;
   cgst?: string | null;
+  additionalDiscount?: number | null;
 }
 
 export interface ParseInvoiceResponse {
@@ -604,6 +607,7 @@ export interface InventoryItem {
   scheme?: string | null;
   sgst?: string | null;
   cgst?: string | null;
+  additionalDiscount?: number | null;
   createdAt?: string;
 }
 
@@ -690,6 +694,7 @@ export interface CartResponse {
   sgstAmount?: number;
   cgstAmount?: number;
   discountTotal: number;
+  additionalDiscountTotal: number;
   grandTotal: number;
   status: string;
   customerName?: string;

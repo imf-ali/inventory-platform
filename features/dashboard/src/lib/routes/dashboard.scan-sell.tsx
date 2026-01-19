@@ -185,19 +185,28 @@ export default function ScanSellPage() {
       const localItems: CartItem[] = [];
 
       for (const cartItem of cart.items) {
-        // Try to fetch full inventory details to get accurate stock count
+        // Try to fetch full inventory details to get accurate stock count and additionalDiscount
         let inventoryItem: InventoryItem | null = null;
         try {
+          // Search for the inventory item by ID to get full details including additionalDiscount
           const searchResult = await inventoryApi.search(cartItem.inventoryId);
           inventoryItem =
             searchResult.data?.find((inv) => inv.id === cartItem.inventoryId) ||
             null;
+          
+          // If search didn't find it, try searching all inventory
+          if (!inventoryItem) {
+            const allInventory = await inventoryApi.getAll(0, 1000);
+            inventoryItem =
+              allInventory.data?.find((inv) => inv.id === cartItem.inventoryId) ||
+              null;
+          }
         } catch {
           // If search fails, we'll create a minimal item
         }
 
         if (inventoryItem) {
-          // Use the actual inventory item with correct stock count
+          // Use the actual inventory item with correct stock count and additionalDiscount
           localItems.push({
             inventoryItem,
             quantity: cartItem.quantity,
@@ -223,6 +232,7 @@ export default function ScanSellPage() {
             location: '',
             expiryDate: '',
             shopId: cart.shopId,
+            additionalDiscount: null, // Will be populated when we fetch full details
           };
           localItems.push({
             inventoryItem: minimalItem,
@@ -302,6 +312,7 @@ export default function ScanSellPage() {
                       location: '',
                       expiryDate: '',
                       shopId: '',
+                      additionalDiscount: null,
                     },
                     quantity: 0,
                     price: cartItem.sellingPrice,
@@ -1082,6 +1093,12 @@ export default function ScanSellPage() {
                           % off MRP
                         </span>
                       )}
+                      {cartItem.inventoryItem.additionalDiscount !== null &&
+                        cartItem.inventoryItem.additionalDiscount !== undefined && (
+                        <span className={styles.itemDiscount}>
+                          Additional: {cartItem.inventoryItem.additionalDiscount.toFixed(2)}%
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className={styles.itemActions}>
@@ -1141,11 +1158,11 @@ export default function ScanSellPage() {
                   <span>₹{calculateSubtotal().toFixed(2)}</span>
                 </div>
                 {cartData &&
-                  cartData.discountTotal &&
-                  cartData.discountTotal > 0 && (
+                  cartData.additionalDiscountTotal &&
+                  cartData.additionalDiscountTotal > 0 && (
                     <div className={styles.summaryRow}>
-                      <span>Discount</span>
-                      <span>-₹{(cartData.discountTotal ?? 0).toFixed(2)}</span>
+                      <span>Additional Discount</span>
+                      <span>-₹{(cartData.additionalDiscountTotal ?? 0).toFixed(2)}</span>
                     </div>
                   )}
                 <div className={styles.summaryRow}>
@@ -1249,6 +1266,14 @@ function ProductResultItem({ item, onAddToCart }: ProductResultItemProps) {
         <p className={styles.resultItemMRP}>
           MRP: ₹{item.maximumRetailPrice.toFixed(2)}
         </p>
+        <p className={styles.resultItemPTR}>
+          Price to Retailer (PTR): ₹{item.sellingPrice.toFixed(2)}
+        </p>
+        {item.additionalDiscount !== null && item.additionalDiscount !== undefined && (
+          <p className={styles.resultItemDiscount}>
+            Additional Discount: {item.additionalDiscount.toFixed(2)}%
+          </p>
+        )}
         <p className={styles.resultItemExpiry}>
           Expires: {formatDate(item.expiryDate)}
         </p>
