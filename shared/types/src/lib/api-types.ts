@@ -419,6 +419,7 @@ export interface RegisterShopDto {
   panNo?: string;
   sgst?: string;
   cgst?: string;
+  tagline?: string;
 }
 
 export interface RegisterShopResponse {

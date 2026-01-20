@@ -7,6 +7,7 @@ import styles from './onboarding.module.css';
 
 const STEPS: OnboardingStep[] = [
   'name',
+  'tagline',
   'businessId',
   'contactPhone',
   'contactEmail',
@@ -21,6 +22,7 @@ const STEP_LABELS: Record<OnboardingStep, string> = {
   contactEmail: 'Contact Email',
   location: 'Location Details',
   businessDetails: 'Business Details',
+  tagline: 'Tagline',
 };
 
 export function meta() {
@@ -55,6 +57,7 @@ export default function OnboardingPage() {
     panNo: '',
     sgst: '',
     cgst: '',
+    tagline: '',
   });
 
   useEffect(() => {
@@ -96,6 +99,8 @@ export default function OnboardingPage() {
       });
     } else if (step === 'businessDetails') {
       setFormData({ ...formData, [name]: value });
+    } else if (step === 'tagline') {
+      setFormData({ ...formData, tagline: value });
     }
 
     if (error) {
@@ -109,6 +114,7 @@ export default function OnboardingPage() {
     if (step === 'businessId') return formData.businessId;
     if (step === 'contactPhone') return formData.contactPhone;
     if (step === 'contactEmail') return formData.contactEmail;
+    if (step === 'tagline') return formData.tagline;
     if (step === 'location' && fieldName) {
       return (
         formData.location[fieldName as keyof typeof formData.location] || ''
@@ -150,8 +156,8 @@ export default function OnboardingPage() {
       setCurrentStep(currentStep + 1);
       setError(null);
       return;
-    } else if (step === 'businessDetails') {
-      // Business details are all optional, skip validation and move to next step or submit
+    } else if (step === 'businessDetails' || step === 'tagline') {
+      // Business details and tagline are all optional, skip validation and move to next step or submit
       if (currentStep === STEPS.length - 1) {
         handleSubmit();
       } else {
@@ -210,6 +216,7 @@ export default function OnboardingPage() {
         panNo: formData.panNo || undefined,
         sgst: formData.sgst || undefined,
         cgst: formData.cgst || undefined,
+        tagline: formData.tagline || undefined,
       });
 
       // Check if registration was successful - response should have shopId
@@ -522,6 +529,37 @@ export default function OnboardingPage() {
                       disabled={isLoading}
                     />
                   </div>
+                </div>
+              </>
+            ) : STEPS[currentStep] === 'tagline' ? (
+              <>
+                <p
+                  className={styles.subtitle}
+                  style={{ marginBottom: '1.5rem', fontSize: '0.9rem' }}
+                >
+                  Add a tagline for your shop. This field is optional.
+                </p>
+                <div className={styles.formGroup}>
+                  <label htmlFor="tagline" className={styles.label}>
+                    Tagline
+                  </label>
+                  <input
+                    type="text"
+                    id="tagline"
+                    name="tagline"
+                    className={styles.input}
+                    placeholder="Enter shop tagline (e.g., Your Trusted Pharmacy)"
+                    value={getCurrentValue('tagline')}
+                    onChange={handleChange}
+                    disabled={isLoading}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleContinue();
+                      }
+                    }}
+                    autoFocus
+                  />
                 </div>
               </>
             ) : (

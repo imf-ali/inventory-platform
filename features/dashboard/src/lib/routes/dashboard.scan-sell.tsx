@@ -1158,11 +1158,12 @@ export default function ScanSellPage() {
                   <span>₹{calculateSubtotal().toFixed(2)}</span>
                 </div>
                 {cartData &&
-                  cartData.additionalDiscountTotal &&
+                  cartData.additionalDiscountTotal !== undefined &&
+                  cartData.additionalDiscountTotal !== null &&
                   cartData.additionalDiscountTotal > 0 && (
                     <div className={styles.summaryRow}>
                       <span>Additional Discount</span>
-                      <span>-₹{(cartData.additionalDiscountTotal ?? 0).toFixed(2)}</span>
+                      <span>-₹{cartData.additionalDiscountTotal.toFixed(2)}</span>
                     </div>
                   )}
                 <div className={styles.summaryRow}>
