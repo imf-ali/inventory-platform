@@ -162,7 +162,11 @@ export function LoginForm() {
         <button
           type="button"
           className={styles.submitButton}
-          onClick={handleSubmit}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleSubmit();
+          }}
           disabled={isLoading}
         >
           {isLoading ? 'Signing In...' : 'Sign In'}

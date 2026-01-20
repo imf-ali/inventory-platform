@@ -193,7 +193,7 @@ export default function OnboardingPage() {
     try {
       const response = await shopsApi.register({
         name: formData.name,
-        businessId: 'business-default',
+        businessId: 'pharmacy',
         location: {
           primaryAddress: formData.location.primaryAddress,
           secondaryAddress: formData.location.secondaryAddress || undefined,
