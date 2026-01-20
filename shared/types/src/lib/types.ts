@@ -1,6 +1,7 @@
 // Import API types for use in store interfaces
 import type {
   User,
+  Shop,
   LoginDto,
   SignupDto,
   Order,
@@ -13,6 +14,7 @@ import type {
 // Store State Interfaces
 export interface AuthState {
   user: User | null;
+  shop: Shop | null;
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -120,9 +122,9 @@ export type Plan = {
 };
 
 // Feature-specific Types
-export type OnboardingStep = 
+export type OnboardingStep =
   | 'name'
-  | 'businessId'
+  // | 'businessId'
   | 'contactPhone'
   | 'contactEmail'
   | 'location'

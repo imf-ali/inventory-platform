@@ -8,6 +8,7 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
+      shop: null,
       token: null,
       isAuthenticated: false,
       isLoading: false,
@@ -20,6 +21,7 @@ export const useAuthStore = create<AuthState>()(
           // Token is already set by authApi.login via apiClient.setToken
           set({
             user: response.user,
+            shop: response.shop,
             token: response.accessToken,
             isAuthenticated: true,
             isLoading: false,
@@ -128,4 +130,3 @@ export const useAuthStore = create<AuthState>()(
     }
   )
 );
-
