@@ -68,6 +68,10 @@ export interface User {
   createdAt?: string;
 }
 
+export interface Shop {
+  name?: string;
+}
+
 export interface LoginDto {
   idToken?: string; // For Google login
   email?: string; // Required if idToken is not provided
@@ -92,6 +96,7 @@ export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
   user: User;
+  shop: Shop;
 }
 
 export interface AcceptInviteResponse {

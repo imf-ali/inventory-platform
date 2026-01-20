@@ -38,7 +38,7 @@ const MENU_ITEMS = [
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout, isLoading } = useAuthStore();
+  const { user, shop, logout, isLoading } = useAuthStore();
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -232,15 +232,26 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 {userMenuOpen && (
                   <div className={styles.userMenu}>
                     <div className={styles.userMenuHeader}>
-                      <div>{user?.name}</div>
-                      <div>{user?.email}</div>
-                      <div>
-                        Role: {user?.role} | Shop: {user?.shopId ?? 'N/A'}
+                      <div className={styles.userIdentity}>
+                        <div className={styles.avatar}>👤</div>
+
+                        <div className={styles.userMeta}>
+                          <div className={styles.userMenuName}>
+                            {user?.name || 'User'}
+                          </div>
+                          <div className={styles.userMenuEmail}>
+                            {user?.email}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className={styles.userMenuInfo}>
+                        <span className={styles.roleBadge}>{shop?.name}</span>
                       </div>
                     </div>
 
                     <button onClick={handleLogout} className={styles.logoutBtn}>
-                      Logout
+                      🚪 Logout
                     </button>
                   </div>
                 )}
