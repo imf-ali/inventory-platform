@@ -232,12 +232,20 @@ export default function CheckoutPage() {
       setIsPrinting(false);
     }
   };
-
-  // Calculate tax percentage
-  const taxPercentage =
-    checkoutData.subTotal > 0
-      ? ((checkoutData.taxTotal / checkoutData.subTotal) * 100).toFixed(1)
-      : '0';
+  
+  // Get SGST and CGST percentages from items if available, otherwise calculate from amounts
+  const firstItem = checkoutData.items[0];
+  const sgstPercentage = firstItem?.sgst 
+    ? parseFloat(firstItem.sgst).toFixed(1)
+    : checkoutData.subTotal > 0 && checkoutData.sgstAmount
+    ? ((checkoutData.sgstAmount / checkoutData.subTotal) * 100).toFixed(1)
+    : '0';
+  
+  const cgstPercentage = firstItem?.cgst
+    ? parseFloat(firstItem.cgst).toFixed(1)
+    : checkoutData.subTotal > 0 && checkoutData.cgstAmount
+    ? ((checkoutData.cgstAmount / checkoutData.subTotal) * 100).toFixed(1)
+    : '0';
 
   // Get current date
   const currentDate = new Date().toLocaleDateString('en-US', {
@@ -430,21 +438,37 @@ export default function CheckoutPage() {
                   <th>MRP</th>
                   <th>Selling Price</th>
                   <th>Discount</th>
+                  <th>Additional Discount</th>
+                  <th>CGST%</th>
+                  <th>SGST%</th>
                   <th>Total</th>
                 </tr>
               </thead>
               <tbody>
                 {checkoutData.items.map((item, index: number) => {
-                  const itemTotal = item.sellingPrice * item.quantity;
-                  // Calculate discount percentage: ((MRP - Selling Price) / MRP) * 100
+                  // Calculate discount amount: (MRP - Selling Price) * quantity
+                  const discountAmount = (item.maximumRetailPrice - item.sellingPrice) * item.quantity;
                   return (
                     <tr key={index}>
                       <td>{item.name}</td>
                       <td>{item.quantity}</td>
                       <td>₹{item.maximumRetailPrice.toFixed(2)}</td>
                       <td>₹{item.sellingPrice.toFixed(2)}</td>
-                      <td>{item.discount.toFixed(2)}%</td>
-                      <td>₹{itemTotal.toFixed(2)}</td>
+                      <td>₹{discountAmount.toFixed(2)}</td>
+                      <td>
+                        {item.additionalDiscount !== null && item.additionalDiscount !== undefined
+                          ? `${item.additionalDiscount.toFixed(2)}%`
+                          : '—'}
+                      </td>
+                      <td>{item.cgst !== null && item.cgst !== undefined
+                          ? `${item.cgst}%`
+                          : '—'}
+                      </td>
+                      <td>{item.sgst !== null && item.sgst !== undefined
+                          ? `${item.sgst}%`
+                          : '—'}
+                      </td>
+                      <td>₹{item.totalAmount.toFixed(2)}</td>
                     </tr>
                   );
                 })}
@@ -461,14 +485,28 @@ export default function CheckoutPage() {
               <span>Subtotal:</span>
               <span>₹{checkoutData.subTotal.toFixed(2)}</span>
             </div>
+            {checkoutData.sgstAmount !== undefined && checkoutData.sgstAmount > 0 && (
+              <div className={styles.summaryRow}>
+                <span>SGST ({sgstPercentage}%):</span>
+                <span>₹{checkoutData.sgstAmount.toFixed(2)}</span>
+              </div>
+            )}
+            {checkoutData.cgstAmount !== undefined && checkoutData.cgstAmount > 0 && (
+              <div className={styles.summaryRow}>
+                <span>CGST ({cgstPercentage}%):</span>
+                <span>₹{checkoutData.cgstAmount.toFixed(2)}</span>
+              </div>
+            )}
             <div className={styles.summaryRow}>
-              <span>Tax ({taxPercentage}%):</span>
+              <span>Tax:</span>
               <span>₹{checkoutData.taxTotal.toFixed(2)}</span>
             </div>
-            <div className={styles.summaryRow}>
-              <span>Discount:</span>
-              <span>₹{checkoutData.discountTotal.toFixed(2)}</span>
-            </div>
+            {checkoutData.additionalDiscountTotal > 0 && (
+              <div className={styles.summaryRow}>
+                <span>Additional Discount:</span>
+                <span>-₹{checkoutData.additionalDiscountTotal.toFixed(2)}</span>
+              </div>
+            )}
             <div className={styles.summaryRowTotal}>
               <span>Grand Total:</span>
               <span>₹{checkoutData.grandTotal.toFixed(2)}</span>

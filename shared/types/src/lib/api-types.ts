@@ -663,6 +663,10 @@ export interface CheckoutItemResponse {
   maximumRetailPrice: number;
   sellingPrice: number;
   discount: number;
+  additionalDiscount?: number | null;
+  totalAmount: number;
+  sgst?: string | null;
+  cgst?: string | null;
 }
 
 export interface CheckoutResponse {
@@ -760,6 +764,7 @@ export interface GetPurchasesParams {
   page?: number;
   limit?: number;
   order?: string; // e.g., "soldAt:desc"
+  status?: string; // Filter by status (e.g., "COMPLETED", "CANCELLED")
 }
 
 export interface SearchPurchasesParams {
