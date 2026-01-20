@@ -5,11 +5,8 @@
   box-shadow: 0 8px 24px var(--shadow);
   width: 100%;
   border: 1px solid var(--border-color);
-  transition:
-    background-color 0.3s ease,
-    border-color 0.3s ease,
-    box-shadow 0.3s ease,
-    transform 0.2s ease;
+  transition: background-color 0.3s ease, border-color 0.3s ease,
+    box-shadow 0.3s ease, transform 0.2s ease;
 }
 
 @media (hover: hover) {
@@ -202,11 +199,27 @@
   justify-content: center;
 }
 
-.googleButtonWrapper > div {
+.googleButtonOuter {
   width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
-.googleButtonWrapper > div > div {
+.googleButtonInner {
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+/* Safety for Google iframe */
+.googleButtonInner iframe {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Extra safety for Google internal button wrapper */
+.googleButtonInner > div {
   width: 100% !important;
 }
 
@@ -219,4 +232,3 @@
     font-size: 1.75rem;
   }
 }
-
