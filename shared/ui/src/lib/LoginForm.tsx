@@ -176,17 +176,18 @@ export function LoginForm() {
           <span className={styles.dividerText}>or</span>
         </div>
 
-        <div className={styles.googleButtonWrapper}>
-          <GoogleLogin
-            onSuccess={handleGoogleSuccess}
-            onError={handleGoogleError}
-            useOneTap={false}
-            theme="outline"
-            size="large"
-            text="continue_with"
-            shape="rectangular"
-            width="100%"
-          />
+        <div className={styles.googleButtonOuter}>
+          <div className={styles.googleButtonInner}>
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+              useOneTap={false}
+              theme="outline"
+              size="large"
+              text="continue_with"
+              shape="rectangular"
+            />
+          </div>
         </div>
       </div>
 

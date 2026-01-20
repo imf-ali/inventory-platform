@@ -7,7 +7,7 @@ import styles from './onboarding.module.css';
 
 const STEPS: OnboardingStep[] = [
   'name',
-  'businessId',
+  // 'businessId',
   'contactPhone',
   'contactEmail',
   'location',
@@ -16,7 +16,7 @@ const STEPS: OnboardingStep[] = [
 
 const STEP_LABELS: Record<OnboardingStep, string> = {
   name: 'Shop Name',
-  businessId: 'Business ID',
+  // businessId: 'Business ID',
   contactPhone: 'Mobile number',
   contactEmail: 'Contact Email',
   location: 'Location Details',
@@ -38,7 +38,7 @@ export default function OnboardingPage() {
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
-    businessId: 'Pharmacy',
+    // businessId: 'Pharmacy',
     location: {
       primaryAddress: '',
       secondaryAddress: '',
@@ -81,9 +81,9 @@ export default function OnboardingPage() {
 
     if (step === 'name') {
       setFormData({ ...formData, name: value });
-    } else if (step === 'businessId') {
-      // Business ID is fixed, don't allow changes
-      return;
+      // } else if (step === 'businessId') {
+      //   // Business ID is fixed, don't allow changes
+      //   return;
     } else if (step === 'contactPhone') {
       setFormData({ ...formData, contactPhone: value });
     } else if (step === 'contactEmail') {
@@ -106,7 +106,7 @@ export default function OnboardingPage() {
   const getCurrentValue = (fieldName?: string): string => {
     const step = STEPS[currentStep];
     if (step === 'name') return formData.name;
-    if (step === 'businessId') return formData.businessId;
+    // if (step === 'businessId') return formData.businessId;
     if (step === 'contactPhone') return formData.contactPhone;
     if (step === 'contactEmail') return formData.contactEmail;
     if (step === 'location' && fieldName) {
@@ -145,11 +145,11 @@ export default function OnboardingPage() {
         setError('Please enter country');
         return;
       }
-    } else if (step === 'businessId') {
-      // Business ID is fixed, skip validation and move to next step
-      setCurrentStep(currentStep + 1);
-      setError(null);
-      return;
+      // } else if (step === 'businessId') {
+      //   // Business ID is fixed, skip validation and move to next step
+      //   setCurrentStep(currentStep + 1);
+      //   setError(null);
+      //   return;
     } else if (step === 'businessDetails') {
       // Business details are all optional, skip validation and move to next step or submit
       if (currentStep === STEPS.length - 1) {
@@ -193,7 +193,7 @@ export default function OnboardingPage() {
     try {
       const response = await shopsApi.register({
         name: formData.name,
-        businessId: formData.businessId,
+        businessId: 'pharmacy',
         location: {
           primaryAddress: formData.location.primaryAddress,
           secondaryAddress: formData.location.secondaryAddress || undefined,
@@ -542,9 +542,9 @@ export default function OnboardingPage() {
                   placeholder={
                     STEPS[currentStep] === 'name'
                       ? 'Enter shop name'
-                      : STEPS[currentStep] === 'businessId'
-                      ? 'Enter business ID'
-                      : STEPS[currentStep] === 'contactPhone'
+                      : // : STEPS[currentStep] === 'businessId'
+                      // ? 'Enter business ID'
+                      STEPS[currentStep] === 'contactPhone'
                       ? '+91 1234 567890'
                       : 'Enter contact email'
                   }
@@ -557,8 +557,8 @@ export default function OnboardingPage() {
                     }
                   }}
                   autoFocus
-                  disabled={isLoading || STEPS[currentStep] === 'businessId'}
-                  readOnly={STEPS[currentStep] === 'businessId'}
+                  // disabled={isLoading || STEPS[currentStep] === 'businessId'}
+                  // readOnly={STEPS[currentStep] === 'businessId'}
                 />
               </div>
             )}
