@@ -73,13 +73,15 @@ export interface Shop {
 }
 
 export interface LoginDto {
-  idToken?: string; // For Google login
+  idToken?: string; // For Google/Facebook login
+  loginType?: 'google' | 'facebook'; // Required if idToken is provided
   email?: string; // Required if idToken is not provided
   password?: string; // Required if idToken is not provided
 }
 
 export interface SignupDto {
-  idToken?: string; // For Google signup
+  idToken?: string; // For Google/Facebook signup
+  signupType?: 'google' | 'facebook'; // Required if idToken is provided
   name?: string; // Required if idToken is not provided
   email?: string; // Required if idToken is not provided
   password?: string; // Required if idToken is not provided
