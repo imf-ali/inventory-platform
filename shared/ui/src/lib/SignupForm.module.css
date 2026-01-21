@@ -205,13 +205,14 @@
 }
 
 .googleButtonWrapper {
-  flex: 1;
+  flex: 1 1 0;
   width: 100%;
   display: flex;
   justify-content: center;
   align-items: stretch;
   margin-top: 0.5rem;
   min-height: 48px;
+  min-width: 0;
 }
 
 .googleButtonWrapper > div {
@@ -263,6 +264,27 @@
   display: none !important;
 }
 
+/* Hide account picker text and email when Google shows account selector */
+.googleButtonWrapper div[role="button"] div[data-profile] {
+  display: none !important;
+}
+
+.googleButtonWrapper div[role="button"] div[aria-label*="Sign in as"] {
+  display: none !important;
+}
+
+/* Hide any text content inside the button */
+.googleButtonWrapper div[role="button"] > div > div:not(:first-child) {
+  display: none !important;
+}
+
+/* Ensure only the logo/icon is visible */
+.googleButtonWrapper div[role="button"] > div > div:first-child {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
 /* Ensure Google logo/icon is visible and centered */
 .googleButtonWrapper svg,
 .googleButtonWrapper img {
@@ -273,7 +295,7 @@
 }
 
 .facebookButton {
-  flex: 1;
+  flex: 1 1 0;
   background: white;
   border: 1px solid #dadce0;
   border-radius: 8px;
@@ -287,6 +309,8 @@
   min-height: 48px;
   margin-top: 0.5rem;
   height: 100%;
+  min-width: 0;
+  width: 100%;
 }
 
 .facebookButton:hover:not(:disabled) {
