@@ -27,7 +27,13 @@ export function PurchaseList({ onPurchaseChange }: PurchaseListProps) {
         limit,
         order: 'soldAt:desc',
       });
-      setPurchases(response.purchases);
+      
+      // Filter out PENDING orders, only show COMPLETED and CANCELLED
+      const filteredPurchases = response.purchases.filter(
+        (purchase) => purchase.status === 'COMPLETED' || purchase.status === 'CANCELLED'
+      );
+      
+      setPurchases(filteredPurchases);
       setTotalPages(response.totalPages);
       setTotal(response.total);
     } catch (err: any) {

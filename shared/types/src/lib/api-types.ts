@@ -424,6 +424,7 @@ export interface RegisterShopDto {
   panNo?: string;
   sgst?: string;
   cgst?: string;
+  tagline?: string;
 }
 
 export interface RegisterShopResponse {
@@ -505,6 +506,7 @@ export interface CreateInventoryDto {
   sac?: string;
   batchNo?: string;
   scheme?: string;
+  additionalDiscount?: number | null;
 }
 
 export interface InventoryResponse {
@@ -538,6 +540,7 @@ export interface BulkCreateInventoryItem {
   scheme?: string | null;
   sgst?: string | null;
   cgst?: string | null;
+  additionalDiscount?: number | null;
 }
 
 export interface BulkCreateInventoryDto {
@@ -578,6 +581,7 @@ export interface ParseInvoiceItem {
   scheme?: string | null;
   sgst?: string | null;
   cgst?: string | null;
+  additionalDiscount?: number | null;
 }
 
 export interface ParseInvoiceResponse {
@@ -609,6 +613,7 @@ export interface InventoryItem {
   scheme?: string | null;
   sgst?: string | null;
   cgst?: string | null;
+  additionalDiscount?: number | null;
   createdAt?: string;
 }
 
@@ -664,6 +669,10 @@ export interface CheckoutItemResponse {
   maximumRetailPrice: number;
   sellingPrice: number;
   discount: number;
+  additionalDiscount?: number | null;
+  totalAmount: number;
+  sgst?: string | null;
+  cgst?: string | null;
 }
 
 export interface CheckoutResponse {
@@ -695,6 +704,7 @@ export interface CartResponse {
   sgstAmount?: number;
   cgstAmount?: number;
   discountTotal: number;
+  additionalDiscountTotal: number;
   grandTotal: number;
   status: string;
   customerName?: string;
@@ -760,6 +770,7 @@ export interface GetPurchasesParams {
   page?: number;
   limit?: number;
   order?: string; // e.g., "soldAt:desc"
+  status?: string; // Filter by status (e.g., "COMPLETED", "CANCELLED")
 }
 
 export interface SearchPurchasesParams {

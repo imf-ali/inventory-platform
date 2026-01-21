@@ -19,6 +19,9 @@ export const purchasesApi = {
     if (params?.order) {
       queryParams.order = params.order;
     }
+    if (params?.status) {
+      queryParams.status = params.status;
+    }
 
     const response = await apiClient.get<ApiResponse<PurchaseHistoryResponse>>(
       API_ENDPOINTS.PURCHASES.BASE,

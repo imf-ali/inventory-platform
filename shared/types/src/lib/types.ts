@@ -128,4 +128,5 @@ export type OnboardingStep =
   | 'contactPhone'
   | 'contactEmail'
   | 'location'
-  | 'businessDetails';
+  | 'businessDetails'
+  | 'tagline';
