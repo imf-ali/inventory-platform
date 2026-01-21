@@ -204,6 +204,23 @@
   align-items: stretch;
 }
 
+/* Make GoogleLogin button 100% width */
+.socialButtons > div {
+  width: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+}
+
+.socialButtons iframe {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.socialButtons div[role="button"] {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
 .googleButtonWrapper {
   flex: 1 1 0;
   width: 100%;
@@ -260,9 +277,6 @@
   justify-content: center !important;
 }
 
-.googleButtonWrapper div[role="button"] span {
-  display: none !important;
-}
 
 /* Hide account picker text and email when Google shows account selector */
 .googleButtonWrapper div[role="button"] div[data-profile] {
@@ -273,13 +287,16 @@
   display: none !important;
 }
 
-/* Hide any text content inside the button */
-.googleButtonWrapper div[role="button"] > div > div:not(:first-child) {
-  display: none !important;
+/* When using icon mode, ensure the icon container is visible */
+.googleButtonWrapper div[role="button"] > div {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
 }
 
-/* Ensure only the logo/icon is visible */
-.googleButtonWrapper div[role="button"] > div > div:first-child {
+/* Don't hide child divs when in icon mode - they contain the icon */
+.googleButtonWrapper div[role="button"] > div > div {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -292,6 +309,25 @@
   margin: 0 auto !important;
   width: 18px !important;
   height: 18px !important;
+}
+
+/* Force Google icon to be visible when using icon mode */
+.googleButtonWrapper div[role="button"] svg {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 18px !important;
+  height: 18px !important;
+  margin: 0 auto !important;
+}
+
+.googleButtonWrapper div[role="button"] img {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 18px !important;
+  height: 18px !important;
+  margin: 0 auto !important;
 }
 
 .facebookButton {
