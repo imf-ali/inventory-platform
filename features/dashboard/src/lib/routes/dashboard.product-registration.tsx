@@ -11,6 +11,7 @@ import type {
   ParseInvoiceItem,
 } from '@inventory-platform/types';
 import { CustomRemindersSection } from '@inventory-platform/ui';
+import { useNotify } from '@inventory-platform/store';
 import styles from './dashboard.product-registration.module.css';
 
 export function meta() {
@@ -151,12 +152,12 @@ export default function ProductRegistrationPage() {
     if (file) {
       // Validate file type
       if (!file.type.startsWith('image/')) {
-        setError('Please select an image file');
+        useNotify.error('Please select an image file');
         return;
       }
       // Validate file size (max 10MB)
       if (file.size > 10 * 1024 * 1024) {
-        setError('File size must be less than 10MB');
+        useNotify.error('File size must be less than 10MB');
         return;
       }
       setSelectedFile(file);
@@ -166,7 +167,7 @@ export default function ProductRegistrationPage() {
 
   const handleUploadInvoice = async () => {
     if (!selectedFile) {
-      setError('Please select an image file');
+      useNotify.error('Please select an image file');
       return;
     }
 
@@ -181,7 +182,7 @@ export default function ProductRegistrationPage() {
         // Transform parsed items to product form data
         const parsedProducts = response.items.map(transformParsedItemToProduct);
         setProducts(parsedProducts);
-        setSuccess(
+        useNotify.success(
           `Successfully parsed invoice! Found ${response.totalItems} item(s). Please review and fill in any missing information.`
         );
         setSelectedFile(null);
@@ -189,7 +190,7 @@ export default function ProductRegistrationPage() {
           fileInputRef.current.value = '';
         }
       } else {
-        setError(
+        useNotify.error(
           'No items found in the invoice image. Please try a different image.'
         );
       }
@@ -198,7 +199,7 @@ export default function ProductRegistrationPage() {
         err instanceof Error
           ? err.message
           : 'Failed to parse invoice. Please try again.';
-      setError(errorMessage);
+      useNotify.error(errorMessage);
     } finally {
       setIsUploading(false);
     }
@@ -302,7 +303,7 @@ export default function ProductRegistrationPage() {
           !product.location ||
           !product.expiryDate
         ) {
-          setError(
+          useNotify.error(
             `Product "${product.name || 'Unnamed'}" is missing required fields`
           );
           setIsLoading(false);
@@ -310,7 +311,7 @@ export default function ProductRegistrationPage() {
         }
 
         if (product.count <= 0) {
-          setError(
+          useNotify.error(
             `Product "${
               product.name || 'Unnamed'
             }" count must be greater than 0`
@@ -420,7 +421,7 @@ export default function ProductRegistrationPage() {
                   )
                   .join('; ')
               : '';
-          setSuccess(
+          useNotify.success(
             `Successfully registered ${
               createdCount || items.length
             } product(s)! ${lotId ? `Lot ID: ${lotId}. ` : ''}${
@@ -440,7 +441,7 @@ export default function ProductRegistrationPage() {
         } else if (response) {
           // If response exists but no createdCount/items, still consider it success
           // (API might return success without detailed counts)
-          setSuccess(
+          useNotify.success(
             `Successfully registered ${products.length} product(s)! ${
               lotId ? `Lot ID: ${lotId}. ` : ''
             }`
@@ -454,21 +455,23 @@ export default function ProductRegistrationPage() {
             setSuccess(null);
           }, 5000);
         } else {
-          setError('Failed to register products. No items were created.');
+          useNotify.error(
+            'Failed to register products. No items were created.'
+          );
         }
       } catch (bulkError) {
         const errorMessage =
           bulkError instanceof Error
             ? bulkError.message
             : 'Failed to register products. Please try again.';
-        setError(errorMessage);
+        useNotify.error(errorMessage);
       }
     } catch (err) {
       const errorMessage =
         err instanceof Error
           ? err.message
           : 'Failed to register products. Please try again.';
-      setError(errorMessage);
+      useNotify.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -480,7 +483,7 @@ export default function ProductRegistrationPage() {
 
   const handleVendorSearch = async () => {
     if (!vendorSearchQuery.trim()) {
-      setError('Please enter a search query');
+      useNotify.error('Please enter a search query');
       return;
     }
 
@@ -498,7 +501,7 @@ export default function ProductRegistrationPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to search vendor';
-      setError(errorMessage);
+      useNotify.error(errorMessage);
       setVendorSearchResults([]);
       setSelectedVendor(null);
     } finally {
@@ -537,7 +540,7 @@ export default function ProductRegistrationPage() {
       }
 
       if (showCustomBusinessType && !customBusinessType.trim()) {
-        setError('Please enter a custom business type');
+        useNotify.error('Please enter a custom business type');
         setIsCreatingVendor(false);
         return;
       }
@@ -560,7 +563,7 @@ export default function ProductRegistrationPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to create vendor';
-      setError(errorMessage);
+      useNotify.error(errorMessage);
     } finally {
       setIsCreatingVendor(false);
     }
@@ -599,7 +602,7 @@ export default function ProductRegistrationPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to search lots';
-      setError(errorMessage);
+      useNotify.error(errorMessage);
       setLotIdSearchResults([]);
     } finally {
       setIsSearchingLots(false);
@@ -635,8 +638,8 @@ export default function ProductRegistrationPage() {
         </p>
       </div>
       <div className={styles.formContainer}>
-        {error && <div className={styles.errorMessage}>{error}</div>}
-        {success && <div className={styles.successMessage}>{success}</div>}
+        {/* {error && <div className={styles.errorMessage}>{error}</div>}
+        {success && <div className={styles.successMessage}>{success}</div>} */}
 
         <form className={styles.form} onSubmit={handleSubmit}>
           {/* Shared Vendor and Lot ID Section */}

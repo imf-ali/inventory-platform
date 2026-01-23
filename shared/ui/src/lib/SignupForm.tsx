@@ -9,11 +9,16 @@ declare global {
     FB?: {
       init: (config: { appId: string; version: string }) => void;
       login: (
-        callback: (response: { authResponse?: { accessToken: string } }) => void,
+        callback: (response: {
+          authResponse?: { accessToken: string };
+        }) => void,
         options?: { scope: string }
       ) => void;
       getLoginStatus: (
-        callback: (response: { status: string; authResponse?: { accessToken: string } }) => void
+        callback: (response: {
+          status: string;
+          authResponse?: { accessToken: string };
+        }) => void
       ) => void;
     };
     fbAsyncInit?: () => void;
@@ -31,7 +36,7 @@ export function SignupForm() {
     confirmPassword: '',
   });
   const [localError, setLocalError] = useState<string | null>(null);
-  const [isFacebookReady, setIsFacebookReady] = useState(false);
+  const [_isFacebookReady, setIsFacebookReady] = useState(false);
 
   // Load Facebook SDK
   useEffect(() => {
@@ -178,47 +183,47 @@ export function SignupForm() {
     setLocalError('Google signup failed. Please try again.');
   };
 
-  const handleFacebookSignup = async () => {
-    try {
-      setLocalError(null);
-      clearError();
+  // const handleFacebookSignup = async () => {
+  //   try {
+  //     setLocalError(null);
+  //     clearError();
 
-      if (!window.FB) {
-        setLocalError('Facebook SDK not loaded. Please refresh the page.');
-        return;
-      }
+  //     if (!window.FB) {
+  //       setLocalError('Facebook SDK not loaded. Please refresh the page.');
+  //       return;
+  //     }
 
-      window.FB.login(
-        async (response) => {
-          if (response.authResponse && response.authResponse.accessToken) {
-            try {
-              await signup({
-                idToken: response.authResponse.accessToken,
-                signupType: 'facebook',
-                role: 'CASHIER', // Default role
-              });
-              navigate('/shop-selection');
-            } catch (err) {
-              const errorMessage =
-                err instanceof Error
-                  ? err.message
-                  : 'Facebook signup failed. Please try again.';
-              setLocalError(errorMessage);
-            }
-          } else {
-            setLocalError('Facebook signup failed. Please try again.');
-          }
-        },
-        { scope: 'email,public_profile' }
-      );
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : 'Facebook signup failed. Please try again.';
-      setLocalError(errorMessage);
-    }
-  };
+  //     window.FB.login(
+  //       async (response) => {
+  //         if (response.authResponse && response.authResponse.accessToken) {
+  //           try {
+  //             await signup({
+  //               idToken: response.authResponse.accessToken,
+  //               signupType: 'facebook',
+  //               role: 'CASHIER', // Default role
+  //             });
+  //             navigate('/shop-selection');
+  //           } catch (err) {
+  //             const errorMessage =
+  //               err instanceof Error
+  //                 ? err.message
+  //                 : 'Facebook signup failed. Please try again.';
+  //             setLocalError(errorMessage);
+  //           }
+  //         } else {
+  //           setLocalError('Facebook signup failed. Please try again.');
+  //         }
+  //       },
+  //       { scope: 'email,public_profile' }
+  //     );
+  //   } catch (err) {
+  //     const errorMessage =
+  //       err instanceof Error
+  //         ? err.message
+  //         : 'Facebook signup failed. Please try again.';
+  //     setLocalError(errorMessage);
+  //   }
+  // };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>

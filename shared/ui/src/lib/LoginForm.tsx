@@ -9,11 +9,16 @@ declare global {
     FB?: {
       init: (config: { appId: string; version: string }) => void;
       login: (
-        callback: (response: { authResponse?: { accessToken: string } }) => void,
+        callback: (response: {
+          authResponse?: { accessToken: string };
+        }) => void,
         options?: { scope: string }
       ) => void;
       getLoginStatus: (
-        callback: (response: { status: string; authResponse?: { accessToken: string } }) => void
+        callback: (response: {
+          status: string;
+          authResponse?: { accessToken: string };
+        }) => void
       ) => void;
     };
     fbAsyncInit?: () => void;
@@ -30,7 +35,7 @@ export function LoginForm() {
     password: '',
   });
   const [localError, setLocalError] = useState<string | null>(null);
-  const [isFacebookReady, setIsFacebookReady] = useState(false);
+  const [_isFacebookReady, setIsFacebookReady] = useState(false);
 
   // Load Facebook SDK
   useEffect(() => {
@@ -174,49 +179,49 @@ export function LoginForm() {
     setLocalError('Google login failed. Please try again.');
   };
 
-  const handleFacebookLogin = async () => {
-    try {
-      setLocalError(null);
-      clearError();
+  // const handleFacebookLogin = async () => {
+  //   try {
+  //     setLocalError(null);
+  //     clearError();
 
-      if (!window.FB) {
-        setLocalError('Facebook SDK not loaded. Please refresh the page.');
-        return;
-      }
+  //     if (!window.FB) {
+  //       setLocalError('Facebook SDK not loaded. Please refresh the page.');
+  //       return;
+  //     }
 
-      window.FB.login(
-        async (response) => {
-          if (response.authResponse && response.authResponse.accessToken) {
-            try {
-              await login({
-                idToken: response.authResponse.accessToken,
-                loginType: 'facebook',
-              });
-              // Redirect to the original location if available, otherwise go to dashboard
-              const from =
-                (location.state as { from?: string })?.from || '/dashboard';
-              navigate(from, { replace: true });
-            } catch (err) {
-              const errorMessage =
-                err instanceof Error
-                  ? err.message
-                  : 'Facebook login failed. Please try again.';
-              setLocalError(errorMessage);
-            }
-          } else {
-            setLocalError('Facebook login failed. Please try again.');
-          }
-        },
-        { scope: 'email,public_profile' }
-      );
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : 'Facebook login failed. Please try again.';
-      setLocalError(errorMessage);
-    }
-  };
+  //     window.FB.login(
+  //       async (response) => {
+  //         if (response.authResponse && response.authResponse.accessToken) {
+  //           try {
+  //             await login({
+  //               idToken: response.authResponse.accessToken,
+  //               loginType: 'facebook',
+  //             });
+  //             // Redirect to the original location if available, otherwise go to dashboard
+  //             const from =
+  //               (location.state as { from?: string })?.from || '/dashboard';
+  //             navigate(from, { replace: true });
+  //           } catch (err) {
+  //             const errorMessage =
+  //               err instanceof Error
+  //                 ? err.message
+  //                 : 'Facebook login failed. Please try again.';
+  //             setLocalError(errorMessage);
+  //           }
+  //         } else {
+  //           setLocalError('Facebook login failed. Please try again.');
+  //         }
+  //       },
+  //       { scope: 'email,public_profile' }
+  //     );
+  //   } catch (err) {
+  //     const errorMessage =
+  //       err instanceof Error
+  //         ? err.message
+  //         : 'Facebook login failed. Please try again.';
+  //     setLocalError(errorMessage);
+  //   }
+  // };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
