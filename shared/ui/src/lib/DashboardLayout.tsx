@@ -5,6 +5,7 @@ import type { DashboardLayoutProps } from '@inventory-platform/types';
 import styles from './DashboardLayout.module.css';
 import { ThemeToggle } from './ThemeToggle';
 import { useNotifications } from '@inventory-platform/store';
+import { ToastProvider } from './ToastProvider';
 
 const MENU_ITEMS = [
   { path: '/dashboard', label: 'Dashboard', icon: '📊' },
@@ -113,6 +114,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className={styles.dashboard}>
+      <ToastProvider />
       {/* Sidebar */}
       <aside
         className={`${styles.sidebar} ${

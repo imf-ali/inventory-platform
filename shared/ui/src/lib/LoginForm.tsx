@@ -4,7 +4,6 @@ import { GoogleLogin, type CredentialResponse } from '@react-oauth/google';
 import { useAuthStore } from '@inventory-platform/store';
 import styles from './LoginForm.module.css';
 
-
 export function LoginForm() {
   const navigate = useNavigate();
   const location = useLocation();
