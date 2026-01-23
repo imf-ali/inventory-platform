@@ -30,6 +30,9 @@ interface ProductFormData
   sgst?: string;
   cgst?: string;
   additionalDiscount?: number | null;
+  sellingPrice: string;
+  costPrice: string;
+  maximumRetailPrice: string;
 }
 
 export default function ProductRegistrationPage() {
@@ -78,10 +81,10 @@ export default function ProductRegistrationPage() {
     barcode: '',
     name: '',
     companyName: '',
-    price: 0,
-    maximumRetailPrice: 0,
-    costPrice: 0,
-    sellingPrice: 0,
+    price: '',
+    maximumRetailPrice: '',
+    costPrice: '',
+    sellingPrice: '',
     businessType: 'pharmacy',
     location: '',
     count: 0,
@@ -123,10 +126,10 @@ export default function ProductRegistrationPage() {
       barcode: item.barcode || '',
       name: item.name || '',
       companyName: item.companyName || '',
-      price: item.sellingPrice || 0,
-      maximumRetailPrice: item.maximumRetailPrice || 0,
-      costPrice: item.costPrice || 0,
-      sellingPrice: item.sellingPrice || 0,
+      price: item.sellingPrice || '',
+      maximumRetailPrice: item.maximumRetailPrice || '',
+      costPrice: item.costPrice || '',
+      sellingPrice: item.sellingPrice || '',
       businessType: item.businessType?.toLowerCase() || 'pharmacy',
       location: item.location || '',
       count: item.count || 0,
@@ -361,9 +364,9 @@ export default function ProductRegistrationPage() {
           name: product.name,
           description: product.description || undefined,
           companyName: product.companyName,
-          maximumRetailPrice: product.maximumRetailPrice,
-          costPrice: product.costPrice,
-          sellingPrice: product.sellingPrice,
+          sellingPrice: parseFloat(product.sellingPrice),
+          costPrice: parseFloat(product.costPrice),
+          maximumRetailPrice: parseFloat(product.maximumRetailPrice),
           businessType: product.businessType.toUpperCase(),
           location: product.location,
           count: product.count,
@@ -1434,9 +1437,9 @@ function ProductAccordion({
                 id={`sellingPrice-${product.id}`}
                 className={styles.input}
                 placeholder="0.00"
-                value={product.sellingPrice === 0 ? '' : product.sellingPrice}
+                value={product.sellingPrice ?? ''}
                 onChange={(e) =>
-                  onDecimalChange(product.id, 'sellingPrice', e.target.value)
+                  onChange(product.id, 'sellingPrice', e.target.value)
                 }
                 required
                 disabled={isLoading}
@@ -1456,9 +1459,9 @@ function ProductAccordion({
                 id={`costPrice-${product.id}`}
                 className={styles.input}
                 placeholder="0.00"
-                value={product.costPrice === 0 ? '' : product.costPrice}
+                value={product.costPrice ?? ''}
                 onChange={(e) =>
-                  onDecimalChange(product.id, 'costPrice', e.target.value)
+                  onChange(product.id, 'costPrice', e.target.value)
                 }
                 required
                 disabled={isLoading}
@@ -1481,17 +1484,9 @@ function ProductAccordion({
                 id={`maximumRetailPrice-${product.id}`}
                 className={styles.input}
                 placeholder="0.00"
-                value={
-                  product.maximumRetailPrice === 0
-                    ? ''
-                    : product.maximumRetailPrice
-                }
+                value={product.maximumRetailPrice ?? ''}
                 onChange={(e) =>
-                  onDecimalChange(
-                    product.id,
-                    'maximumRetailPrice',
-                    e.target.value
-                  )
+                  onChange(product.id, 'maximumRetailPrice', e.target.value)
                 }
                 required
                 disabled={isLoading}
