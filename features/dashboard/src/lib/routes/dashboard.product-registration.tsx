@@ -39,8 +39,6 @@ interface ProductFormData
 export default function ProductRegistrationPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   // Shared vendor and lot ID (applied to all products)
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
@@ -103,7 +101,7 @@ export default function ProductRegistrationPage() {
 
   const handleAddProduct = () => {
     setProducts([...products, createEmptyProduct()]);
-    setError(null);
+    useNotify.error('Added new product form');
   };
 
   const transformParsedItemToProduct = (
@@ -161,7 +159,7 @@ export default function ProductRegistrationPage() {
         return;
       }
       setSelectedFile(file);
-      setError(null);
+      useNotify.error('Selected file: ' + file.name);
     }
   };
 
@@ -172,8 +170,8 @@ export default function ProductRegistrationPage() {
     }
 
     setIsUploading(true);
-    setError(null);
-    setSuccess(null);
+    useNotify.error('Uploading and parsing invoice...');
+    useNotify.success('Please wait while we process the image.');
 
     try {
       const response = await inventoryApi.parseInvoice(selectedFile);
@@ -210,7 +208,7 @@ export default function ProductRegistrationPage() {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-    setError(null);
+    useNotify.error('Cleared selected file');
   };
 
   const handleRemoveProduct = (productId: string) => {
@@ -233,8 +231,8 @@ export default function ProductRegistrationPage() {
     setProducts(
       products.map((p) => (p.id === productId ? { ...p, [field]: value } : p))
     );
-    setError(null);
-    setSuccess(null);
+    useNotify.error('Changed product field: ' + field);
+    useNotify.success('Updated product information successfully');
   };
 
   const handleIntegerChange = (
@@ -273,14 +271,14 @@ export default function ProductRegistrationPage() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
+    useNotify.error('Submitting product registration...');
+    useNotify.success('Please wait while we register your products.');
     setIsLoading(true);
 
     try {
       // Validate vendor is selected
       if (!selectedVendor || !selectedVendor.vendorId) {
-        setError(
+        useNotify.error(
           'Vendor information is required. Please search and select a vendor.'
         );
         setIsLoading(false);
@@ -289,7 +287,7 @@ export default function ProductRegistrationPage() {
 
       // Validate at least one product exists
       if (products.length === 0) {
-        setError('Please add at least one product to register.');
+        useNotify.error('Please add at least one product to register.');
         setIsLoading(false);
         return;
       }
@@ -436,7 +434,7 @@ export default function ProductRegistrationPage() {
             setLotId('');
             setLotIdSearchQuery('');
             setLotIdSearchResults([]);
-            setSuccess(null);
+            useNotify.success('Form cleared successfully');
           }, 5000);
         } else if (response) {
           // If response exists but no createdCount/items, still consider it success
@@ -452,7 +450,7 @@ export default function ProductRegistrationPage() {
             setLotId('');
             setLotIdSearchQuery('');
             setLotIdSearchResults([]);
-            setSuccess(null);
+            useNotify.success('Form cleared successfully');
           }, 5000);
         } else {
           useNotify.error(
@@ -488,7 +486,7 @@ export default function ProductRegistrationPage() {
     }
 
     setIsSearchingVendor(true);
-    setError(null);
+    useNotify.error('Searching vendors...');
     try {
       const vendors = await vendorsApi.search(vendorSearchQuery.trim());
       setVendorSearchResults(vendors || []);
@@ -531,10 +529,12 @@ export default function ProductRegistrationPage() {
 
   const handleCreateVendor = async () => {
     setIsCreatingVendor(true);
-    setError(null);
+    useNotify.error('Creating vendor...');
     try {
       if (!vendorFormData.name || !vendorFormData.contactPhone) {
-        setError('Please fill in all required vendor fields (Name and Phone)');
+        useNotify.error(
+          'Please fill in all required vendor fields (Name and Phone)'
+        );
         setIsCreatingVendor(false);
         return;
       }
@@ -591,7 +591,7 @@ export default function ProductRegistrationPage() {
     }
 
     setIsSearchingLots(true);
-    setError(null);
+    useNotify.error('Searching lots...');
     try {
       const response = await inventoryApi.searchLots(lotIdSearchQuery.trim());
       const lots = response.data || [];
