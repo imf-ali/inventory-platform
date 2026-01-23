@@ -491,10 +491,10 @@ export interface CreateInventoryDto {
   barcode: string;
   name: string;
   companyName: string;
-  price: number;
-  maximumRetailPrice: number;
-  costPrice: number;
-  sellingPrice: number;
+  price: string;
+  maximumRetailPrice: string;
+  costPrice: string;
+  sellingPrice: string;
   businessType: string;
   location: string;
   count: number;
@@ -567,9 +567,9 @@ export interface ParseInvoiceItem {
   name: string;
   description?: string | null;
   companyName?: string | null;
-  maximumRetailPrice: number;
-  costPrice?: number | null;
-  sellingPrice: number;
+  maximumRetailPrice: string;
+  costPrice?: string | '';
+  sellingPrice: string;
   businessType: string;
   location?: string | null;
   count?: number | null;
