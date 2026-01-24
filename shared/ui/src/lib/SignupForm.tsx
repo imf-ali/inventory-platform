@@ -4,26 +4,6 @@ import { GoogleLogin, type CredentialResponse } from '@react-oauth/google';
 import { useAuthStore } from '@inventory-platform/store';
 import styles from './SignupForm.module.css';
 
-declare global {
-  interface Window {
-    FB?: {
-      init: (config: { appId: string; version: string }) => void;
-      login: (
-        callback: (response: {
-          authResponse?: { accessToken: string };
-        }) => void,
-        options?: { scope: string }
-      ) => void;
-      getLoginStatus: (
-        callback: (response: {
-          status: string;
-          authResponse?: { accessToken: string };
-        }) => void
-      ) => void;
-    };
-    fbAsyncInit?: () => void;
-  }
-}
 
 export function SignupForm() {
   const navigate = useNavigate();
@@ -36,76 +16,6 @@ export function SignupForm() {
     confirmPassword: '',
   });
   const [localError, setLocalError] = useState<string | null>(null);
-  const [_isFacebookReady, setIsFacebookReady] = useState(false);
-
-  // Load Facebook SDK
-  useEffect(() => {
-    const initializeFacebook = () => {
-      const appId = import.meta.env.VITE_FACEBOOK_APP_ID || '';
-      if (!appId) {
-        return;
-      }
-
-      // If FB is already loaded, initialize it immediately
-      if (window.FB) {
-        window.FB.init({
-          appId: appId,
-          version: 'v18.0',
-        });
-        setIsFacebookReady(true);
-        return;
-      }
-
-      // If script already exists, wait for it to load
-      if (document.getElementById('facebook-jssdk')) {
-        // Set up the callback in case it hasn't been called yet
-        window.fbAsyncInit = () => {
-          if (window.FB) {
-            window.FB.init({
-              appId: appId,
-              version: 'v18.0',
-            });
-            setIsFacebookReady(true);
-          }
-        };
-        // If the script is already loaded, try to initialize
-        const checkInterval = setInterval(() => {
-          if (window.FB) {
-            window.FB.init({
-              appId: appId,
-              version: 'v18.0',
-            });
-            setIsFacebookReady(true);
-            clearInterval(checkInterval);
-          }
-        }, 100);
-        // Clear interval after 5 seconds
-        setTimeout(() => clearInterval(checkInterval), 5000);
-        return;
-      }
-
-      // Create and load the script
-      const script = document.createElement('script');
-      script.id = 'facebook-jssdk';
-      script.src = 'https://connect.facebook.net/en_US/sdk.js';
-      script.async = true;
-      script.defer = true;
-      script.crossOrigin = 'anonymous';
-      document.body.appendChild(script);
-
-      window.fbAsyncInit = () => {
-        if (window.FB) {
-          window.FB.init({
-            appId: appId,
-            version: 'v18.0',
-          });
-          setIsFacebookReady(true);
-        }
-      };
-    };
-
-    initializeFacebook();
-  }, []);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -182,48 +92,6 @@ export function SignupForm() {
   const handleGoogleError = () => {
     setLocalError('Google signup failed. Please try again.');
   };
-
-  // const handleFacebookSignup = async () => {
-  //   try {
-  //     setLocalError(null);
-  //     clearError();
-
-  //     if (!window.FB) {
-  //       setLocalError('Facebook SDK not loaded. Please refresh the page.');
-  //       return;
-  //     }
-
-  //     window.FB.login(
-  //       async (response) => {
-  //         if (response.authResponse && response.authResponse.accessToken) {
-  //           try {
-  //             await signup({
-  //               idToken: response.authResponse.accessToken,
-  //               signupType: 'facebook',
-  //               role: 'CASHIER', // Default role
-  //             });
-  //             navigate('/shop-selection');
-  //           } catch (err) {
-  //             const errorMessage =
-  //               err instanceof Error
-  //                 ? err.message
-  //                 : 'Facebook signup failed. Please try again.';
-  //             setLocalError(errorMessage);
-  //           }
-  //         } else {
-  //           setLocalError('Facebook signup failed. Please try again.');
-  //         }
-  //       },
-  //       { scope: 'email,public_profile' }
-  //     );
-  //   } catch (err) {
-  //     const errorMessage =
-  //       err instanceof Error
-  //         ? err.message
-  //         : 'Facebook signup failed. Please try again.';
-  //     setLocalError(errorMessage);
-  //   }
-  // };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
