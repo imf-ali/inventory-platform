@@ -153,9 +153,9 @@ export default function ProductRegistrationPage() {
    */
   const compressImage = async (
     file: File,
-    maxWidth: number = 1920,
-    maxHeight: number = 1920,
-    quality: number = 0.8
+    maxWidth = 1920,
+    maxHeight = 1920,
+    quality = 0.8
   ): Promise<File> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -297,7 +297,7 @@ export default function ProductRegistrationPage() {
   const handleProductChange = (
     productId: string,
     field: keyof ProductFormData,
-    value: any
+    value: ProductFormData[keyof ProductFormData]
   ) => {
     setProducts(
       products.map((p) =>
@@ -909,7 +909,7 @@ export default function ProductRegistrationPage() {
                 >
                   {selectedFile ? (
                     <div className={styles.fileInfo}>
-                      <span className={styles.fileIcon}>📄</span>
+                      <span className={styles.fileIcon} role="img" aria-label="File icon">📄</span>
                       <span className={styles.fileName}>{selectedFile.name}</span>
                       <span className={styles.fileSize}>
                         ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
@@ -917,7 +917,7 @@ export default function ProductRegistrationPage() {
                     </div>
                   ) : (
                     <div className={styles.uploadPlaceholder}>
-                      <span className={styles.uploadIcon}>📤</span>
+                      <span className={styles.uploadIcon} role="img" aria-label="Upload icon">📤</span>
                       <span>Choose Image File</span>
                     </div>
                   )}
@@ -938,7 +938,7 @@ export default function ProductRegistrationPage() {
                       onClick={handleUploadInvoice}
                       disabled={isLoading}
                     >
-                      <span className={styles.btnIcon}>🚀</span>
+                      <span className={styles.btnIcon} role="img" aria-label="Rocket icon">🚀</span>
                       Parse Invoice
                     </button>
                     <button
@@ -1202,7 +1202,7 @@ interface ProductAccordionProps {
   index: number;
   onToggle: () => void;
   onRemove: () => void;
-  onChange: (productId: string, field: keyof ProductFormData, value: any) => void;
+  onChange: (productId: string, field: keyof ProductFormData, value: ProductFormData[keyof ProductFormData]) => void;
   onIntegerChange: (productId: string, field: string, value: string) => void;
   onDecimalChange: (productId: string, field: string, value: string) => void;
   onCustomRemindersChange: (reminders: CustomReminderInput[]) => void;
