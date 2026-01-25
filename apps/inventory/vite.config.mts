@@ -25,6 +25,7 @@ export default defineConfig({
       '@inventory-platform/onboarding': path.resolve(__dirname, '../../features/onboarding/src/index.ts'),
       '@inventory-platform/auth': path.resolve(__dirname, '../../features/auth/src/index.ts'),
       '@inventory-platform/analytics': path.resolve(__dirname, '../../features/analytics/src/index.ts'),
+      '@inventory-platform/gst': path.resolve(__dirname, '../../features/gst/src/index.ts'),
     },
   },
   // Uncomment this if you are using workers.

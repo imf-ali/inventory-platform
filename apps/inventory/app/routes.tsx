@@ -23,5 +23,6 @@ export default [
     route('join-requests', './routes/dashboard.join-requests.tsx'),
     route('history', './routes/dashboard.history.tsx'),
     route('refund', './routes/dashboard.refund.tsx'),
+    route('gst', './routes/dashboard.gst.tsx'),
   ]),
 ] satisfies RouteConfig;
