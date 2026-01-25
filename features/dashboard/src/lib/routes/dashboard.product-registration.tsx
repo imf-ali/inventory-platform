@@ -68,6 +68,7 @@ export default function ProductRegistrationPage() {
 
   // Image upload state
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<string>('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -142,6 +143,74 @@ export default function ProductRegistrationPage() {
     };
   };
 
+  /**
+   * Compresses and resizes an image file to reduce its size before upload
+   * @param file - The original image file
+   * @param maxWidth - Maximum width in pixels (default: 1920)
+   * @param maxHeight - Maximum height in pixels (default: 1920)
+   * @param quality - Compression quality 0-1 (default: 0.8)
+   * @returns Promise<File> - The compressed image file
+   */
+  const compressImage = async (
+    file: File,
+    maxWidth = 1920,
+    maxHeight = 1920,
+    quality = 0.8
+  ): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          // Calculate new dimensions while maintaining aspect ratio
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth || height > maxHeight) {
+            const ratio = Math.min(maxWidth / width, maxHeight / height);
+            width = width * ratio;
+            height = height * ratio;
+          }
+
+          // Create canvas and draw resized image
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Failed to get canvas context'));
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Convert canvas to blob
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                reject(new Error('Failed to compress image'));
+                return;
+              }
+
+              // Create a new File from the blob with the original file name
+              const compressedFile = new File([blob], file.name, {
+                type: file.type,
+                lastModified: Date.now(),
+              });
+              resolve(compressedFile);
+            },
+            file.type,
+            quality
+          );
+        };
+        img.onerror = () => reject(new Error('Failed to load image'));
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -169,9 +238,14 @@ export default function ProductRegistrationPage() {
     setIsUploading(true);
     setError(null);
     setSuccess(null);
+    setUploadProgress('Compressing image...');
 
     try {
-      const response = await inventoryApi.parseInvoice(selectedFile);
+      // Compress the image before uploading
+      const compressedFile = await compressImage(selectedFile);
+      setUploadProgress('Uploading and parsing invoice...');
+      
+      const response = await inventoryApi.parseInvoice(compressedFile);
 
       if (response && response.items && response.items.length > 0) {
         // Transform parsed items to product form data
@@ -195,6 +269,7 @@ export default function ProductRegistrationPage() {
       setError(errorMessage);
     } finally {
       setIsUploading(false);
+      setUploadProgress('');
     }
   };
 
@@ -204,6 +279,7 @@ export default function ProductRegistrationPage() {
       fileInputRef.current.value = '';
     }
     setError(null);
+    setUploadProgress('');
   };
 
   const handleRemoveProduct = (productId: string) => {
@@ -221,7 +297,7 @@ export default function ProductRegistrationPage() {
   const handleProductChange = (
     productId: string,
     field: keyof ProductFormData,
-    value: any
+    value: ProductFormData[keyof ProductFormData]
   ) => {
     setProducts(
       products.map((p) =>
@@ -831,23 +907,45 @@ export default function ProductRegistrationPage() {
                   htmlFor="invoice-upload"
                   className={styles.fileInputLabel}
                 >
-                  {selectedFile ? selectedFile.name : 'Choose Image File'}
+                  {selectedFile ? (
+                    <div className={styles.fileInfo}>
+                      <span className={styles.fileIcon} role="img" aria-label="File icon">📄</span>
+                      <span className={styles.fileName}>{selectedFile.name}</span>
+                      <span className={styles.fileSize}>
+                        ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                      </span>
+                    </div>
+                  ) : (
+                    <div className={styles.uploadPlaceholder}>
+                      <span className={styles.uploadIcon} role="img" aria-label="Upload icon">📤</span>
+                      <span>Choose Image File</span>
+                    </div>
+                  )}
                 </label>
-                {selectedFile && (
+                
+                {isUploading && (
+                  <div className={styles.uploadProgress}>
+                    <div className={styles.progressSpinner}></div>
+                    <div className={styles.progressText}>{uploadProgress}</div>
+                  </div>
+                )}
+                
+                {selectedFile && !isUploading && (
                   <div className={styles.uploadActions}>
                     <button
                       type="button"
                       className={styles.uploadBtn}
                       onClick={handleUploadInvoice}
-                      disabled={isUploading || isLoading}
+                      disabled={isLoading}
                     >
-                      {isUploading ? 'Parsing...' : 'Parse Invoice'}
+                      <span className={styles.btnIcon} role="img" aria-label="Rocket icon">🚀</span>
+                      Parse Invoice
                     </button>
                     <button
                       type="button"
                       className={styles.clearUploadBtn}
                       onClick={handleClearUpload}
-                      disabled={isUploading || isLoading}
+                      disabled={isLoading}
                     >
                       Clear
                     </button>
@@ -1104,7 +1202,7 @@ interface ProductAccordionProps {
   index: number;
   onToggle: () => void;
   onRemove: () => void;
-  onChange: (productId: string, field: keyof ProductFormData, value: any) => void;
+  onChange: (productId: string, field: keyof ProductFormData, value: ProductFormData[keyof ProductFormData]) => void;
   onIntegerChange: (productId: string, field: string, value: string) => void;
   onDecimalChange: (productId: string, field: string, value: string) => void;
   onCustomRemindersChange: (reminders: CustomReminderInput[]) => void;
