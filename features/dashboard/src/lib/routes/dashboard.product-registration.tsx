@@ -713,8 +713,8 @@ export default function ProductRegistrationPage() {
         </p>
       </div>
       <div className={styles.formContainer}>
-        {/* {error && <div className={styles.errorMessage}>{error}</div>}
-        {success && <div className={styles.successMessage}>{success}</div>} */}
+        {error && <div className={styles.errorMessage}>{error}</div>}
+        {success && <div className={styles.successMessage}>{success}</div>}
 
         <form className={styles.form} onSubmit={handleSubmit}>
           {/* Shared Vendor and Lot ID Section */}
