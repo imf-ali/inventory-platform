@@ -110,7 +110,7 @@ export default function CheckoutPage() {
 
   const handlePayment = async (method: 'CASH' | 'ONLINE') => {
     if (!checkoutData) {
-      useNotify.error('Checkout data not available');
+      notifyError('Checkout data not available');
       return;
     }
 
@@ -153,7 +153,7 @@ export default function CheckoutPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to process payment';
-      useNotify.error(errorMessage);
+      notifyError(errorMessage);
       setIsProcessingPayment(false);
     }
   };
@@ -188,14 +188,14 @@ export default function CheckoutPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to update cart status';
-      useNotify.error(errorMessage);
+      notifyError(errorMessage);
       setIsUpdating(false);
     }
   };
 
   const handlePrintInvoice = async () => {
     if (!checkoutData?.purchaseId) {
-      useNotify.error('Purchase ID not found');
+      notifyError('Purchase ID not found');
       return;
     }
 
@@ -228,7 +228,7 @@ export default function CheckoutPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to download invoice PDF';
-      useNotify.error(errorMessage);
+      notifyError(errorMessage);
     } finally {
       setIsPrinting(false);
     }

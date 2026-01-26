@@ -54,7 +54,7 @@ export default function ProductSearchPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to fetch inventory';
-      useNotify.error(errorMessage);
+      notifyError(errorMessage);
       setInventory([]);
     } finally {
       setIsLoading(false);
@@ -102,7 +102,7 @@ export default function ProductSearchPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to search inventory';
-      useNotify.error(errorMessage);
+      notifyError(errorMessage);
       setInventory([]);
     } finally {
       setIsLoading(false);
@@ -132,7 +132,7 @@ export default function ProductSearchPage() {
 
   const handleAddToSell = async (item: InventoryItem) => {
     if (item.currentCount <= 0) {
-      useNotify.error('Product is out of stock');
+      notifyError('Product is out of stock');
       return;
     }
 
@@ -162,7 +162,7 @@ export default function ProductSearchPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to add item to cart';
-      useNotify.error(errorMessage);
+      notifyError(errorMessage);
     } finally {
       setAddingToCart(null);
     }

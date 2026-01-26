@@ -219,12 +219,12 @@ export default function ProductRegistrationPage() {
     if (file) {
       // Validate file type
       if (!file.type.startsWith('image/')) {
-        useNotify.error('Please select an image file');
+        notifyError('Please select an image file');
         return;
       }
       // Validate file size (max 10MB)
       if (file.size > 10 * 1024 * 1024) {
-        useNotify.error('File size must be less than 10MB');
+        notifyError('File size must be less than 10MB');
         return;
       }
       setSelectedFile(file);
@@ -234,7 +234,7 @@ export default function ProductRegistrationPage() {
 
   const handleUploadInvoice = async () => {
     if (!selectedFile) {
-      useNotify.error('Please select an image file');
+      notifyError('Please select an image file');
       return;
     }
 
@@ -262,7 +262,7 @@ export default function ProductRegistrationPage() {
           fileInputRef.current.value = '';
         }
       } else {
-        useNotify.error(
+        notifyError(
           'No items found in the invoice image. Please try a different image.'
         );
       }
@@ -271,7 +271,7 @@ export default function ProductRegistrationPage() {
         err instanceof Error
           ? err.message
           : 'Failed to parse invoice. Please try again.';
-      useNotify.error(errorMessage);
+      notifyError(errorMessage);
     } finally {
       setIsUploading(false);
       setUploadProgress('');
@@ -354,7 +354,7 @@ export default function ProductRegistrationPage() {
     try {
       // Validate vendor is selected
       if (!selectedVendor || !selectedVendor.vendorId) {
-        useNotify.error(
+        notifyError(
           'Vendor information is required. Please search and select a vendor.'
         );
         setIsLoading(false);
@@ -363,7 +363,7 @@ export default function ProductRegistrationPage() {
 
       // Validate at least one product exists
       if (products.length === 0) {
-        useNotify.error('Please add at least one product to register.');
+        notifyError('Please add at least one product to register.');
         setIsLoading(false);
         return;
       }
@@ -377,7 +377,7 @@ export default function ProductRegistrationPage() {
           !product.location ||
           !product.expiryDate
         ) {
-          useNotify.error(
+          notifyError(
             `Product "${product.name || 'Unnamed'}" is missing required fields`
           );
           setIsLoading(false);
@@ -385,7 +385,7 @@ export default function ProductRegistrationPage() {
         }
 
         if (product.count <= 0) {
-          useNotify.error(
+          notifyError(
             `Product "${
               product.name || 'Unnamed'
             }" count must be greater than 0`
@@ -529,23 +529,21 @@ export default function ProductRegistrationPage() {
             setSuccess(null);
           }, 5000);
         } else {
-          useNotify.error(
-            'Failed to register products. No items were created.'
-          );
+          notifyError('Failed to register products. No items were created.');
         }
       } catch (bulkError) {
         const errorMessage =
           bulkError instanceof Error
             ? bulkError.message
             : 'Failed to register products. Please try again.';
-        useNotify.error(errorMessage);
+        notifyError(errorMessage);
       }
     } catch (err) {
       const errorMessage =
         err instanceof Error
           ? err.message
           : 'Failed to register products. Please try again.';
-      useNotify.error(errorMessage);
+      notifyError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -557,7 +555,7 @@ export default function ProductRegistrationPage() {
 
   const handleVendorSearch = async () => {
     if (!vendorSearchQuery.trim()) {
-      useNotify.error('Please enter a search query');
+      notifyError('Please enter a search query');
       return;
     }
 
@@ -575,7 +573,7 @@ export default function ProductRegistrationPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to search vendor';
-      useNotify.error(errorMessage);
+      notifyError(errorMessage);
       setVendorSearchResults([]);
       setSelectedVendor(null);
     } finally {
@@ -608,7 +606,7 @@ export default function ProductRegistrationPage() {
     setError(null);
     try {
       if (!vendorFormData.name || !vendorFormData.contactPhone) {
-        useNotify.error(
+        notifyError(
           'Please fill in all required vendor fields (Name and Phone)'
         );
         setIsCreatingVendor(false);
@@ -616,7 +614,7 @@ export default function ProductRegistrationPage() {
       }
 
       if (showCustomBusinessType && !customBusinessType.trim()) {
-        useNotify.error('Please enter a custom business type');
+        notifyError('Please enter a custom business type');
         setIsCreatingVendor(false);
         return;
       }
@@ -639,7 +637,7 @@ export default function ProductRegistrationPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to create vendor';
-      useNotify.error(errorMessage);
+      notifyError(errorMessage);
     } finally {
       setIsCreatingVendor(false);
     }
@@ -678,7 +676,7 @@ export default function ProductRegistrationPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to search lots';
-      useNotify.error(errorMessage);
+      notifyError(errorMessage);
       setLotIdSearchResults([]);
     } finally {
       setIsSearchingLots(false);

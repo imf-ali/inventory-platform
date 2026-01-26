@@ -96,14 +96,14 @@ export default function RefundPage() {
       });
       setPurchases(response.purchases);
       if (response.purchases.length === 0) {
-        useNotify.error('No purchases found with the given criteria.');
+        notifyError('No purchases found with the given criteria.');
       }
     } catch (err) {
       const errorMessage =
         err instanceof Error
           ? err.message
           : 'Failed to search purchases. Please try again.';
-      useNotify.error(errorMessage);
+      notifyError(errorMessage);
       setPurchases([]);
     } finally {
       setIsLoading(false);
@@ -154,7 +154,7 @@ export default function RefundPage() {
 
   const handleProcessRefund = async () => {
     if (!selectedPurchase) {
-      useNotify.error('Please select a purchase first.');
+      notifyError('Please select a purchase first.');
       return;
     }
 
@@ -172,7 +172,7 @@ export default function RefundPage() {
     });
 
     if (!hasItems) {
-      useNotify.error('Please select at least one item to refund.');
+      notifyError('Please select at least one item to refund.');
       return;
     }
 
@@ -206,7 +206,7 @@ export default function RefundPage() {
         err instanceof Error
           ? err.message
           : 'Failed to process refund. Please try again.';
-      useNotify.error(errorMessage);
+      notifyError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -229,7 +229,7 @@ export default function RefundPage() {
         err instanceof Error
           ? err.message
           : 'Failed to load refund history. Please try again.';
-      useNotify.error(errorMessage);
+      notifyError(errorMessage);
     } finally {
       setIsLoading(false);
     }
