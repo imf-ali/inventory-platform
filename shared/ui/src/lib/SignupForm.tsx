@@ -4,7 +4,6 @@ import { GoogleLogin, type CredentialResponse } from '@react-oauth/google';
 import { useAuthStore } from '@inventory-platform/store';
 import styles from './SignupForm.module.css';
 
-
 export function SignupForm() {
   const navigate = useNavigate();
   const { signup, isAuthenticated, isLoading, error, clearError } =

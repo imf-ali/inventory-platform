@@ -7,6 +7,7 @@ import type {
   SearchPurchasesParams,
 } from '@inventory-platform/types';
 import styles from './dashboard.refund.module.css';
+import { useNotify } from '@inventory-platform/store';
 
 export function meta() {
   return [
@@ -47,6 +48,7 @@ export default function RefundPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const { success: notifySuccess } = useNotify;
 
   // Search state
   const [searchParams, setSearchParams] = useState<SearchPurchasesParams>({
@@ -56,7 +58,9 @@ export default function RefundPage() {
     invoiceNo: '',
   });
   const [purchases, setPurchases] = useState<Purchase[]>([]);
-  const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
+  const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(
+    null
+  );
   const [refundItems, setRefundItems] = useState<
     Record<string, { quantity: number; maxQuantity: number }>
   >({});
@@ -68,7 +72,10 @@ export default function RefundPage() {
   const [historyTotalPages, setHistoryTotalPages] = useState(1);
   const [historyTotal, setHistoryTotal] = useState(0);
 
-  const handleSearchChange = (field: keyof SearchPurchasesParams, value: string) => {
+  const handleSearchChange = (
+    field: keyof SearchPurchasesParams,
+    value: string
+  ) => {
     setSearchParams((prev) => ({ ...prev, [field]: value }));
     setError(null);
   };
@@ -89,14 +96,14 @@ export default function RefundPage() {
       });
       setPurchases(response.purchases);
       if (response.purchases.length === 0) {
-        setError('No purchases found with the given criteria.');
+        notifyError('No purchases found with the given criteria.');
       }
     } catch (err) {
       const errorMessage =
         err instanceof Error
           ? err.message
           : 'Failed to search purchases. Please try again.';
-      setError(errorMessage);
+      notifyError(errorMessage);
       setPurchases([]);
     } finally {
       setIsLoading(false);
@@ -118,10 +125,7 @@ export default function RefundPage() {
     setSuccess(null);
   };
 
-  const handleRefundQuantityChange = (
-    inventoryId: string,
-    value: string
-  ) => {
+  const handleRefundQuantityChange = (inventoryId: string, value: string) => {
     const item = refundItems[inventoryId];
     if (!item) return;
 
@@ -150,7 +154,7 @@ export default function RefundPage() {
 
   const handleProcessRefund = async () => {
     if (!selectedPurchase) {
-      setError('Please select a purchase first.');
+      notifyError('Please select a purchase first.');
       return;
     }
 
@@ -168,7 +172,7 @@ export default function RefundPage() {
     });
 
     if (!hasItems) {
-      setError('Please select at least one item to refund.');
+      notifyError('Please select at least one item to refund.');
       return;
     }
 
@@ -182,7 +186,7 @@ export default function RefundPage() {
         items: itemsToRefund,
       });
 
-      setSuccess(
+      notifySuccess(
         `Refund processed successfully! Refund Amount: ${formatCurrency(
           response.refundAmount
         )}. Refund ID: ${response.refundId}`
@@ -202,7 +206,7 @@ export default function RefundPage() {
         err instanceof Error
           ? err.message
           : 'Failed to process refund. Please try again.';
-      setError(errorMessage);
+      notifyError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -225,7 +229,7 @@ export default function RefundPage() {
         err instanceof Error
           ? err.message
           : 'Failed to load refund history. Please try again.';
-      setError(errorMessage);
+      notifyError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -276,13 +280,17 @@ export default function RefundPage() {
 
       <div className={styles.tabs}>
         <button
-          className={`${styles.tab} ${activeTab === 'process' ? styles.activeTab : ''}`}
+          className={`${styles.tab} ${
+            activeTab === 'process' ? styles.activeTab : ''
+          }`}
           onClick={() => handleTabChange('process')}
         >
           Process Refund
         </button>
         <button
-          className={`${styles.tab} ${activeTab === 'history' ? styles.activeTab : ''}`}
+          className={`${styles.tab} ${
+            activeTab === 'history' ? styles.activeTab : ''
+          }`}
           onClick={() => handleTabChange('history')}
         >
           Refund History
@@ -296,7 +304,10 @@ export default function RefundPage() {
         <div className={styles.content}>
           <div className={styles.searchSection}>
             <h3 className={styles.sectionTitle}>Search Purchase</h3>
-            <form onSubmit={handleSearchPurchases} className={styles.searchForm}>
+            <form
+              onSubmit={handleSearchPurchases}
+              className={styles.searchForm}
+            >
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
                   <label htmlFor="customerName" className={styles.label}>
@@ -308,7 +319,9 @@ export default function RefundPage() {
                     className={styles.input}
                     placeholder="Enter customer name"
                     value={searchParams.customerName || ''}
-                    onChange={(e) => handleSearchChange('customerName', e.target.value)}
+                    onChange={(e) =>
+                      handleSearchChange('customerName', e.target.value)
+                    }
                     disabled={isLoading}
                   />
                 </div>
@@ -322,7 +335,9 @@ export default function RefundPage() {
                     className={styles.input}
                     placeholder="Enter customer phone"
                     value={searchParams.customerPhone || ''}
-                    onChange={(e) => handleSearchChange('customerPhone', e.target.value)}
+                    onChange={(e) =>
+                      handleSearchChange('customerPhone', e.target.value)
+                    }
                     disabled={isLoading}
                   />
                 </div>
@@ -336,7 +351,9 @@ export default function RefundPage() {
                     className={styles.input}
                     placeholder="Enter customer email"
                     value={searchParams.customerEmail || ''}
-                    onChange={(e) => handleSearchChange('customerEmail', e.target.value)}
+                    onChange={(e) =>
+                      handleSearchChange('customerEmail', e.target.value)
+                    }
                     disabled={isLoading}
                   />
                 </div>
@@ -352,7 +369,9 @@ export default function RefundPage() {
                     className={styles.input}
                     placeholder="Enter invoice number"
                     value={searchParams.invoiceNo || ''}
-                    onChange={(e) => handleSearchChange('invoiceNo', e.target.value)}
+                    onChange={(e) =>
+                      handleSearchChange('invoiceNo', e.target.value)
+                    }
                     disabled={isLoading}
                   />
                 </div>
@@ -395,10 +414,12 @@ export default function RefundPage() {
                           {purchase.customerName || 'N/A'}
                         </div>
                         <div>
-                          <strong>Phone:</strong> {purchase.customerPhone || 'N/A'}
+                          <strong>Phone:</strong>{' '}
+                          {purchase.customerPhone || 'N/A'}
                         </div>
                         <div>
-                          <strong>Total:</strong> {formatCurrency(purchase.grandTotal)}
+                          <strong>Total:</strong>{' '}
+                          {formatCurrency(purchase.grandTotal)}
                         </div>
                         <div>
                           <strong>Payment:</strong> {purchase.paymentMethod}
@@ -408,16 +429,21 @@ export default function RefundPage() {
 
                     {selectedPurchase?.purchaseId === purchase.purchaseId && (
                       <div className={styles.refundSection}>
-                        <h3 className={styles.sectionTitle}>Select Items to Refund</h3>
+                        <h3 className={styles.sectionTitle}>
+                          Select Items to Refund
+                        </h3>
                         <div className={styles.purchaseInfo}>
                           <div>
-                            <strong>Invoice No:</strong> {selectedPurchase.invoiceNo}
+                            <strong>Invoice No:</strong>{' '}
+                            {selectedPurchase.invoiceNo}
                           </div>
                           <div>
-                            <strong>Customer:</strong> {selectedPurchase.customerName || 'N/A'}
+                            <strong>Customer:</strong>{' '}
+                            {selectedPurchase.customerName || 'N/A'}
                           </div>
                           <div>
-                            <strong>Date:</strong> {formatDate(selectedPurchase.soldAt)}
+                            <strong>Date:</strong>{' '}
+                            {formatDate(selectedPurchase.soldAt)}
                           </div>
                         </div>
 
@@ -434,11 +460,14 @@ export default function RefundPage() {
                             </thead>
                             <tbody>
                               {selectedPurchase.items.map((item) => {
-                                const refundItem = refundItems[item.inventoryId];
+                                const refundItem =
+                                  refundItems[item.inventoryId];
                                 return (
                                   <tr key={item.inventoryId}>
                                     <td>{item.name}</td>
-                                    <td>{formatCurrency(item.maximumRetailPrice)}</td>
+                                    <td>
+                                      {formatCurrency(item.maximumRetailPrice)}
+                                    </td>
                                     <td>{formatCurrency(item.sellingPrice)}</td>
                                     <td>{item.quantity}</td>
                                     <td>
@@ -467,7 +496,9 @@ export default function RefundPage() {
                         <div className={styles.refundSummary}>
                           <div className={styles.summaryRow}>
                             <span>Estimated Refund Amount:</span>
-                            <strong>{formatCurrency(calculateRefundTotal())}</strong>
+                            <strong>
+                              {formatCurrency(calculateRefundTotal())}
+                            </strong>
                           </div>
                         </div>
 
@@ -520,7 +551,8 @@ export default function RefundPage() {
                           <strong>Phone:</strong> {refund.customerPhone}
                         </div>
                         <div>
-                          <strong>Items Refunded:</strong> {refund.totalItemsRefunded}
+                          <strong>Items Refunded:</strong>{' '}
+                          {refund.totalItemsRefunded}
                         </div>
                         <div>
                           <strong>Refund Amount:</strong>{' '}
@@ -546,12 +578,15 @@ export default function RefundPage() {
                       Previous
                     </button>
                     <span className={styles.pageInfo}>
-                      Page {historyPage} of {historyTotalPages} ({historyTotal} total)
+                      Page {historyPage} of {historyTotalPages} ({historyTotal}{' '}
+                      total)
                     </span>
                     <button
                       className={styles.pageBtn}
                       onClick={() =>
-                        setHistoryPage((p) => Math.min(historyTotalPages, p + 1))
+                        setHistoryPage((p) =>
+                          Math.min(historyTotalPages, p + 1)
+                        )
                       }
                       disabled={historyPage === historyTotalPages || isLoading}
                     >
@@ -567,4 +602,3 @@ export default function RefundPage() {
     </div>
   );
 }
-

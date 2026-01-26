@@ -1,6 +1,7 @@
 .container {
   max-width: 1200px;
   margin: 0 auto;
+  background: var(--bg-primary);
 }
 
 .header {
@@ -49,7 +50,7 @@
   border: 1px solid var(--border-color, #e5e7eb);
   border-radius: 6px;
   font-size: 0.875rem;
-  background: white;
+  background: var(--card-bg);
   color: var(--text-primary, #1f2937);
 }
 
@@ -104,7 +105,7 @@
 
 .summaryCard {
   padding: 1.5rem;
-  background: white;
+  background: var(--card-bg);
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   border: 1px solid var(--border-color, #e5e7eb);
@@ -175,7 +176,7 @@
 
 .chartCard {
   padding: 1rem;
-  background: white;
+  background: var(--card-bg);
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   border: 1px solid var(--border-color, #e5e7eb);
@@ -256,7 +257,7 @@
   margin-bottom: 1.5rem;
   margin-top: 1.5rem;
   padding: 1.5rem;
-  background: white;
+  background: var(--card-bg);
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   border: 1px solid var(--border-color, #e5e7eb);
@@ -279,7 +280,7 @@
 
 .comparisonCard {
   padding: 1.5rem;
-  background: white;
+  background: var(--card-bg);
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   border: 1px solid var(--border-color, #e5e7eb);
@@ -360,7 +361,7 @@
 
 .discountImpactCard {
   padding: 1.5rem;
-  background: white;
+  background: var(--card-bg);
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   border: 1px solid var(--border-color, #e5e7eb);
@@ -413,7 +414,7 @@
 
 /* Accordion Styles */
 .accordionItem {
-  background: white;
+  background: var(--card-bg);
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   border: 1px solid var(--border-color, #e5e7eb);
@@ -456,7 +457,7 @@
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--text-secondary, #6b7280);
-  background: white;
+  background: var(--card-bg);
   padding: 0.25rem 0.5rem;
   border-radius: 12px;
 }
@@ -644,4 +645,22 @@
   .tableContainer {
     overflow-x: scroll;
   }
+}
+
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9fafb;
+  --card-bg: #ffffff;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --border-color: #e5e7eb;
+}
+
+[data-theme='dark'] {
+  --bg-primary: #0b1220;
+  --bg-secondary: #111827;
+  --card-bg: #0f172a;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --border-color: #1f2937;
 }

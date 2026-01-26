@@ -3,6 +3,7 @@ import { invitationsApi } from '@inventory-platform/api';
 import type { ShopUser, UserRole } from '@inventory-platform/types';
 import { RoleBadge } from './RoleBadge';
 import styles from './ShopUsersList.module.css';
+import { useNotify } from '@inventory-platform/store';
 
 interface ShopUsersListProps {
   shopId: string;
@@ -13,6 +14,7 @@ export function ShopUsersList({ shopId, onUserChange }: ShopUsersListProps) {
   const [users, setUsers] = useState<ShopUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { error: notifyError } = useNotify;
 
   const fetchUsers = useCallback(async () => {
     setIsLoading(true);
@@ -22,7 +24,7 @@ export function ShopUsersList({ shopId, onUserChange }: ShopUsersListProps) {
       const data = await invitationsApi.getShopUsers(shopId);
       setUsers(data);
     } catch (err: any) {
-      setError(err?.message || 'Failed to load shop users');
+      notifyError(err?.message || 'Failed to load shop users');
     } finally {
       setIsLoading(false);
     }
@@ -64,13 +66,15 @@ export function ShopUsersList({ shopId, onUserChange }: ShopUsersListProps) {
   }
 
   // Handle null relationship - if relationship is null but role is OWNER, treat as owner
-  const owners = users.filter((u) => 
-    u.relationship === 'OWNER' || (u.relationship === null && u.role === 'OWNER')
+  const owners = users.filter(
+    (u) =>
+      u.relationship === 'OWNER' ||
+      (u.relationship === null && u.role === 'OWNER')
   );
   const invited = users.filter((u) => u.relationship === 'INVITED');
   // Get users that don't match owner or invited (fallback for any edge cases)
-  const otherUsers = users.filter((u) => 
-    !owners.includes(u) && !invited.includes(u)
+  const otherUsers = users.filter(
+    (u) => !owners.includes(u) && !invited.includes(u)
   );
   const active = users.filter((u) => u.active);
   const inactive = users.filter((u) => !u.active);
@@ -94,12 +98,20 @@ export function ShopUsersList({ shopId, onUserChange }: ShopUsersListProps) {
                   <div className={styles.detailRow}>
                     <span className={styles.label}>Joined:</span>
                     <span className={styles.value}>
-                      {user.joinedAt ? new Date(user.joinedAt).toLocaleDateString() : 'N/A'}
+                      {user.joinedAt
+                        ? new Date(user.joinedAt).toLocaleDateString()
+                        : 'N/A'}
                     </span>
                   </div>
                   <div className={styles.detailRow}>
                     <span className={styles.label}>Status:</span>
-                    <span className={`${styles.status} ${user.active ? styles.statusActive : styles.statusInactive}`}>
+                    <span
+                      className={`${styles.status} ${
+                        user.active
+                          ? styles.statusActive
+                          : styles.statusInactive
+                      }`}
+                    >
                       {user.active ? 'Active' : 'Inactive'}
                     </span>
                   </div>
@@ -112,7 +124,9 @@ export function ShopUsersList({ shopId, onUserChange }: ShopUsersListProps) {
 
       {invited.length > 0 && (
         <div className={styles.section}>
-          <h3 className={styles.sectionTitle}>Invited Users ({invited.length})</h3>
+          <h3 className={styles.sectionTitle}>
+            Invited Users ({invited.length})
+          </h3>
           <div className={styles.grid}>
             {invited.map((user) => (
               <div key={user.userId} className={styles.card}>
@@ -127,12 +141,20 @@ export function ShopUsersList({ shopId, onUserChange }: ShopUsersListProps) {
                   <div className={styles.detailRow}>
                     <span className={styles.label}>Joined:</span>
                     <span className={styles.value}>
-                      {user.joinedAt ? new Date(user.joinedAt).toLocaleDateString() : 'N/A'}
+                      {user.joinedAt
+                        ? new Date(user.joinedAt).toLocaleDateString()
+                        : 'N/A'}
                     </span>
                   </div>
                   <div className={styles.detailRow}>
                     <span className={styles.label}>Status:</span>
-                    <span className={`${styles.status} ${user.active ? styles.statusActive : styles.statusInactive}`}>
+                    <span
+                      className={`${styles.status} ${
+                        user.active
+                          ? styles.statusActive
+                          : styles.statusInactive
+                      }`}
+                    >
                       {user.active ? 'Active' : 'Inactive'}
                     </span>
                   </div>
@@ -160,12 +182,20 @@ export function ShopUsersList({ shopId, onUserChange }: ShopUsersListProps) {
                   <div className={styles.detailRow}>
                     <span className={styles.label}>Joined:</span>
                     <span className={styles.value}>
-                      {user.joinedAt ? new Date(user.joinedAt).toLocaleDateString() : 'N/A'}
+                      {user.joinedAt
+                        ? new Date(user.joinedAt).toLocaleDateString()
+                        : 'N/A'}
                     </span>
                   </div>
                   <div className={styles.detailRow}>
                     <span className={styles.label}>Status:</span>
-                    <span className={`${styles.status} ${user.active ? styles.statusActive : styles.statusInactive}`}>
+                    <span
+                      className={`${styles.status} ${
+                        user.active
+                          ? styles.statusActive
+                          : styles.statusInactive
+                      }`}
+                    >
                       {user.active ? 'Active' : 'Inactive'}
                     </span>
                   </div>
@@ -178,7 +208,9 @@ export function ShopUsersList({ shopId, onUserChange }: ShopUsersListProps) {
 
       {active.length === 0 && inactive.length > 0 && (
         <div className={styles.section}>
-          <h3 className={styles.sectionTitle}>Inactive Users ({inactive.length})</h3>
+          <h3 className={styles.sectionTitle}>
+            Inactive Users ({inactive.length})
+          </h3>
           <div className={styles.grid}>
             {inactive.map((user) => (
               <div key={user.userId} className={styles.card}>
@@ -197,12 +229,16 @@ export function ShopUsersList({ shopId, onUserChange }: ShopUsersListProps) {
                   <div className={styles.detailRow}>
                     <span className={styles.label}>Joined:</span>
                     <span className={styles.value}>
-                      {user.joinedAt ? new Date(user.joinedAt).toLocaleDateString() : 'N/A'}
+                      {user.joinedAt
+                        ? new Date(user.joinedAt).toLocaleDateString()
+                        : 'N/A'}
                     </span>
                   </div>
                   <div className={styles.detailRow}>
                     <span className={styles.label}>Status:</span>
-                    <span className={`${styles.status} ${styles.statusInactive}`}>
+                    <span
+                      className={`${styles.status} ${styles.statusInactive}`}
+                    >
                       Inactive
                     </span>
                   </div>
@@ -215,4 +251,3 @@ export function ShopUsersList({ shopId, onUserChange }: ShopUsersListProps) {
     </div>
   );
 }
-

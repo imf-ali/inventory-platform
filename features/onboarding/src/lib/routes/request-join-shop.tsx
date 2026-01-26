@@ -4,6 +4,7 @@ import { useAuthStore } from '@inventory-platform/store';
 import { shopsApi } from '@inventory-platform/api';
 import type { UserRole } from '@inventory-platform/types';
 import styles from './request-join-shop.module.css';
+import { useNotify } from '@inventory-platform/store';
 
 const AVAILABLE_ROLES: UserRole[] = ['ADMIN', 'MANAGER', 'CASHIER'];
 
@@ -23,6 +24,7 @@ export default function RequestJoinShopPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const { success: notifySuccess, error: notifyError } = useNotify;
 
   // Periodically check if user has been added to a shop
   useEffect(() => {
@@ -71,12 +73,12 @@ export default function RequestJoinShopPage() {
     setSuccess(null);
 
     if (!ownerEmail.trim()) {
-      setError('Please enter the shop owner email');
+      notifyError('Please enter the shop owner email');
       return;
     }
 
     if (!ownerEmail.includes('@')) {
-      setError('Please enter a valid email address');
+      notifyError('Please enter a valid email address');
       return;
     }
 
@@ -89,7 +91,7 @@ export default function RequestJoinShopPage() {
         message: message.trim() || undefined,
       });
 
-      setSuccess(
+      notifySuccess(
         `Request sent successfully! You requested to join "${response.shopName}". The shop owner will review your request.`
       );
 
@@ -114,7 +116,7 @@ export default function RequestJoinShopPage() {
         err?.response?.data?.message ||
         err?.message ||
         'Failed to send request. Please try again.';
-      setError(errorMessage);
+      notifyError(errorMessage);
     } finally {
       setIsLoading(false);
     }

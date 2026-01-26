@@ -11,6 +11,7 @@ import type {
 } from '@inventory-platform/types';
 import { ReminderForm, InventoryAlertDetails } from '@inventory-platform/ui';
 import styles from './dashboard.reminders.module.css';
+import { useNotify } from '@inventory-platform/store';
 
 export function meta() {
   return [
@@ -46,10 +47,11 @@ export default function RemindersPage() {
   const [customSnoozeDays, setCustomSnoozeDays] = useState<number | ''>(''); // 👈 for manual days
   const [selectedInventory, setSelectedInventory] =
     useState<ReminderInventorySummary | null>(null);
+  const { error: notifyError } = useNotify;
 
   const handleSnooze = async (reminderId: string, snoozeDays: number) => {
     if (!snoozeDays || snoozeDays <= 0) {
-      setError('Snooze days must be a positive number');
+      notifyError('Snooze days must be a positive number');
       return;
     }
 
@@ -62,7 +64,7 @@ export default function RemindersPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to snooze reminder';
-      setError(errorMessage);
+      notifyError(errorMessage);
     } finally {
       setSnoozingReminderId(null);
     }
@@ -85,7 +87,9 @@ export default function RemindersPage() {
         setTotalPages(res.meta.totalPages);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load reminders');
+      notifyError(
+        err instanceof Error ? err.message : 'Failed to load reminders'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -113,7 +117,7 @@ export default function RemindersPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to create reminder';
-      setError(errorMessage);
+      notifyError(errorMessage);
       throw err;
     } finally {
       setIsSubmitting(false);
@@ -133,7 +137,7 @@ export default function RemindersPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to update reminder';
-      setError(errorMessage);
+      notifyError(errorMessage);
       throw err;
     } finally {
       setIsSubmitting(false);
@@ -162,7 +166,7 @@ export default function RemindersPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to delete reminder';
-      setError(errorMessage);
+      notifyError(errorMessage);
       setDeletingReminderId(null);
     }
   };

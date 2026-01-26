@@ -5,6 +5,7 @@ import type {
   Reminder,
 } from '@inventory-platform/types';
 import styles from './ReminderForm.module.css';
+import { useNotify } from '@inventory-platform/store';
 
 interface ReminderFormProps {
   reminder?: Reminder;
@@ -35,6 +36,7 @@ export function ReminderForm({
   });
 
   const [error, setError] = useState<string | null>(null);
+  const { error: notifyError } = useNotify;
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -54,7 +56,7 @@ export function ReminderForm({
     setError(null);
 
     if (!formData.reminderAt) {
-      setError('Reminder date and time is required');
+      notifyError('Reminder date and time is required');
       return;
     }
 
@@ -85,7 +87,7 @@ export function ReminderForm({
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to save reminder';
-      setError(errorMessage);
+      notifyError(errorMessage);
     }
   };
 

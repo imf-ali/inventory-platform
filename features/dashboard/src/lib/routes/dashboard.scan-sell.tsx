@@ -7,6 +7,7 @@ import type {
   CheckoutItemResponse,
 } from '@inventory-platform/types';
 import styles from './dashboard.scan-sell.module.css';
+import { useNotify } from '@inventory-platform/store';
 
 export function meta() {
   return [
@@ -97,6 +98,7 @@ export default function ScanSellPage() {
   const [customerDlNo, setCustomerDlNo] = useState('');
   const [customerPan, setCustomerPan] = useState('');
   const [isSearchingCustomer, setIsSearchingCustomer] = useState(false);
+  const { error: notifyError } = useNotify;
 
   // Load cart on mount (only once, even in StrictMode)
   useEffect(() => {
@@ -193,13 +195,14 @@ export default function ScanSellPage() {
           inventoryItem =
             searchResult.data?.find((inv) => inv.id === cartItem.inventoryId) ||
             null;
-          
+
           // If search didn't find it, try searching all inventory
           if (!inventoryItem) {
             const allInventory = await inventoryApi.getAll(0, 1000);
             inventoryItem =
-              allInventory.data?.find((inv) => inv.id === cartItem.inventoryId) ||
-              null;
+              allInventory.data?.find(
+                (inv) => inv.id === cartItem.inventoryId
+              ) || null;
           }
         } catch {
           // If search fails, we'll create a minimal item
@@ -368,7 +371,7 @@ export default function ScanSellPage() {
       // Handle API errors - might include stock validation errors
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to update cart';
-      setError(errorMessage);
+      notifyError(errorMessage);
       // Revert to previous cart state on error by reloading cart
       try {
         const currentCart = await cartApi.get();
@@ -473,7 +476,7 @@ export default function ScanSellPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to search products';
-      setError(errorMessage);
+      notifyError(errorMessage);
       setSearchResults([]);
       if (import.meta.env.DEV) {
         console.error('Search error:', err);
@@ -488,12 +491,12 @@ export default function ScanSellPage() {
     const finalPrice = price !== undefined ? price : item.sellingPrice;
 
     if (finalPrice <= 0) {
-      setError('Please enter a valid price');
+      notifyError('Please enter a valid price');
       return;
     }
 
     if (item.currentCount <= 0) {
-      setError('Product is out of stock');
+      notifyError('Product is out of stock');
       return;
     }
 
@@ -508,7 +511,7 @@ export default function ScanSellPage() {
         const newQuantity = existingItem.quantity + 1;
         // Validate stock only if we have accurate inventory data
         if (item.currentCount > 0 && newQuantity > item.currentCount) {
-          setError(`Only ${item.currentCount} items available in stock`);
+          notifyError(`Only ${item.currentCount} items available in stock`);
           return prev;
         }
         updatedItems = prev.map((cartItem) =>
@@ -520,7 +523,7 @@ export default function ScanSellPage() {
         // Add new item to cart
         // Validate stock only if we have accurate inventory data
         if (item.currentCount > 0 && item.currentCount < 1) {
-          setError('Product is out of stock');
+          notifyError('Product is out of stock');
           return prev;
         }
         updatedItems = [
@@ -614,7 +617,7 @@ export default function ScanSellPage() {
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : 'Failed to clear cart';
-        setError(errorMessage);
+        notifyError(errorMessage);
         // Reload cart on error to restore state
         try {
           await loadCart();
@@ -684,7 +687,7 @@ export default function ScanSellPage() {
 
   const handleCustomerSearch = async () => {
     if (!customerPhone.trim()) {
-      setError('Please enter a customer phone number');
+      notifyError('Please enter a customer phone number');
       return;
     }
 
@@ -729,7 +732,7 @@ export default function ScanSellPage() {
       // On error (404 or any other error), clear all fields
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to search customer';
-      setError(errorMessage);
+      notifyError(errorMessage);
       setCustomerName('');
       setCustomerEmail('');
       setCustomerAddress('');
@@ -744,7 +747,7 @@ export default function ScanSellPage() {
 
   const handleProcessPayment = async () => {
     if (cartItems.length === 0) {
-      setError('Cart is empty');
+      notifyError('Cart is empty');
       return;
     }
 
@@ -1094,11 +1097,16 @@ export default function ScanSellPage() {
                         </span>
                       )}
                       {cartItem.inventoryItem.additionalDiscount !== null &&
-                        cartItem.inventoryItem.additionalDiscount !== undefined && (
-                        <span className={styles.itemDiscount}>
-                          Additional: {cartItem.inventoryItem.additionalDiscount.toFixed(2)}%
-                        </span>
-                      )}
+                        cartItem.inventoryItem.additionalDiscount !==
+                          undefined && (
+                          <span className={styles.itemDiscount}>
+                            Additional:{' '}
+                            {cartItem.inventoryItem.additionalDiscount.toFixed(
+                              2
+                            )}
+                            %
+                          </span>
+                        )}
                     </div>
                   </div>
                   <div className={styles.itemActions}>
@@ -1163,7 +1171,9 @@ export default function ScanSellPage() {
                   cartData.additionalDiscountTotal > 0 && (
                     <div className={styles.summaryRow}>
                       <span>Additional Discount</span>
-                      <span>-₹{cartData.additionalDiscountTotal.toFixed(2)}</span>
+                      <span>
+                        -₹{cartData.additionalDiscountTotal.toFixed(2)}
+                      </span>
                     </div>
                   )}
                 <div className={styles.summaryRow}>
@@ -1270,11 +1280,12 @@ function ProductResultItem({ item, onAddToCart }: ProductResultItemProps) {
         <p className={styles.resultItemPTR}>
           Price to Retailer (PTR): ₹{item.sellingPrice.toFixed(2)}
         </p>
-        {item.additionalDiscount !== null && item.additionalDiscount !== undefined && (
-          <p className={styles.resultItemDiscount}>
-            Additional Discount: {item.additionalDiscount.toFixed(2)}%
-          </p>
-        )}
+        {item.additionalDiscount !== null &&
+          item.additionalDiscount !== undefined && (
+            <p className={styles.resultItemDiscount}>
+              Additional Discount: {item.additionalDiscount.toFixed(2)}%
+            </p>
+          )}
         <p className={styles.resultItemExpiry}>
           Expires: {formatDate(item.expiryDate)}
         </p>

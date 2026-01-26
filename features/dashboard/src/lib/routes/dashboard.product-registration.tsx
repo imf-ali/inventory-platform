@@ -11,6 +11,7 @@ import type {
   ParseInvoiceItem,
 } from '@inventory-platform/types';
 import { CustomRemindersSection } from '@inventory-platform/ui';
+import { useNotify } from '@inventory-platform/store';
 import styles from './dashboard.product-registration.module.css';
 
 export function meta() {
@@ -23,7 +24,8 @@ export function meta() {
   ];
 }
 
-interface ProductFormData extends Omit<CreateInventoryDto, 'vendorId' | 'lotId'> {
+interface ProductFormData
+  extends Omit<CreateInventoryDto, 'vendorId' | 'lotId'> {
   id: string; // Unique ID for each product form
   isExpanded: boolean;
   sgst?: string;
@@ -36,6 +38,7 @@ export default function ProductRegistrationPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const { success: notifySuccess } = useNotify;
 
   // Shared vendor and lot ID (applied to all products)
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
@@ -216,12 +219,12 @@ export default function ProductRegistrationPage() {
     if (file) {
       // Validate file type
       if (!file.type.startsWith('image/')) {
-        setError('Please select an image file');
+        notifyError('Please select an image file');
         return;
       }
       // Validate file size (max 10MB)
       if (file.size > 10 * 1024 * 1024) {
-        setError('File size must be less than 10MB');
+        notifyError('File size must be less than 10MB');
         return;
       }
       setSelectedFile(file);
@@ -231,7 +234,7 @@ export default function ProductRegistrationPage() {
 
   const handleUploadInvoice = async () => {
     if (!selectedFile) {
-      setError('Please select an image file');
+      notifyError('Please select an image file');
       return;
     }
 
@@ -244,14 +247,14 @@ export default function ProductRegistrationPage() {
       // Compress the image before uploading
       const compressedFile = await compressImage(selectedFile);
       setUploadProgress('Uploading and parsing invoice...');
-      
+
       const response = await inventoryApi.parseInvoice(compressedFile);
 
       if (response && response.items && response.items.length > 0) {
         // Transform parsed items to product form data
         const parsedProducts = response.items.map(transformParsedItemToProduct);
         setProducts(parsedProducts);
-        setSuccess(
+        notifySuccess(
           `Successfully parsed invoice! Found ${response.totalItems} item(s). Please review and fill in any missing information.`
         );
         setSelectedFile(null);
@@ -259,14 +262,16 @@ export default function ProductRegistrationPage() {
           fileInputRef.current.value = '';
         }
       } else {
-        setError('No items found in the invoice image. Please try a different image.');
+        notifyError(
+          'No items found in the invoice image. Please try a different image.'
+        );
       }
     } catch (err) {
       const errorMessage =
         err instanceof Error
           ? err.message
           : 'Failed to parse invoice. Please try again.';
-      setError(errorMessage);
+      notifyError(errorMessage);
     } finally {
       setIsUploading(false);
       setUploadProgress('');
@@ -300,9 +305,7 @@ export default function ProductRegistrationPage() {
     value: ProductFormData[keyof ProductFormData]
   ) => {
     setProducts(
-      products.map((p) =>
-        p.id === productId ? { ...p, [field]: value } : p
-      )
+      products.map((p) => (p.id === productId ? { ...p, [field]: value } : p))
     );
     setError(null);
     setSuccess(null);
@@ -318,7 +321,11 @@ export default function ProductRegistrationPage() {
       return;
     }
     if (!/^\d+$/.test(value)) return;
-    handleProductChange(productId, field as keyof ProductFormData, parseInt(value, 10));
+    handleProductChange(
+      productId,
+      field as keyof ProductFormData,
+      parseInt(value, 10)
+    );
   };
 
   const handleDecimalChange = (
@@ -331,7 +338,11 @@ export default function ProductRegistrationPage() {
       return;
     }
     if (!/^\d*\.?\d*$/.test(value)) return;
-    handleProductChange(productId, field as keyof ProductFormData, parseFloat(value) || 0);
+    handleProductChange(
+      productId,
+      field as keyof ProductFormData,
+      parseFloat(value) || 0
+    );
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -343,14 +354,16 @@ export default function ProductRegistrationPage() {
     try {
       // Validate vendor is selected
       if (!selectedVendor || !selectedVendor.vendorId) {
-        setError('Vendor information is required. Please search and select a vendor.');
+        notifyError(
+          'Vendor information is required. Please search and select a vendor.'
+        );
         setIsLoading(false);
         return;
       }
 
       // Validate at least one product exists
       if (products.length === 0) {
-        setError('Please add at least one product to register.');
+        notifyError('Please add at least one product to register.');
         setIsLoading(false);
         return;
       }
@@ -364,13 +377,19 @@ export default function ProductRegistrationPage() {
           !product.location ||
           !product.expiryDate
         ) {
-          setError(`Product "${product.name || 'Unnamed'}" is missing required fields`);
+          notifyError(
+            `Product "${product.name || 'Unnamed'}" is missing required fields`
+          );
           setIsLoading(false);
           return;
         }
 
         if (product.count <= 0) {
-          setError(`Product "${product.name || 'Unnamed'}" count must be greater than 0`);
+          notifyError(
+            `Product "${
+              product.name || 'Unnamed'
+            }" count must be greater than 0`
+          );
           setIsLoading(false);
           return;
         }
@@ -397,7 +416,8 @@ export default function ProductRegistrationPage() {
                 if (reminder.reminderAt && product.expiryDate) {
                   const reminderDate = new Date(reminder.reminderAt);
                   const expiryDate = new Date(product.expiryDate);
-                  const diffTime = expiryDate.getTime() - reminderDate.getTime();
+                  const diffTime =
+                    expiryDate.getTime() - reminderDate.getTime();
                   daysBefore = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                 } else if (reminder.endDate && product.expiryDate) {
                   // Fallback: calculate from endDate if reminderAt is not available
@@ -431,9 +451,14 @@ export default function ProductRegistrationPage() {
           hsn: product.hsn || null,
           batchNo: product.batchNo || null,
           scheme: product.scheme || null,
-          ...(product.sgst && product.sgst.trim() ? { sgst: product.sgst.trim() } : {}),
-          ...(product.cgst && product.cgst.trim() ? { cgst: product.cgst.trim() } : {}),
-          ...(product.additionalDiscount !== null && product.additionalDiscount !== undefined
+          ...(product.sgst && product.sgst.trim()
+            ? { sgst: product.sgst.trim() }
+            : {}),
+          ...(product.cgst && product.cgst.trim()
+            ? { cgst: product.cgst.trim() }
+            : {}),
+          ...(product.additionalDiscount !== null &&
+          product.additionalDiscount !== undefined
             ? { additionalDiscount: product.additionalDiscount }
             : {}),
         };
@@ -452,7 +477,8 @@ export default function ProductRegistrationPage() {
 
         // The response should be BulkCreateInventoryResponse
         // Handle cases where the response structure might vary
-        const createdCount = response?.createdCount ?? response?.items?.length ?? 0;
+        const createdCount =
+          response?.createdCount ?? response?.items?.length ?? 0;
         const lotId = response?.lotId;
         const items = response?.items ?? [];
 
@@ -463,14 +489,18 @@ export default function ProductRegistrationPage() {
               ? items
                   .map(
                     (item, index) =>
-                      `${products[index]?.name || 'Product'}: ${item.id || 'Created'}`
+                      `${products[index]?.name || 'Product'}: ${
+                        item.id || 'Created'
+                      }`
                   )
                   .join('; ')
               : '';
-          setSuccess(
-            `Successfully registered ${createdCount || items.length} product(s)! ${
-              lotId ? `Lot ID: ${lotId}. ` : ''
-            }${itemDetails ? `Details: ${itemDetails}` : ''}`
+          notifySuccess(
+            `Successfully registered ${
+              createdCount || items.length
+            } product(s)! ${lotId ? `Lot ID: ${lotId}. ` : ''}${
+              itemDetails ? `Details: ${itemDetails}` : ''
+            }`
           );
 
           // Clear form after 5 seconds
@@ -485,7 +515,7 @@ export default function ProductRegistrationPage() {
         } else if (response) {
           // If response exists but no createdCount/items, still consider it success
           // (API might return success without detailed counts)
-          setSuccess(
+          notifySuccess(
             `Successfully registered ${products.length} product(s)! ${
               lotId ? `Lot ID: ${lotId}. ` : ''
             }`
@@ -499,21 +529,21 @@ export default function ProductRegistrationPage() {
             setSuccess(null);
           }, 5000);
         } else {
-          setError('Failed to register products. No items were created.');
+          notifyError('Failed to register products. No items were created.');
         }
       } catch (bulkError) {
         const errorMessage =
           bulkError instanceof Error
             ? bulkError.message
             : 'Failed to register products. Please try again.';
-        setError(errorMessage);
+        notifyError(errorMessage);
       }
     } catch (err) {
       const errorMessage =
         err instanceof Error
           ? err.message
           : 'Failed to register products. Please try again.';
-      setError(errorMessage);
+      notifyError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -525,7 +555,7 @@ export default function ProductRegistrationPage() {
 
   const handleVendorSearch = async () => {
     if (!vendorSearchQuery.trim()) {
-      setError('Please enter a search query');
+      notifyError('Please enter a search query');
       return;
     }
 
@@ -543,7 +573,7 @@ export default function ProductRegistrationPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to search vendor';
-      setError(errorMessage);
+      notifyError(errorMessage);
       setVendorSearchResults([]);
       setSelectedVendor(null);
     } finally {
@@ -576,13 +606,15 @@ export default function ProductRegistrationPage() {
     setError(null);
     try {
       if (!vendorFormData.name || !vendorFormData.contactPhone) {
-        setError('Please fill in all required vendor fields (Name and Phone)');
+        notifyError(
+          'Please fill in all required vendor fields (Name and Phone)'
+        );
         setIsCreatingVendor(false);
         return;
       }
 
       if (showCustomBusinessType && !customBusinessType.trim()) {
-        setError('Please enter a custom business type');
+        notifyError('Please enter a custom business type');
         setIsCreatingVendor(false);
         return;
       }
@@ -605,7 +637,7 @@ export default function ProductRegistrationPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to create vendor';
-      setError(errorMessage);
+      notifyError(errorMessage);
     } finally {
       setIsCreatingVendor(false);
     }
@@ -644,7 +676,7 @@ export default function ProductRegistrationPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to search lots';
-      setError(errorMessage);
+      notifyError(errorMessage);
       setLotIdSearchResults([]);
     } finally {
       setIsSearchingLots(false);
@@ -675,18 +707,19 @@ export default function ProductRegistrationPage() {
       <div className={styles.header}>
         <h2 className={styles.title}>Product Registration</h2>
         <p className={styles.subtitle}>
-          Register multiple products at once with shared vendor and lot information
+          Register multiple products at once with shared vendor and lot
+          information
         </p>
       </div>
       <div className={styles.formContainer}>
         {error && <div className={styles.errorMessage}>{error}</div>}
         {success && <div className={styles.successMessage}>{success}</div>}
-        
+
         <form className={styles.form} onSubmit={handleSubmit}>
           {/* Shared Vendor and Lot ID Section */}
           <div className={styles.sharedSection}>
             <h3 className={styles.sectionTitle}>Shared Information</h3>
-            
+
             {/* Lot ID */}
             <div className={styles.formGroup}>
               <label htmlFor="lotId" className={styles.label}>
@@ -841,7 +874,8 @@ export default function ProductRegistrationPage() {
                     !isSearchingVendor && (
                       <div className={styles.vendorNotFound}>
                         <p>
-                          No vendors found. Would you like to create a new vendor?
+                          No vendors found. Would you like to create a new
+                          vendor?
                         </p>
                         <button
                           type="button"
@@ -887,10 +921,12 @@ export default function ProductRegistrationPage() {
 
           {/* Invoice Upload Section */}
           <div className={styles.uploadSection}>
-            <h3 className={styles.sectionTitle}>Upload Invoice Image (Optional)</h3>
+            <h3 className={styles.sectionTitle}>
+              Upload Invoice Image (Optional)
+            </h3>
             <p className={styles.helperText}>
-              Upload an invoice image to automatically parse and prefill product information.
-              You can also manually add products below.
+              Upload an invoice image to automatically parse and prefill product
+              information. You can also manually add products below.
             </p>
             <div className={styles.uploadContainer}>
               <input
@@ -909,27 +945,41 @@ export default function ProductRegistrationPage() {
                 >
                   {selectedFile ? (
                     <div className={styles.fileInfo}>
-                      <span className={styles.fileIcon} role="img" aria-label="File icon">📄</span>
-                      <span className={styles.fileName}>{selectedFile.name}</span>
+                      <span
+                        className={styles.fileIcon}
+                        role="img"
+                        aria-label="File icon"
+                      >
+                        📄
+                      </span>
+                      <span className={styles.fileName}>
+                        {selectedFile.name}
+                      </span>
                       <span className={styles.fileSize}>
                         ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
                       </span>
                     </div>
                   ) : (
                     <div className={styles.uploadPlaceholder}>
-                      <span className={styles.uploadIcon} role="img" aria-label="Upload icon">📤</span>
+                      <span
+                        className={styles.uploadIcon}
+                        role="img"
+                        aria-label="Upload icon"
+                      >
+                        📤
+                      </span>
                       <span>Choose Image File</span>
                     </div>
                   )}
                 </label>
-                
+
                 {isUploading && (
                   <div className={styles.uploadProgress}>
                     <div className={styles.progressSpinner}></div>
                     <div className={styles.progressText}>{uploadProgress}</div>
                   </div>
                 )}
-                
+
                 {selectedFile && !isUploading && (
                   <div className={styles.uploadActions}>
                     <button
@@ -938,7 +988,13 @@ export default function ProductRegistrationPage() {
                       onClick={handleUploadInvoice}
                       disabled={isLoading}
                     >
-                      <span className={styles.btnIcon} role="img" aria-label="Rocket icon">🚀</span>
+                      <span
+                        className={styles.btnIcon}
+                        role="img"
+                        aria-label="Rocket icon"
+                      >
+                        🚀
+                      </span>
                       Parse Invoice
                     </button>
                     <button
@@ -971,7 +1027,9 @@ export default function ProductRegistrationPage() {
 
             {products.length === 0 ? (
               <div className={styles.emptyState}>
-                <p>No products added yet. Click "Add Product" to get started.</p>
+                <p>
+                  No products added yet. Click "Add Product" to get started.
+                </p>
               </div>
             ) : (
               <div className={styles.productsList}>
@@ -986,7 +1044,11 @@ export default function ProductRegistrationPage() {
                     onIntegerChange={handleIntegerChange}
                     onDecimalChange={handleDecimalChange}
                     onCustomRemindersChange={(reminders) =>
-                      handleProductChange(product.id, 'customReminders', reminders)
+                      handleProductChange(
+                        product.id,
+                        'customReminders',
+                        reminders
+                      )
                     }
                     isLoading={isLoading}
                     isoToLocalDateTime={isoToLocalDateTime}
@@ -1025,7 +1087,7 @@ export default function ProductRegistrationPage() {
       {showVendorModal && (
         <div
           className={styles.modalOverlay}
-                onClick={() => !isCreatingVendor && handleCloseVendorModal()}
+          onClick={() => !isCreatingVendor && handleCloseVendorModal()}
         >
           <div
             className={styles.modalContent}
@@ -1128,7 +1190,11 @@ export default function ProductRegistrationPage() {
                 <select
                   id="vendorBusinessType"
                   className={styles.input}
-                  value={showCustomBusinessType ? 'OTHER' : vendorFormData.businessType}
+                  value={
+                    showCustomBusinessType
+                      ? 'OTHER'
+                      : vendorFormData.businessType
+                  }
                   onChange={(e) => {
                     if (e.target.value === 'OTHER') {
                       setShowCustomBusinessType(true);
@@ -1202,7 +1268,11 @@ interface ProductAccordionProps {
   index: number;
   onToggle: () => void;
   onRemove: () => void;
-  onChange: (productId: string, field: keyof ProductFormData, value: ProductFormData[keyof ProductFormData]) => void;
+  onChange: (
+    productId: string,
+    field: keyof ProductFormData,
+    value: ProductFormData[keyof ProductFormData]
+  ) => void;
   onIntegerChange: (productId: string, field: string, value: string) => void;
   onDecimalChange: (productId: string, field: string, value: string) => void;
   onCustomRemindersChange: (reminders: CustomReminderInput[]) => void;
@@ -1228,10 +1298,7 @@ function ProductAccordion({
 
   return (
     <div className={styles.productAccordion}>
-      <div
-        className={styles.accordionHeader}
-        onClick={onToggle}
-      >
+      <div className={styles.accordionHeader} onClick={onToggle}>
         <div className={styles.accordionTitle}>
           <span className={styles.accordionIcon}>
             {product.isExpanded ? '▼' : '▶'}
@@ -1270,13 +1337,18 @@ function ProductAccordion({
                 className={styles.input}
                 placeholder="Enter barcode"
                 value={product.barcode}
-                onChange={(e) => onChange(product.id, 'barcode', e.target.value)}
+                onChange={(e) =>
+                  onChange(product.id, 'barcode', e.target.value)
+                }
                 required
                 disabled={isLoading}
               />
             </div>
             <div className={styles.formGroup}>
-              <label htmlFor={`companyName-${product.id}`} className={styles.label}>
+              <label
+                htmlFor={`companyName-${product.id}`}
+                className={styles.label}
+              >
                 Company *
               </label>
               <input
@@ -1285,7 +1357,9 @@ function ProductAccordion({
                 className={styles.input}
                 placeholder="Enter company name"
                 value={product.companyName}
-                onChange={(e) => onChange(product.id, 'companyName', e.target.value)}
+                onChange={(e) =>
+                  onChange(product.id, 'companyName', e.target.value)
+                }
                 required
                 disabled={isLoading}
               />
@@ -1320,7 +1394,9 @@ function ProductAccordion({
                 className={styles.input}
                 placeholder="0"
                 value={product.count === 0 ? '' : product.count}
-                onChange={(e) => onIntegerChange(product.id, 'count', e.target.value)}
+                onChange={(e) =>
+                  onIntegerChange(product.id, 'count', e.target.value)
+                }
                 required
                 disabled={isLoading}
               />
@@ -1329,7 +1405,10 @@ function ProductAccordion({
 
           <div className={styles.formRow}>
             <div className={styles.formGroup}>
-              <label htmlFor={`expiryDate-${product.id}`} className={styles.label}>
+              <label
+                htmlFor={`expiryDate-${product.id}`}
+                className={styles.label}
+              >
                 Expiry Date *
               </label>
               <input
@@ -1355,7 +1434,10 @@ function ProductAccordion({
               />
             </div>
             <div className={styles.formGroup}>
-              <label htmlFor={`location-${product.id}`} className={styles.label}>
+              <label
+                htmlFor={`location-${product.id}`}
+                className={styles.label}
+              >
                 Inventory Location *
               </label>
               <input
@@ -1364,7 +1446,9 @@ function ProductAccordion({
                 className={styles.input}
                 placeholder="Enter inventory location"
                 value={product.location}
-                onChange={(e) => onChange(product.id, 'location', e.target.value)}
+                onChange={(e) =>
+                  onChange(product.id, 'location', e.target.value)
+                }
                 required
                 disabled={isLoading}
               />
@@ -1397,7 +1481,9 @@ function ProductAccordion({
                 className={styles.input}
                 placeholder="Enter the batch number"
                 value={product.batchNo || ''}
-                onChange={(e) => onChange(product.id, 'batchNo', e.target.value)}
+                onChange={(e) =>
+                  onChange(product.id, 'batchNo', e.target.value)
+                }
                 disabled={isLoading}
               />
             </div>
@@ -1419,7 +1505,10 @@ function ProductAccordion({
               />
             </div>
             <div className={styles.formGroup}>
-              <label htmlFor={`additionalDiscount-${product.id}`} className={styles.label}>
+              <label
+                htmlFor={`additionalDiscount-${product.id}`}
+                className={styles.label}
+              >
                 Additional Discount (%)
               </label>
               <input
@@ -1430,7 +1519,12 @@ function ProductAccordion({
                 step="0.01"
                 min="0"
                 max="100"
-                value={product.additionalDiscount === null || product.additionalDiscount === undefined ? '' : product.additionalDiscount}
+                value={
+                  product.additionalDiscount === null ||
+                  product.additionalDiscount === undefined
+                    ? ''
+                    : product.additionalDiscount
+                }
                 onChange={(e) => {
                   const value = e.target.value;
                   if (value === '') {
@@ -1449,7 +1543,10 @@ function ProductAccordion({
 
           <div className={styles.formRow}>
             <div className={styles.formGroup}>
-              <label htmlFor={`sellingPrice-${product.id}`} className={styles.label}>
+              <label
+                htmlFor={`sellingPrice-${product.id}`}
+                className={styles.label}
+              >
                 Price to Retailer (PTR) *
               </label>
               <input
@@ -1460,13 +1557,18 @@ function ProductAccordion({
                 className={styles.input}
                 placeholder="0.00"
                 value={product.sellingPrice === 0 ? '' : product.sellingPrice}
-                onChange={(e) => onDecimalChange(product.id, 'sellingPrice', e.target.value)}
+                onChange={(e) =>
+                  onDecimalChange(product.id, 'sellingPrice', e.target.value)
+                }
                 required
                 disabled={isLoading}
               />
             </div>
             <div className={styles.formGroup}>
-              <label htmlFor={`costPrice-${product.id}`} className={styles.label}>
+              <label
+                htmlFor={`costPrice-${product.id}`}
+                className={styles.label}
+              >
                 Price from stockist (PTS) *
               </label>
               <input
@@ -1477,7 +1579,9 @@ function ProductAccordion({
                 className={styles.input}
                 placeholder="0.00"
                 value={product.costPrice === 0 ? '' : product.costPrice}
-                onChange={(e) => onDecimalChange(product.id, 'costPrice', e.target.value)}
+                onChange={(e) =>
+                  onDecimalChange(product.id, 'costPrice', e.target.value)
+                }
                 required
                 disabled={isLoading}
               />
@@ -1486,7 +1590,10 @@ function ProductAccordion({
 
           <div className={styles.formRow}>
             <div className={styles.formGroup}>
-              <label htmlFor={`maximumRetailPrice-${product.id}`} className={styles.label}>
+              <label
+                htmlFor={`maximumRetailPrice-${product.id}`}
+                className={styles.label}
+              >
                 MRP *
               </label>
               <input
@@ -1501,7 +1608,13 @@ function ProductAccordion({
                     ? ''
                     : product.maximumRetailPrice
                 }
-                onChange={(e) => onDecimalChange(product.id, 'maximumRetailPrice', e.target.value)}
+                onChange={(e) =>
+                  onDecimalChange(
+                    product.id,
+                    'maximumRetailPrice',
+                    e.target.value
+                  )
+                }
                 required
                 disabled={isLoading}
               />
@@ -1544,7 +1657,10 @@ function ProductAccordion({
           </div>
 
           <div className={styles.formGroup}>
-            <label htmlFor={`description-${product.id}`} className={styles.label}>
+            <label
+              htmlFor={`description-${product.id}`}
+              className={styles.label}
+            >
               Description
             </label>
             <textarea
@@ -1552,7 +1668,9 @@ function ProductAccordion({
               className={styles.textarea}
               placeholder="Enter product description (optional)"
               value={product.description || ''}
-              onChange={(e) => onChange(product.id, 'description', e.target.value)}
+              onChange={(e) =>
+                onChange(product.id, 'description', e.target.value)
+              }
               disabled={isLoading}
               rows={3}
             />
@@ -1563,7 +1681,10 @@ function ProductAccordion({
             <h4 className={styles.subsectionTitle}>Expiry Reminder Settings</h4>
             <div className={styles.formRow}>
               <div className={styles.formGroup}>
-                <label htmlFor={`reminderAt-${product.id}`} className={styles.label}>
+                <label
+                  htmlFor={`reminderAt-${product.id}`}
+                  className={styles.label}
+                >
                   Expiry Reminder Date & Time (Optional)
                 </label>
                 <input
@@ -1587,7 +1708,8 @@ function ProductAccordion({
                   disabled={isLoading}
                 />
                 <p className={styles.helperText}>
-                  Set a reminder date to be notified before this inventory item expires
+                  Set a reminder date to be notified before this inventory item
+                  expires
                 </p>
               </div>
             </div>

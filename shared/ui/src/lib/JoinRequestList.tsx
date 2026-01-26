@@ -3,6 +3,7 @@ import { shopsApi } from '@inventory-platform/api';
 import type { JoinRequest } from '@inventory-platform/types';
 import { JoinRequestCard } from './JoinRequestCard';
 import styles from './JoinRequestList.module.css';
+import { useNotify } from '@inventory-platform/store';
 
 interface JoinRequestListProps {
   onRequestChange?: () => void;
@@ -12,6 +13,7 @@ export function JoinRequestList({ onRequestChange }: JoinRequestListProps) {
   const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { error: notifyError } = useNotify;
 
   const fetchJoinRequests = useCallback(async () => {
     setIsLoading(true);
@@ -21,7 +23,7 @@ export function JoinRequestList({ onRequestChange }: JoinRequestListProps) {
       const data = await shopsApi.getJoinRequests();
       setJoinRequests(data);
     } catch (err: any) {
-      setError(err?.message || 'Failed to load join requests');
+      notifyError(err?.message || 'Failed to load join requests');
     } finally {
       setIsLoading(false);
     }
@@ -128,4 +130,3 @@ export function JoinRequestList({ onRequestChange }: JoinRequestListProps) {
     </div>
   );
 }
-

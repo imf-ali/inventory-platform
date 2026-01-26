@@ -4,6 +4,7 @@ import { useAuthStore } from '@inventory-platform/store';
 import { shopsApi } from '@inventory-platform/api';
 import type { OnboardingStep } from '@inventory-platform/types';
 import styles from './onboarding.module.css';
+import { useNotify } from '@inventory-platform/store';
 
 const STEPS: OnboardingStep[] = [
   'name',
@@ -38,6 +39,7 @@ export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { error: notifyError } = useNotify;
   const [formData, setFormData] = useState({
     name: '',
     // businessId: 'Pharmacy',
@@ -132,23 +134,23 @@ export default function OnboardingPage() {
     // Validate location step - check all required fields
     if (step === 'location') {
       if (!formData.location.primaryAddress.trim()) {
-        setError('Please enter primary address');
+        notifyError('Please enter primary address');
         return;
       }
       if (!formData.location.city.trim()) {
-        setError('Please enter city');
+        notifyError('Please enter city');
         return;
       }
       if (!formData.location.state.trim()) {
-        setError('Please enter state');
+        notifyError('Please enter state');
         return;
       }
       if (!formData.location.pin.trim()) {
-        setError('Please enter PIN code');
+        notifyError('Please enter PIN code');
         return;
       }
       if (!formData.location.country.trim()) {
-        setError('Please enter country');
+        notifyError('Please enter country');
         return;
       }
       // } else if (step === 'businessId') {
@@ -169,7 +171,7 @@ export default function OnboardingPage() {
       // Validate other steps
       const value = getCurrentValue().trim();
       if (!value) {
-        setError(`Please enter ${STEP_LABELS[step].toLowerCase()}`);
+        notifyError(`Please enter ${STEP_LABELS[step].toLowerCase()}`);
         return;
       }
     }
@@ -234,7 +236,7 @@ export default function OnboardingPage() {
         err instanceof Error
           ? err.message
           : 'Failed to register shop. Please try again.';
-      setError(errorMessage);
+      notifyError(errorMessage);
       setIsLoading(false);
     }
   };
