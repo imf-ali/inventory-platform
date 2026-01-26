@@ -3,6 +3,7 @@ import { invitationsApi } from '@inventory-platform/api';
 import type { Invitation } from '@inventory-platform/types';
 import { InvitationCard } from './InvitationCard';
 import styles from './InvitationList.module.css';
+import { useNotify } from '@inventory-platform/store';
 
 interface InvitationListProps {
   shopId?: string;
@@ -38,7 +39,7 @@ export function InvitationList({
 
       setInvitations(data);
     } catch (err: any) {
-      setError(err?.message || 'Failed to load invitations');
+      useNotify.error(err?.message || 'Failed to load invitations');
     } finally {
       setIsLoading(false);
     }
@@ -92,7 +93,9 @@ export function InvitationList({
   );
   const accepted = invitations.filter((inv) => inv.status === 'ACCEPTED');
   const expired = invitations.filter(
-    (inv) => inv.status === 'EXPIRED' || (inv.status === 'PENDING' && new Date(inv.expiresAt) < new Date())
+    (inv) =>
+      inv.status === 'EXPIRED' ||
+      (inv.status === 'PENDING' && new Date(inv.expiresAt) < new Date())
   );
   const rejected = invitations.filter((inv) => inv.status === 'REJECTED');
 

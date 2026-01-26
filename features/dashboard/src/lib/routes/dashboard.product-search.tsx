@@ -3,6 +3,7 @@ import { inventoryApi, cartApi } from '@inventory-platform/api';
 import type { InventoryItem } from '@inventory-platform/types';
 import { InventoryAlertDetails } from '@inventory-platform/ui';
 import styles from './dashboard.product-search.module.css';
+import { useNotify } from '@inventory-platform/store';
 
 export function meta() {
   return [
@@ -52,7 +53,7 @@ export default function ProductSearchPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to fetch inventory';
-      setError(errorMessage);
+      useNotify.error(errorMessage);
       setInventory([]);
     } finally {
       setIsLoading(false);
@@ -100,7 +101,7 @@ export default function ProductSearchPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to search inventory';
-      setError(errorMessage);
+      useNotify.error(errorMessage);
       setInventory([]);
     } finally {
       setIsLoading(false);
@@ -130,7 +131,7 @@ export default function ProductSearchPage() {
 
   const handleAddToSell = async (item: InventoryItem) => {
     if (item.currentCount <= 0) {
-      setError('Product is out of stock');
+      useNotify.error('Product is out of stock');
       return;
     }
 
@@ -151,7 +152,7 @@ export default function ProductSearchPage() {
       };
 
       await cartApi.add(cartPayload);
-      setSuccessMessage(
+      useNotify.success(
         `Added "${item.name || 'Product'}" to cart successfully!`
       );
 
@@ -162,7 +163,7 @@ export default function ProductSearchPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to add item to cart';
-      setError(errorMessage);
+      useNotify.error(errorMessage);
     } finally {
       setAddingToCart(null);
     }
@@ -276,16 +277,19 @@ export default function ProductSearchPage() {
                       </div>
                       <div className={styles.priceInfo}>
                         <span className={styles.productPrice}>
-                          Price to Retailer (PTR): ₹{item.sellingPrice.toFixed(2)}
+                          Price to Retailer (PTR): ₹
+                          {item.sellingPrice.toFixed(2)}
                         </span>
                         <span className={styles.productPrice}>
                           MRP: ₹{item.maximumRetailPrice.toFixed(2)}
                         </span>
-                        {item.additionalDiscount !== null && item.additionalDiscount !== undefined && (
-                          <span className={styles.productPrice}>
-                            Additional Discount: {item.additionalDiscount.toFixed(2)}%
-                          </span>
-                        )}
+                        {item.additionalDiscount !== null &&
+                          item.additionalDiscount !== undefined && (
+                            <span className={styles.productPrice}>
+                              Additional Discount:{' '}
+                              {item.additionalDiscount.toFixed(2)}%
+                            </span>
+                          )}
                       </div>
                       <div className={styles.expiryInfo}>
                         <span className={styles.expiryDate}>

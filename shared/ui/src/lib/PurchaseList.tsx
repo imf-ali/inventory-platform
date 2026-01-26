@@ -3,6 +3,7 @@ import { purchasesApi } from '@inventory-platform/api';
 import type { Purchase } from '@inventory-platform/types';
 import { PurchaseCard } from './PurchaseCard';
 import styles from './PurchaseList.module.css';
+import { useNotify } from '@inventory-platform/store';
 
 interface PurchaseListProps {
   onPurchaseChange?: () => void;
@@ -27,17 +28,18 @@ export function PurchaseList({ onPurchaseChange }: PurchaseListProps) {
         limit,
         order: 'soldAt:desc',
       });
-      
+
       // Filter out PENDING orders, only show COMPLETED and CANCELLED
       const filteredPurchases = response.purchases.filter(
-        (purchase) => purchase.status === 'COMPLETED' || purchase.status === 'CANCELLED'
+        (purchase) =>
+          purchase.status === 'COMPLETED' || purchase.status === 'CANCELLED'
       );
-      
+
       setPurchases(filteredPurchases);
       setTotalPages(response.totalPages);
       setTotal(response.total);
     } catch (err: any) {
-      setError(err?.message || 'Failed to load purchases');
+      useNotify.error(err?.message || 'Failed to load purchases');
     } finally {
       setIsLoading(false);
     }
@@ -86,7 +88,8 @@ export function PurchaseList({ onPurchaseChange }: PurchaseListProps) {
       {purchases.length > 0 && (
         <div className={styles.summary}>
           <p className={styles.summaryText}>
-            Showing {((page - 1) * limit) + 1} - {Math.min(page * limit, total)} of {total} purchases
+            Showing {(page - 1) * limit + 1} - {Math.min(page * limit, total)}{' '}
+            of {total} purchases
           </p>
           <div className={styles.limitSelector}>
             <label htmlFor="limit-select" className={styles.limitLabel}>
@@ -145,4 +148,3 @@ export function PurchaseList({ onPurchaseChange }: PurchaseListProps) {
     </div>
   );
 }
-

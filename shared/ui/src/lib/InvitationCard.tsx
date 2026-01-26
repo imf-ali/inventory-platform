@@ -3,6 +3,7 @@ import { invitationsApi } from '@inventory-platform/api';
 import type { Invitation, UserRole } from '@inventory-platform/types';
 import { RoleBadge } from './RoleBadge';
 import styles from './InvitationCard.module.css';
+import { useNotify } from '@inventory-platform/store';
 
 interface InvitationCardProps {
   invitation: Invitation;
@@ -32,7 +33,7 @@ export function InvitationCard({
         onAccept();
       }
     } catch (err: any) {
-      setError(err?.message || 'Failed to accept invitation');
+      useNotify.error(err?.message || 'Failed to accept invitation');
     } finally {
       setIsAccepting(false);
     }
@@ -65,15 +66,21 @@ export function InvitationCard({
           </div>
           <RoleBadge role={invitation.role as UserRole} />
         </div>
-        <span className={`${styles.status} ${getStatusColor(invitation.status)}`}>
-          {isExpired && invitation.status === 'PENDING' ? 'EXPIRED' : invitation.status}
+        <span
+          className={`${styles.status} ${getStatusColor(invitation.status)}`}
+        >
+          {isExpired && invitation.status === 'PENDING'
+            ? 'EXPIRED'
+            : invitation.status}
         </span>
       </div>
 
       <div className={styles.details}>
         <div className={styles.detailRow}>
           <span className={styles.label}>Invited by:</span>
-          <span className={styles.value}>{invitation.inviterName || invitation.inviterUserId}</span>
+          <span className={styles.value}>
+            {invitation.inviterName || invitation.inviterUserId}
+          </span>
         </div>
         <div className={styles.detailRow}>
           <span className={styles.label}>Email:</span>
@@ -107,11 +114,7 @@ export function InvitationCard({
         )}
       </div>
 
-      {error && (
-        <div className={styles.errorMessage}>
-          {error}
-        </div>
-      )}
+      {error && <div className={styles.errorMessage}>{error}</div>}
 
       {showAcceptButton && isPending && (
         <button

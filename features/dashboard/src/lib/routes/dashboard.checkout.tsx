@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { cartApi } from '@inventory-platform/api';
 import type { CartResponse } from '@inventory-platform/types';
 import styles from './dashboard.checkout.module.css';
+import { useNotify } from '@inventory-platform/store';
 
 export function meta() {
   return [
@@ -109,7 +110,7 @@ export default function CheckoutPage() {
 
   const handlePayment = async (method: 'CASH' | 'ONLINE') => {
     if (!checkoutData) {
-      setError('Checkout data not available');
+      useNotify.error('Checkout data not available');
       return;
     }
 
@@ -152,7 +153,7 @@ export default function CheckoutPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to process payment';
-      setError(errorMessage);
+      useNotify.error(errorMessage);
       setIsProcessingPayment(false);
     }
   };
@@ -187,14 +188,14 @@ export default function CheckoutPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to update cart status';
-      setError(errorMessage);
+      useNotify.error(errorMessage);
       setIsUpdating(false);
     }
   };
 
   const handlePrintInvoice = async () => {
     if (!checkoutData?.purchaseId) {
-      setError('Purchase ID not found');
+      useNotify.error('Purchase ID not found');
       return;
     }
 
@@ -227,20 +228,20 @@ export default function CheckoutPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to download invoice PDF';
-      setError(errorMessage);
+      useNotify.error(errorMessage);
     } finally {
       setIsPrinting(false);
     }
   };
-  
+
   // Get SGST and CGST percentages from items if available, otherwise calculate from amounts
   const firstItem = checkoutData.items[0];
-  const sgstPercentage = firstItem?.sgst 
+  const sgstPercentage = firstItem?.sgst
     ? parseFloat(firstItem.sgst).toFixed(1)
     : checkoutData.subTotal > 0 && checkoutData.sgstAmount
     ? ((checkoutData.sgstAmount / checkoutData.subTotal) * 100).toFixed(1)
     : '0';
-  
+
   const cgstPercentage = firstItem?.cgst
     ? parseFloat(firstItem.cgst).toFixed(1)
     : checkoutData.subTotal > 0 && checkoutData.cgstAmount
@@ -447,7 +448,9 @@ export default function CheckoutPage() {
               <tbody>
                 {checkoutData.items.map((item, index: number) => {
                   // Calculate discount amount: (MRP - Selling Price) * quantity
-                  const discountAmount = (item.maximumRetailPrice - item.sellingPrice) * item.quantity;
+                  const discountAmount =
+                    (item.maximumRetailPrice - item.sellingPrice) *
+                    item.quantity;
                   return (
                     <tr key={index}>
                       <td>{item.name}</td>
@@ -456,15 +459,18 @@ export default function CheckoutPage() {
                       <td>₹{item.sellingPrice.toFixed(2)}</td>
                       <td>₹{discountAmount.toFixed(2)}</td>
                       <td>
-                        {item.additionalDiscount !== null && item.additionalDiscount !== undefined
+                        {item.additionalDiscount !== null &&
+                        item.additionalDiscount !== undefined
                           ? `${item.additionalDiscount.toFixed(2)}%`
                           : '—'}
                       </td>
-                      <td>{item.cgst !== null && item.cgst !== undefined
+                      <td>
+                        {item.cgst !== null && item.cgst !== undefined
                           ? `${item.cgst}%`
                           : '—'}
                       </td>
-                      <td>{item.sgst !== null && item.sgst !== undefined
+                      <td>
+                        {item.sgst !== null && item.sgst !== undefined
                           ? `${item.sgst}%`
                           : '—'}
                       </td>
@@ -485,18 +491,20 @@ export default function CheckoutPage() {
               <span>Subtotal:</span>
               <span>₹{checkoutData.subTotal.toFixed(2)}</span>
             </div>
-            {checkoutData.sgstAmount !== undefined && checkoutData.sgstAmount > 0 && (
-              <div className={styles.summaryRow}>
-                <span>SGST ({sgstPercentage}%):</span>
-                <span>₹{checkoutData.sgstAmount.toFixed(2)}</span>
-              </div>
-            )}
-            {checkoutData.cgstAmount !== undefined && checkoutData.cgstAmount > 0 && (
-              <div className={styles.summaryRow}>
-                <span>CGST ({cgstPercentage}%):</span>
-                <span>₹{checkoutData.cgstAmount.toFixed(2)}</span>
-              </div>
-            )}
+            {checkoutData.sgstAmount !== undefined &&
+              checkoutData.sgstAmount > 0 && (
+                <div className={styles.summaryRow}>
+                  <span>SGST ({sgstPercentage}%):</span>
+                  <span>₹{checkoutData.sgstAmount.toFixed(2)}</span>
+                </div>
+              )}
+            {checkoutData.cgstAmount !== undefined &&
+              checkoutData.cgstAmount > 0 && (
+                <div className={styles.summaryRow}>
+                  <span>CGST ({cgstPercentage}%):</span>
+                  <span>₹{checkoutData.cgstAmount.toFixed(2)}</span>
+                </div>
+              )}
             <div className={styles.summaryRow}>
               <span>Tax:</span>
               <span>₹{checkoutData.taxTotal.toFixed(2)}</span>
