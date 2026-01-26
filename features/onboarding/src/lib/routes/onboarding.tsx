@@ -39,6 +39,7 @@ export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { error: notifyError } = useNotify;
   const [formData, setFormData] = useState({
     name: '',
     // businessId: 'Pharmacy',

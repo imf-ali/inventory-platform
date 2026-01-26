@@ -24,6 +24,7 @@ export default function RequestJoinShopPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const { success: notifySuccess, error: notifyError } = useNotify;
 
   // Periodically check if user has been added to a shop
   useEffect(() => {
