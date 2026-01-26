@@ -353,7 +353,7 @@ export default function ProductRegistrationPage() {
     try {
       // Validate vendor is selected
       if (!selectedVendor || !selectedVendor.vendorId) {
-        setError(
+        useNotify.error(
           'Vendor information is required. Please search and select a vendor.'
         );
         setIsLoading(false);
@@ -362,7 +362,7 @@ export default function ProductRegistrationPage() {
 
       // Validate at least one product exists
       if (products.length === 0) {
-        setError('Please add at least one product to register.');
+        useNotify.error('Please add at least one product to register.');
         setIsLoading(false);
         return;
       }
@@ -607,7 +607,9 @@ export default function ProductRegistrationPage() {
     setError(null);
     try {
       if (!vendorFormData.name || !vendorFormData.contactPhone) {
-        setError('Please fill in all required vendor fields (Name and Phone)');
+        useNotify.error(
+          'Please fill in all required vendor fields (Name and Phone)'
+        );
         setIsCreatingVendor(false);
         return;
       }
