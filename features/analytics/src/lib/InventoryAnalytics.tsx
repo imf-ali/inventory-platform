@@ -1,21 +1,49 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAnalyticsStore } from '@inventory-platform/store';
 import type { InventoryItemAnalytics } from '@inventory-platform/types';
 import styles from './analytics.module.css';
 
+// Module-level tracking to prevent duplicate calls across StrictMode remounts
+let pendingFetch: { params: string; timestamp: number } | null = null;
+const FETCH_DEBOUNCE_MS = 200;
+
 export function InventoryAnalytics() {
   const { inventoryData, isLoading, error, fetchInventory } = useAnalyticsStore();
+  const prevFiltersRef = useRef<string | null>(null);
   const [localFilters, setLocalFilters] = useState<{
+    startDate: string;
+    endDate: string;
     includeAll: boolean;
     lowStockThreshold: number;
     deadStockDays: number;
     expiringSoonDays: number;
   }>({
+    startDate: '',
+    endDate: '',
     includeAll: false,
     lowStockThreshold: 10,
     deadStockDays: 60,
     expiringSoonDays: 15,
   });
+
+  // Set default dates (30 days ago to now)
+  useEffect(() => {
+    const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999);
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 30);
+    startDate.setHours(0, 0, 0, 0);
+
+    const formatDate = (date: Date) => {
+      return date.toISOString();
+    };
+
+    setLocalFilters((prev) => ({
+      ...prev,
+      startDate: prev.startDate || formatDate(startDate),
+      endDate: prev.endDate || formatDate(endDate),
+    }));
+  }, []);
 
   const [expandedSections, setExpandedSections] = useState<{
     lowStock: boolean;
@@ -40,33 +68,62 @@ export function InventoryAnalytics() {
     }));
   };
 
-  // Fetch data on mount
+  // Fetch data on mount and when filters change
   useEffect(() => {
+    const currentFiltersKey = JSON.stringify(localFilters);
+    
+    // Skip if filters haven't changed (prevents duplicate calls)
+    if (prevFiltersRef.current === currentFiltersKey) {
+      return;
+    }
+    
+    // Skip if there's a pending fetch with the same params (prevents StrictMode duplicate)
+    const now = Date.now();
+    if (
+      pendingFetch &&
+      pendingFetch.params === currentFiltersKey &&
+      now - pendingFetch.timestamp < FETCH_DEBOUNCE_MS
+    ) {
+      return;
+    }
+    
+    prevFiltersRef.current = currentFiltersKey;
+    pendingFetch = { params: currentFiltersKey, timestamp: now };
+    
+    // Only fetch if dates are set
+    if (!localFilters.startDate || !localFilters.endDate) {
+      return;
+    }
+    
     fetchInventory({
+      startDate: localFilters.startDate,
+      endDate: localFilters.endDate,
       includeAll: localFilters.includeAll,
       lowStockThreshold: localFilters.lowStockThreshold,
       deadStockDays: localFilters.deadStockDays,
       expiringSoonDays: localFilters.expiringSoonDays,
+    }).finally(() => {
+      // Clear pending fetch after a delay to handle rapid remounts
+      setTimeout(() => {
+        if (pendingFetch?.params === currentFiltersKey) {
+          pendingFetch = null;
+        }
+      }, FETCH_DEBOUNCE_MS);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Fetch data when filters change
-  useEffect(() => {
-    fetchInventory({
-      includeAll: localFilters.includeAll,
-      lowStockThreshold: localFilters.lowStockThreshold,
-      deadStockDays: localFilters.deadStockDays,
-      expiringSoonDays: localFilters.expiringSoonDays,
-    });
-  }, [localFilters, fetchInventory]);
+  }, [localFilters]);
 
   const handleFilterChange = (key: string, value: string | number | boolean) => {
     setLocalFilters((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleApplyFilters = () => {
+    if (!localFilters.startDate || !localFilters.endDate) {
+      return;
+    }
     fetchInventory({
+      startDate: localFilters.startDate,
+      endDate: localFilters.endDate,
       includeAll: localFilters.includeAll,
       lowStockThreshold: localFilters.lowStockThreshold,
       deadStockDays: localFilters.deadStockDays,
@@ -223,6 +280,47 @@ export function InventoryAnalytics() {
     <div>
       {/* Filters */}
       <div className={styles.filters}>
+        <div className={styles.filterGroup}>
+          <label htmlFor="inventoryStartDate">Start Date</label>
+          <input
+            id="inventoryStartDate"
+            type="datetime-local"
+            value={
+              localFilters.startDate
+                ? new Date(localFilters.startDate).toISOString().slice(0, 16)
+                : ''
+            }
+            onChange={(e) => {
+              const date = e.target.value ? new Date(e.target.value).toISOString() : '';
+              handleFilterChange('startDate', date);
+            }}
+            className={styles.input}
+          />
+        </div>
+
+        <div className={styles.filterGroup}>
+          <label htmlFor="inventoryEndDate">End Date</label>
+          <input
+            id="inventoryEndDate"
+            type="datetime-local"
+            value={
+              localFilters.endDate
+                ? new Date(localFilters.endDate).toISOString().slice(0, 16)
+                : ''
+            }
+            onChange={(e) => {
+              if (e.target.value) {
+                const date = new Date(e.target.value);
+                date.setHours(23, 59, 59, 999);
+                handleFilterChange('endDate', date.toISOString());
+              } else {
+                handleFilterChange('endDate', '');
+              }
+            }}
+            className={styles.input}
+          />
+        </div>
+
         <div className={styles.filterGroup}>
           <label htmlFor="lowStockThreshold">Low Stock Threshold (%)</label>
           <input

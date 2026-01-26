@@ -36,6 +36,8 @@ export interface AnalyticsState {
     includeAll?: boolean;
   };
   inventoryFilters: {
+    startDate?: string;
+    endDate?: string;
     includeAll?: boolean;
     lowStockThreshold?: number;
     deadStockDays?: number;
@@ -67,6 +69,8 @@ export interface AnalyticsState {
     includeAll?: boolean;
   }) => Promise<void>;
   fetchInventory: (params?: {
+    startDate?: string;
+    endDate?: string;
     includeAll?: boolean;
     lowStockThreshold?: number;
     deadStockDays?: number;

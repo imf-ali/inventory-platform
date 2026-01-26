@@ -72,6 +72,8 @@ export const analyticsApi = {
   },
 
   getInventory: async (params?: {
+    startDate?: string;
+    endDate?: string;
     includeAll?: boolean;
     lowStockThreshold?: number;
     deadStockDays?: number;
@@ -79,6 +81,12 @@ export const analyticsApi = {
   }): Promise<InventoryAnalytics> => {
     const queryParams: Record<string, string> = {};
     
+    if (params?.startDate) {
+      queryParams.startDate = params.startDate;
+    }
+    if (params?.endDate) {
+      queryParams.endDate = params.endDate;
+    }
     if (params?.includeAll !== undefined) {
       queryParams.includeAll = params.includeAll.toString();
     }
