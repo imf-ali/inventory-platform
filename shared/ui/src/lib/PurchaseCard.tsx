@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { cartApi } from '@inventory-platform/api';
 import type { Purchase } from '@inventory-platform/types';
 import styles from './PurchaseCard.module.css';
+import { useNotify } from '@inventory-platform/store';
 
 interface PurchaseCardProps {
   purchase: Purchase;
@@ -52,7 +53,7 @@ export function PurchaseCard({ purchase }: PurchaseCardProps) {
 
   const handlePrintInvoice = async () => {
     if (!purchase.purchaseId) {
-      setError('Purchase ID not found');
+      useNotify.error('Purchase ID not found');
       return;
     }
 
@@ -85,7 +86,7 @@ export function PurchaseCard({ purchase }: PurchaseCardProps) {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to download invoice PDF';
-      setError(errorMessage);
+      useNotify.error(errorMessage);
     } finally {
       setIsPrinting(false);
     }
@@ -179,7 +180,8 @@ export function PurchaseCard({ purchase }: PurchaseCardProps) {
                   </div>
                   <div className={styles.itemPricing}>
                     <span className={styles.itemPrice}>
-                      ₹{item.sellingPrice.toFixed(2)} × {item.quantity} = ₹{(item.sellingPrice * item.quantity).toFixed(2)}
+                      ₹{item.sellingPrice.toFixed(2)} × {item.quantity} = ₹
+                      {(item.sellingPrice * item.quantity).toFixed(2)}
                     </span>
                     {item.discount > 0 && (
                       <span className={styles.itemDiscount}>
@@ -215,12 +217,16 @@ export function PurchaseCard({ purchase }: PurchaseCardProps) {
             <>
               <div className={styles.priceRow}>
                 <span className={styles.priceLabel}>Subtotal:</span>
-                <span className={styles.priceValue}>₹{purchase.subTotal.toFixed(2)}</span>
+                <span className={styles.priceValue}>
+                  ₹{purchase.subTotal.toFixed(2)}
+                </span>
               </div>
               {purchase.discountTotal > 0 && (
                 <div className={styles.priceRow}>
                   <span className={styles.priceLabel}>Discount:</span>
-                  <span className={`${styles.priceValue} ${styles.discountValue}`}>
+                  <span
+                    className={`${styles.priceValue} ${styles.discountValue}`}
+                  >
                     -₹{purchase.discountTotal.toFixed(2)}
                   </span>
                 </div>
@@ -228,19 +234,25 @@ export function PurchaseCard({ purchase }: PurchaseCardProps) {
               {purchase.taxTotal > 0 && (
                 <div className={styles.priceRow}>
                   <span className={styles.priceLabel}>Tax:</span>
-                  <span className={styles.priceValue}>₹{purchase.taxTotal.toFixed(2)}</span>
+                  <span className={styles.priceValue}>
+                    ₹{purchase.taxTotal.toFixed(2)}
+                  </span>
                 </div>
               )}
               <div className={`${styles.priceRow} ${styles.grandTotalRow}`}>
                 <span className={styles.priceLabel}>Grand Total:</span>
-                <span className={styles.grandTotalValue}>₹{purchase.grandTotal.toFixed(2)}</span>
+                <span className={styles.grandTotalValue}>
+                  ₹{purchase.grandTotal.toFixed(2)}
+                </span>
               </div>
             </>
           )}
           {!isPriceExpanded && (
             <div className={styles.priceRow}>
               <span className={styles.priceLabel}>Grand Total:</span>
-              <span className={styles.grandTotalValue}>₹{purchase.grandTotal.toFixed(2)}</span>
+              <span className={styles.grandTotalValue}>
+                ₹{purchase.grandTotal.toFixed(2)}
+              </span>
             </div>
           )}
         </div>

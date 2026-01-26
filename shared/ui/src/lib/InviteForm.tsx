@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { invitationsApi } from '@inventory-platform/api';
+import { useNotify } from '@inventory-platform/store';
 import type { UserRole } from '@inventory-platform/types';
 import styles from './InviteForm.module.css';
 
@@ -29,12 +30,12 @@ export function InviteForm({ shopId, onInviteSent, onError }: InviteFormProps) {
     setSuccess(null);
 
     if (!inviteeEmail.trim()) {
-      setError('Email is required');
+      useNotify.error('Email is required');
       return;
     }
 
     if (!validateEmail(inviteeEmail)) {
-      setError('Please enter a valid email address');
+      useNotify.error('Please enter a valid email address');
       return;
     }
 
@@ -46,7 +47,7 @@ export function InviteForm({ shopId, onInviteSent, onError }: InviteFormProps) {
         role,
       });
 
-      setSuccess(response.message || 'Invitation sent successfully!');
+      useNotify.success(response.message || 'Invitation sent successfully!');
       setInviteeEmail('');
       setRole('CASHIER');
 
@@ -54,8 +55,9 @@ export function InviteForm({ shopId, onInviteSent, onError }: InviteFormProps) {
         onInviteSent();
       }
     } catch (err: any) {
-      const errorMessage = err?.message || 'Failed to send invitation. Please try again.';
-      setError(errorMessage);
+      const errorMessage =
+        err?.message || 'Failed to send invitation. Please try again.';
+      useNotify.error(errorMessage);
       if (onError) {
         onError(errorMessage);
       }
@@ -71,17 +73,9 @@ export function InviteForm({ shopId, onInviteSent, onError }: InviteFormProps) {
         <p className={styles.subtitle}>Invite a user to join your shop</p>
       </div>
 
-      {error && (
-        <div className={styles.errorMessage}>
-          {error}
-        </div>
-      )}
+      {error && <div className={styles.errorMessage}>{error}</div>}
 
-      {success && (
-        <div className={styles.successMessage}>
-          {success}
-        </div>
-      )}
+      {success && <div className={styles.successMessage}>{success}</div>}
 
       <form className={styles.form} onSubmit={handleSubmit}>
         <div className={styles.formGroup}>

@@ -4,6 +4,7 @@ import { useAuthStore } from '@inventory-platform/store';
 import { shopsApi } from '@inventory-platform/api';
 import type { UserRole } from '@inventory-platform/types';
 import styles from './request-join-shop.module.css';
+import { useNotify } from '@inventory-platform/store';
 
 const AVAILABLE_ROLES: UserRole[] = ['ADMIN', 'MANAGER', 'CASHIER'];
 
@@ -71,12 +72,12 @@ export default function RequestJoinShopPage() {
     setSuccess(null);
 
     if (!ownerEmail.trim()) {
-      setError('Please enter the shop owner email');
+      useNotify.error('Please enter the shop owner email');
       return;
     }
 
     if (!ownerEmail.includes('@')) {
-      setError('Please enter a valid email address');
+      useNotify.error('Please enter a valid email address');
       return;
     }
 
@@ -89,7 +90,7 @@ export default function RequestJoinShopPage() {
         message: message.trim() || undefined,
       });
 
-      setSuccess(
+      useNotify.success(
         `Request sent successfully! You requested to join "${response.shopName}". The shop owner will review your request.`
       );
 
@@ -114,7 +115,7 @@ export default function RequestJoinShopPage() {
         err?.response?.data?.message ||
         err?.message ||
         'Failed to send request. Please try again.';
-      setError(errorMessage);
+      useNotify.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

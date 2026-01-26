@@ -11,6 +11,7 @@ import type {
 } from '@inventory-platform/types';
 import { ReminderForm, InventoryAlertDetails } from '@inventory-platform/ui';
 import styles from './dashboard.reminders.module.css';
+import { useNotify } from '@inventory-platform/store';
 
 export function meta() {
   return [
@@ -49,7 +50,7 @@ export default function RemindersPage() {
 
   const handleSnooze = async (reminderId: string, snoozeDays: number) => {
     if (!snoozeDays || snoozeDays <= 0) {
-      setError('Snooze days must be a positive number');
+      useNotify.error('Snooze days must be a positive number');
       return;
     }
 
@@ -62,7 +63,7 @@ export default function RemindersPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to snooze reminder';
-      setError(errorMessage);
+      useNotify.error(errorMessage);
     } finally {
       setSnoozingReminderId(null);
     }
@@ -85,7 +86,9 @@ export default function RemindersPage() {
         setTotalPages(res.meta.totalPages);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load reminders');
+      useNotify.error(
+        err instanceof Error ? err.message : 'Failed to load reminders'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -113,7 +116,7 @@ export default function RemindersPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to create reminder';
-      setError(errorMessage);
+      useNotify.error(errorMessage);
       throw err;
     } finally {
       setIsSubmitting(false);
@@ -133,7 +136,7 @@ export default function RemindersPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to update reminder';
-      setError(errorMessage);
+      useNotify.error(errorMessage);
       throw err;
     } finally {
       setIsSubmitting(false);
@@ -162,7 +165,7 @@ export default function RemindersPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to delete reminder';
-      setError(errorMessage);
+      useNotify.error(errorMessage);
       setDeletingReminderId(null);
     }
   };

@@ -3,6 +3,7 @@ import { shopsApi } from '@inventory-platform/api';
 import type { JoinRequest, UserRole } from '@inventory-platform/types';
 import { RoleBadge } from './RoleBadge';
 import styles from './JoinRequestCard.module.css';
+import { useNotify } from '@inventory-platform/store';
 
 interface JoinRequestCardProps {
   joinRequest: JoinRequest;
@@ -32,7 +33,9 @@ export function JoinRequestCard({
         onProcess();
       }
     } catch (err: any) {
-      setError(err?.message || `Failed to ${action.toLowerCase()} request`);
+      useNotify.error(
+        err?.message || `Failed to ${action.toLowerCase()} request`
+      );
     } finally {
       setIsProcessing(false);
     }
@@ -63,7 +66,9 @@ export function JoinRequestCard({
           </div>
           <RoleBadge role={joinRequest.requestedRole as UserRole} />
         </div>
-        <span className={`${styles.status} ${getStatusColor(joinRequest.status)}`}>
+        <span
+          className={`${styles.status} ${getStatusColor(joinRequest.status)}`}
+        >
           {joinRequest.status}
         </span>
       </div>
@@ -99,11 +104,7 @@ export function JoinRequestCard({
         )}
       </div>
 
-      {error && (
-        <div className={styles.errorMessage}>
-          {error}
-        </div>
-      )}
+      {error && <div className={styles.errorMessage}>{error}</div>}
 
       {showActions && isPending && (
         <div className={styles.actions}>
@@ -126,4 +127,3 @@ export function JoinRequestCard({
     </div>
   );
 }
-

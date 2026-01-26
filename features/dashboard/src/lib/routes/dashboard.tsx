@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { dashboardApi } from '@inventory-platform/api';
 import type { DashboardData } from '@inventory-platform/types';
 import styles from './dashboard.module.css';
+import { useNotify } from '@inventory-platform/store';
 
 export function meta() {
   return [
@@ -40,7 +41,7 @@ export default function DashboardPage() {
         const data = await dashboardApi.getDashboard();
         setDashboardData(data);
       } catch (err: any) {
-        setError(err?.message || 'Failed to load dashboard data');
+        useNotify.error(err?.message || 'Failed to load dashboard data');
         console.error('Error fetching dashboard data:', err);
       } finally {
         setLoading(false);
