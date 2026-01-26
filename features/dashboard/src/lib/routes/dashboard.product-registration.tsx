@@ -38,7 +38,7 @@ export default function ProductRegistrationPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const { error: notifyError, success: notifySuccess } = useNotify;
+  const { success: notifySuccess } = useNotify;
 
   // Shared vendor and lot ID (applied to all products)
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);

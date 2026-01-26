@@ -27,7 +27,7 @@ export default function ProductSearchPage() {
   const [searchTotalPages, setSearchTotalPages] = useState(0);
   const [searchTotalItems, setSearchTotalItems] = useState(0);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
-  const { error: notifyError, success: notifySuccess } = useNotify;
+  const { success: notifySuccess } = useNotify;
 
   // Fetch all inventory on mount
   useEffect(() => {

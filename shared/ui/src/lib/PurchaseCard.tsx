@@ -13,6 +13,7 @@ export function PurchaseCard({ purchase }: PurchaseCardProps) {
   const [isPriceExpanded, setIsPriceExpanded] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { error: notifyError } = useNotify;
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);

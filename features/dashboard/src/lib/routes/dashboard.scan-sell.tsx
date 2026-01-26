@@ -98,6 +98,7 @@ export default function ScanSellPage() {
   const [customerDlNo, setCustomerDlNo] = useState('');
   const [customerPan, setCustomerPan] = useState('');
   const [isSearchingCustomer, setIsSearchingCustomer] = useState(false);
+  const { error: notifyError } = useNotify;
 
   // Load cart on mount (only once, even in StrictMode)
   useEffect(() => {

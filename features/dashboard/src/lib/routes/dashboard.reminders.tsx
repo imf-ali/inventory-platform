@@ -47,6 +47,7 @@ export default function RemindersPage() {
   const [customSnoozeDays, setCustomSnoozeDays] = useState<number | ''>(''); // 👈 for manual days
   const [selectedInventory, setSelectedInventory] =
     useState<ReminderInventorySummary | null>(null);
+  const { error: notifyError } = useNotify;
 
   const handleSnooze = async (reminderId: string, snoozeDays: number) => {
     if (!snoozeDays || snoozeDays <= 0) {

@@ -17,7 +17,7 @@ export function PurchaseList({ onPurchaseChange }: PurchaseListProps) {
   const [limit, setLimit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
-  const { error: notifyError, success: notifySuccess } = useNotify;
+  const { error: notifyError } = useNotify;
 
   const fetchPurchases = useCallback(async () => {
     setIsLoading(true);

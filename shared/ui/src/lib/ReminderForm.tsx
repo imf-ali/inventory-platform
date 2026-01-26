@@ -36,7 +36,7 @@ export function ReminderForm({
   });
 
   const [error, setError] = useState<string | null>(null);
-  const { error: notifyError, success: notifySuccess } = useNotify;
+  const { error: notifyError } = useNotify;
 
   const handleChange = (
     e: React.ChangeEvent<

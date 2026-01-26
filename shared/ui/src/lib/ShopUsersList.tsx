@@ -14,7 +14,7 @@ export function ShopUsersList({ shopId, onUserChange }: ShopUsersListProps) {
   const [users, setUsers] = useState<ShopUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { error: notifyError, success: notifySuccess } = useNotify;
+  const { error: notifyError } = useNotify;
 
   const fetchUsers = useCallback(async () => {
     setIsLoading(true);
