@@ -3,6 +3,7 @@ import { invitationsApi } from '@inventory-platform/api';
 import { useNotify } from '@inventory-platform/store';
 import type { UserRole } from '@inventory-platform/types';
 import styles from './InviteForm.module.css';
+const { error: notifyError, success: notifySuccess } = useNotify;
 
 interface InviteFormProps {
   shopId: string;
@@ -30,12 +31,12 @@ export function InviteForm({ shopId, onInviteSent, onError }: InviteFormProps) {
     setSuccess(null);
 
     if (!inviteeEmail.trim()) {
-      useNotify.error('Email is required');
+      notifyError('Email is required');
       return;
     }
 
     if (!validateEmail(inviteeEmail)) {
-      useNotify.error('Please enter a valid email address');
+      notifyError('Please enter a valid email address');
       return;
     }
 
@@ -47,7 +48,7 @@ export function InviteForm({ shopId, onInviteSent, onError }: InviteFormProps) {
         role,
       });
 
-      useNotify.success(response.message || 'Invitation sent successfully!');
+      notifySuccess(response.message || 'Invitation sent successfully!');
       setInviteeEmail('');
       setRole('CASHIER');
 
@@ -57,7 +58,7 @@ export function InviteForm({ shopId, onInviteSent, onError }: InviteFormProps) {
     } catch (err: any) {
       const errorMessage =
         err?.message || 'Failed to send invitation. Please try again.';
-      useNotify.error(errorMessage);
+      notifyError(errorMessage);
       if (onError) {
         onError(errorMessage);
       }

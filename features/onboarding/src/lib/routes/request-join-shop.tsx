@@ -72,12 +72,12 @@ export default function RequestJoinShopPage() {
     setSuccess(null);
 
     if (!ownerEmail.trim()) {
-      useNotify.error('Please enter the shop owner email');
+      notifyError('Please enter the shop owner email');
       return;
     }
 
     if (!ownerEmail.includes('@')) {
-      useNotify.error('Please enter a valid email address');
+      notifyError('Please enter a valid email address');
       return;
     }
 
@@ -90,7 +90,7 @@ export default function RequestJoinShopPage() {
         message: message.trim() || undefined,
       });
 
-      useNotify.success(
+      notifySuccess(
         `Request sent successfully! You requested to join "${response.shopName}". The shop owner will review your request.`
       );
 
@@ -115,7 +115,7 @@ export default function RequestJoinShopPage() {
         err?.response?.data?.message ||
         err?.message ||
         'Failed to send request. Please try again.';
-      useNotify.error(errorMessage);
+      notifyError(errorMessage);
     } finally {
       setIsLoading(false);
     }

@@ -53,7 +53,7 @@ export function PurchaseCard({ purchase }: PurchaseCardProps) {
 
   const handlePrintInvoice = async () => {
     if (!purchase.purchaseId) {
-      useNotify.error('Purchase ID not found');
+      notifyError('Purchase ID not found');
       return;
     }
 
@@ -86,7 +86,7 @@ export function PurchaseCard({ purchase }: PurchaseCardProps) {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to download invoice PDF';
-      useNotify.error(errorMessage);
+      notifyError(errorMessage);
     } finally {
       setIsPrinting(false);
     }

@@ -36,6 +36,7 @@ export function ReminderForm({
   });
 
   const [error, setError] = useState<string | null>(null);
+  const { error: notifyError, success: notifySuccess } = useNotify;
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -55,7 +56,7 @@ export function ReminderForm({
     setError(null);
 
     if (!formData.reminderAt) {
-      useNotify.error('Reminder date and time is required');
+      notifyError('Reminder date and time is required');
       return;
     }
 
@@ -86,7 +87,7 @@ export function ReminderForm({
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to save reminder';
-      useNotify.error(errorMessage);
+      notifyError(errorMessage);
     }
   };
 

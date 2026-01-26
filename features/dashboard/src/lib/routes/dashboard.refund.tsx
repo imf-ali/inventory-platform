@@ -48,6 +48,7 @@ export default function RefundPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const { error: notifyError, success: notifySuccess } = useNotify;
 
   // Search state
   const [searchParams, setSearchParams] = useState<SearchPurchasesParams>({
@@ -185,7 +186,7 @@ export default function RefundPage() {
         items: itemsToRefund,
       });
 
-      useNotify.success(
+      notifySuccess(
         `Refund processed successfully! Refund Amount: ${formatCurrency(
           response.refundAmount
         )}. Refund ID: ${response.refundId}`

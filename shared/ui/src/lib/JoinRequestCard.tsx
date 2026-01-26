@@ -18,6 +18,7 @@ export function JoinRequestCard({
 }: JoinRequestCardProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { error: notifyError, success: notifySuccess } = useNotify;
 
   const handleProcess = async (action: 'ACCEPT' | 'REJECT') => {
     if (joinRequest.status !== 'PENDING') {
@@ -33,9 +34,7 @@ export function JoinRequestCard({
         onProcess();
       }
     } catch (err: any) {
-      useNotify.error(
-        err?.message || `Failed to ${action.toLowerCase()} request`
-      );
+      notifyError(err?.message || `Failed to ${action.toLowerCase()} request`);
     } finally {
       setIsProcessing(false);
     }

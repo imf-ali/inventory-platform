@@ -21,6 +21,7 @@ export function InvitationList({
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { error: notifyError, success: notifySuccess } = useNotify;
 
   const fetchInvitations = useCallback(async () => {
     setIsLoading(true);
@@ -39,7 +40,7 @@ export function InvitationList({
 
       setInvitations(data);
     } catch (err: any) {
-      useNotify.error(err?.message || 'Failed to load invitations');
+      notifyError(err?.message || 'Failed to load invitations');
     } finally {
       setIsLoading(false);
     }

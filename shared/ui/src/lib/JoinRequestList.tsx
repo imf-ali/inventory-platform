@@ -13,6 +13,7 @@ export function JoinRequestList({ onRequestChange }: JoinRequestListProps) {
   const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { error: notifyError, success: notifySuccess } = useNotify;
 
   const fetchJoinRequests = useCallback(async () => {
     setIsLoading(true);
@@ -22,7 +23,7 @@ export function JoinRequestList({ onRequestChange }: JoinRequestListProps) {
       const data = await shopsApi.getJoinRequests();
       setJoinRequests(data);
     } catch (err: any) {
-      useNotify.error(err?.message || 'Failed to load join requests');
+      notifyError(err?.message || 'Failed to load join requests');
     } finally {
       setIsLoading(false);
     }

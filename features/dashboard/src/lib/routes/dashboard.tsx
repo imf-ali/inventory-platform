@@ -41,7 +41,7 @@ export default function DashboardPage() {
         const data = await dashboardApi.getDashboard();
         setDashboardData(data);
       } catch (err: any) {
-        useNotify.error(err?.message || 'Failed to load dashboard data');
+        notifyError(err?.message || 'Failed to load dashboard data');
         console.error('Error fetching dashboard data:', err);
       } finally {
         setLoading(false);

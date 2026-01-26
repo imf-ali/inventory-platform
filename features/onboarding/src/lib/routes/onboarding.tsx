@@ -133,23 +133,23 @@ export default function OnboardingPage() {
     // Validate location step - check all required fields
     if (step === 'location') {
       if (!formData.location.primaryAddress.trim()) {
-        useNotify.error('Please enter primary address');
+        notifyError('Please enter primary address');
         return;
       }
       if (!formData.location.city.trim()) {
-        useNotify.error('Please enter city');
+        notifyError('Please enter city');
         return;
       }
       if (!formData.location.state.trim()) {
-        useNotify.error('Please enter state');
+        notifyError('Please enter state');
         return;
       }
       if (!formData.location.pin.trim()) {
-        useNotify.error('Please enter PIN code');
+        notifyError('Please enter PIN code');
         return;
       }
       if (!formData.location.country.trim()) {
-        useNotify.error('Please enter country');
+        notifyError('Please enter country');
         return;
       }
       // } else if (step === 'businessId') {
@@ -170,7 +170,7 @@ export default function OnboardingPage() {
       // Validate other steps
       const value = getCurrentValue().trim();
       if (!value) {
-        useNotify.error(`Please enter ${STEP_LABELS[step].toLowerCase()}`);
+        notifyError(`Please enter ${STEP_LABELS[step].toLowerCase()}`);
         return;
       }
     }
@@ -235,7 +235,7 @@ export default function OnboardingPage() {
         err instanceof Error
           ? err.message
           : 'Failed to register shop. Please try again.';
-      useNotify.error(errorMessage);
+      notifyError(errorMessage);
       setIsLoading(false);
     }
   };

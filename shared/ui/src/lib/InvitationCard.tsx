@@ -18,6 +18,7 @@ export function InvitationCard({
 }: InvitationCardProps) {
   const [isAccepting, setIsAccepting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { error: notifyError, success: notifySuccess } = useNotify;
 
   const handleAccept = async () => {
     if (invitation.status !== 'PENDING') {
@@ -33,7 +34,7 @@ export function InvitationCard({
         onAccept();
       }
     } catch (err: any) {
-      useNotify.error(err?.message || 'Failed to accept invitation');
+      notifyError(err?.message || 'Failed to accept invitation');
     } finally {
       setIsAccepting(false);
     }

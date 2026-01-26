@@ -370,7 +370,7 @@ export default function ScanSellPage() {
       // Handle API errors - might include stock validation errors
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to update cart';
-      useNotify.error(errorMessage);
+      notifyError(errorMessage);
       // Revert to previous cart state on error by reloading cart
       try {
         const currentCart = await cartApi.get();
@@ -475,7 +475,7 @@ export default function ScanSellPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to search products';
-      useNotify.error(errorMessage);
+      notifyError(errorMessage);
       setSearchResults([]);
       if (import.meta.env.DEV) {
         console.error('Search error:', err);
@@ -490,12 +490,12 @@ export default function ScanSellPage() {
     const finalPrice = price !== undefined ? price : item.sellingPrice;
 
     if (finalPrice <= 0) {
-      useNotify.error('Please enter a valid price');
+      notifyError('Please enter a valid price');
       return;
     }
 
     if (item.currentCount <= 0) {
-      useNotify.error('Product is out of stock');
+      notifyError('Product is out of stock');
       return;
     }
 
@@ -510,7 +510,7 @@ export default function ScanSellPage() {
         const newQuantity = existingItem.quantity + 1;
         // Validate stock only if we have accurate inventory data
         if (item.currentCount > 0 && newQuantity > item.currentCount) {
-          useNotify.error(`Only ${item.currentCount} items available in stock`);
+          notifyError(`Only ${item.currentCount} items available in stock`);
           return prev;
         }
         updatedItems = prev.map((cartItem) =>
@@ -522,7 +522,7 @@ export default function ScanSellPage() {
         // Add new item to cart
         // Validate stock only if we have accurate inventory data
         if (item.currentCount > 0 && item.currentCount < 1) {
-          useNotify.error('Product is out of stock');
+          notifyError('Product is out of stock');
           return prev;
         }
         updatedItems = [
@@ -616,7 +616,7 @@ export default function ScanSellPage() {
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : 'Failed to clear cart';
-        useNotify.error(errorMessage);
+        notifyError(errorMessage);
         // Reload cart on error to restore state
         try {
           await loadCart();
@@ -686,7 +686,7 @@ export default function ScanSellPage() {
 
   const handleCustomerSearch = async () => {
     if (!customerPhone.trim()) {
-      useNotify.error('Please enter a customer phone number');
+      notifyError('Please enter a customer phone number');
       return;
     }
 
@@ -731,7 +731,7 @@ export default function ScanSellPage() {
       // On error (404 or any other error), clear all fields
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to search customer';
-      useNotify.error(errorMessage);
+      notifyError(errorMessage);
       setCustomerName('');
       setCustomerEmail('');
       setCustomerAddress('');
@@ -746,7 +746,7 @@ export default function ScanSellPage() {
 
   const handleProcessPayment = async () => {
     if (cartItems.length === 0) {
-      useNotify.error('Cart is empty');
+      notifyError('Cart is empty');
       return;
     }
 

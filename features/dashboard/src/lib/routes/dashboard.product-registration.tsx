@@ -38,6 +38,7 @@ export default function ProductRegistrationPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const { error: notifyError, success: notifySuccess } = useNotify;
 
   // Shared vendor and lot ID (applied to all products)
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
@@ -253,7 +254,7 @@ export default function ProductRegistrationPage() {
         // Transform parsed items to product form data
         const parsedProducts = response.items.map(transformParsedItemToProduct);
         setProducts(parsedProducts);
-        useNotify.success(
+        notifySuccess(
           `Successfully parsed invoice! Found ${response.totalItems} item(s). Please review and fill in any missing information.`
         );
         setSelectedFile(null);
@@ -494,7 +495,7 @@ export default function ProductRegistrationPage() {
                   )
                   .join('; ')
               : '';
-          useNotify.success(
+          notifySuccess(
             `Successfully registered ${
               createdCount || items.length
             } product(s)! ${lotId ? `Lot ID: ${lotId}. ` : ''}${
@@ -514,7 +515,7 @@ export default function ProductRegistrationPage() {
         } else if (response) {
           // If response exists but no createdCount/items, still consider it success
           // (API might return success without detailed counts)
-          useNotify.success(
+          notifySuccess(
             `Successfully registered ${products.length} product(s)! ${
               lotId ? `Lot ID: ${lotId}. ` : ''
             }`

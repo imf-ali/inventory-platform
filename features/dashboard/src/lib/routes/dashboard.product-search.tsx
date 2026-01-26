@@ -27,6 +27,7 @@ export default function ProductSearchPage() {
   const [searchTotalPages, setSearchTotalPages] = useState(0);
   const [searchTotalItems, setSearchTotalItems] = useState(0);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+  const { error: notifyError, success: notifySuccess } = useNotify;
 
   // Fetch all inventory on mount
   useEffect(() => {
@@ -152,9 +153,7 @@ export default function ProductSearchPage() {
       };
 
       await cartApi.add(cartPayload);
-      useNotify.success(
-        `Added "${item.name || 'Product'}" to cart successfully!`
-      );
+      notifySuccess(`Added "${item.name || 'Product'}" to cart successfully!`);
 
       // Clear success message after 3 seconds
       setTimeout(() => {
