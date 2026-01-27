@@ -1230,3 +1230,37 @@ export interface DashboardData {
   productInsights: ProductInsights;
   salesTrend: SalesTrend;
 }
+
+// Upload Token types (QR Code Upload Flow)
+export type UploadStatus =
+  | 'PENDING'
+  | 'UPLOADING'
+  | 'PROCESSING'
+  | 'COMPLETED'
+  | 'FAILED'
+  | 'EXPIRED';
+
+export interface CreateUploadTokenResponse {
+  token: string;
+  uploadUrl: string;
+  expiresInSeconds: number;
+}
+
+export interface ValidateUploadTokenResponse {
+  token: string;
+  status: UploadStatus;
+  expiresAt: string;
+  errorMessage: string | null;
+}
+
+export interface UploadStatusResponse {
+  token: string;
+  status: UploadStatus;
+  parsedInventoryId: string | null;
+  errorMessage: string | null;
+}
+
+export interface ParsedItemsResponse {
+  items: ParseInvoiceItem[];
+  totalItems: number;
+}

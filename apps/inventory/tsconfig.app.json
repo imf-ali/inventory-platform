@@ -57,6 +57,12 @@
       "path": "../../features/onboarding/tsconfig.lib.json"
     },
     {
+      "path": "../../shared/types/tsconfig.lib.json"
+    },
+    {
+      "path": "../../shared/api/tsconfig.lib.json"
+    },
+    {
       "path": "../../features/auth/tsconfig.lib.json"
     },
     {

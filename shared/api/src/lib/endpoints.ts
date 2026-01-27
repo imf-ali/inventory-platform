@@ -135,4 +135,13 @@ export const API_ENDPOINTS = {
   INVOICES: {
     PDF: (purchaseId: string) => `/invoices/${purchaseId}/pdf`,
   },
+
+  // Upload endpoints (QR Code Upload Flow)
+  UPLOAD: {
+    CREATE_TOKEN: '/session/create-upload-token',
+    VALIDATE_TOKEN: (token: string) => `/m/upload/validate?token=${token}`,
+    UPLOAD_IMAGE: (token: string) => `/m/upload?token=${token}`,
+    STATUS: (token: string) => `/upload/status?token=${token}`,
+    PARSED_ITEMS: (token: string) => `/upload/parsed-items?token=${token}`,
+  },
 } as const;
