@@ -1,6 +1,7 @@
-import { useState, FormEvent, useRef } from 'react';
+import { useState, FormEvent, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { inventoryApi, vendorsApi } from '@inventory-platform/api';
+import { QRCodeSVG } from 'qrcode.react';
+import { inventoryApi, vendorsApi, uploadApi } from '@inventory-platform/api';
 import type {
   CreateInventoryDto,
   CustomReminderInput,
@@ -9,6 +10,7 @@ import type {
   VendorBusinessType,
   BulkCreateInventoryDto,
   ParseInvoiceItem,
+  UploadStatus,
 } from '@inventory-platform/types';
 import { CustomRemindersSection } from '@inventory-platform/ui';
 import { useNotify } from '@inventory-platform/store';
@@ -38,7 +40,17 @@ export default function ProductRegistrationPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const { success: notifySuccess } = useNotify;
+  const { success: notifySuccess, error: notifyError } = useNotify;
+
+  // QR Code Upload state
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [uploadUrl, setUploadUrl] = useState<string | null>(null);
+  const [uploadStatus, setUploadStatus] = useState<UploadStatus | null>(null);
+  const [isPolling, setIsPolling] = useState(false);
+  const [pollingInterval, setPollingInterval] = useState<ReturnType<typeof setInterval> | null>(null);
+  const productsSectionRef = useRef<HTMLDivElement>(null);
+  const [showReviewBanner, setShowReviewBanner] = useState(false);
+  const [reviewBannerItemsCount, setReviewBannerItemsCount] = useState(0);
 
   // Shared vendor and lot ID (applied to all products)
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
@@ -255,12 +267,14 @@ export default function ProductRegistrationPage() {
         const parsedProducts = response.items.map(transformParsedItemToProduct);
         setProducts(parsedProducts);
         notifySuccess(
-          `Successfully parsed invoice! Found ${response.totalItems} item(s). Please review and fill in any missing information.`
+          `✅ Successfully parsed invoice! Found ${response.totalItems} item(s).`
         );
         setSelectedFile(null);
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
+        // Scroll to products section
+        scrollToProducts(response.totalItems);
       } else {
         notifyError(
           'No items found in the invoice image. Please try a different image.'
@@ -286,6 +300,120 @@ export default function ProductRegistrationPage() {
     setError(null);
     setUploadProgress('');
   };
+
+  const scrollToProducts = (itemsCount?: number) => {
+    if (productsSectionRef.current) {
+      setTimeout(() => {
+        productsSectionRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+        // Show review banner
+        if (itemsCount) {
+          setReviewBannerItemsCount(itemsCount);
+          setShowReviewBanner(true);
+          // Auto-hide after 10 seconds
+          setTimeout(() => {
+            setShowReviewBanner(false);
+          }, 10000);
+        }
+      }, 300);
+    }
+  };
+
+  // QR Code Upload Functions
+  const handleCreateQrCode = async () => {
+    try {
+      setIsUploading(true);
+      setError(null);
+      const response = await uploadApi.createUploadToken();
+      setUploadUrl(response.uploadUrl);
+      setUploadStatus('PENDING');
+      setShowQrModal(true);
+      setIsUploading(false);
+      
+      // Start polling for status
+      startPolling(response.token);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Failed to create upload token. Please try again.';
+      notifyError(errorMessage);
+      setIsUploading(false);
+    }
+  };
+
+  const startPolling = (token: string) => {
+    setIsPolling(true);
+    const interval = setInterval(async () => {
+      try {
+        const statusResponse = await uploadApi.getUploadStatus(token);
+        setUploadStatus(statusResponse.status);
+
+        if (statusResponse.status === 'COMPLETED') {
+          clearInterval(interval);
+          setIsPolling(false);
+          setPollingInterval(null);
+          
+          // Fetch parsed items
+          try {
+            const parsedResponse = await uploadApi.getParsedItems(token);
+            if (parsedResponse && parsedResponse.items && parsedResponse.items.length > 0) {
+              const parsedProducts = parsedResponse.items.map(transformParsedItemToProduct);
+              setProducts(parsedProducts);
+              notifySuccess(
+                `✅ Successfully parsed invoice! Found ${parsedResponse.totalItems} item(s).`
+              );
+              handleCloseQrModal();
+              // Scroll to products section
+              scrollToProducts(parsedResponse.totalItems);
+            } else {
+              notifyError('No items found in the parsed invoice.');
+            }
+          } catch (parseErr) {
+            const errorMessage =
+              parseErr instanceof Error
+                ? parseErr.message
+                : 'Failed to retrieve parsed items.';
+            notifyError(errorMessage);
+          }
+        } else if (statusResponse.status === 'FAILED' || statusResponse.status === 'EXPIRED') {
+          clearInterval(interval);
+          setIsPolling(false);
+          setPollingInterval(null);
+          notifyError(
+            statusResponse.errorMessage || 'Upload failed or token expired.'
+          );
+        }
+      } catch (err) {
+        // Continue polling on error (might be temporary)
+        console.error('Error polling upload status:', err);
+      }
+    }, 2500); // Poll every 2.5 seconds
+
+    setPollingInterval(interval);
+  };
+
+  const handleCloseQrModal = () => {
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+      setPollingInterval(null);
+    }
+    setIsPolling(false);
+    setShowQrModal(false);
+    setUploadUrl(null);
+    setUploadStatus(null);
+  };
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
+    };
+  }, [pollingInterval]);
 
   const handleRemoveProduct = (productId: string) => {
     setProducts(products.filter((p) => p.id !== productId));
@@ -921,14 +1049,43 @@ export default function ProductRegistrationPage() {
 
           {/* Invoice Upload Section */}
           <div className={styles.uploadSection}>
-            <h3 className={styles.sectionTitle}>
-              Upload Invoice Image (Optional)
-            </h3>
-            <p className={styles.helperText}>
-              Upload an invoice image to automatically parse and prefill product
-              information. You can also manually add products below.
-            </p>
-            <div className={styles.uploadContainer}>
+            <div className={styles.uploadHeader}>
+              <h3 className={styles.sectionTitle}>
+                Upload Invoice Image (Optional)
+              </h3>
+              <ul className={styles.helperText}>
+                <li>Upload invoice image to auto-parse product details</li>
+                <li>Choose one of the options below to upload</li>
+              </ul>
+            </div>
+            <div className={styles.uploadOptionsHeader}>
+              <span className={styles.uploadOptionsLabel}>Choose upload method:</span>
+            </div>
+            <div className={styles.uploadOptionsGrid}>
+              <button
+                type="button"
+                className={styles.qrUploadBtn}
+                onClick={handleCreateQrCode}
+                disabled={isUploading || isLoading || isPolling}
+              >
+                <div className={styles.qrBtnIcon}>
+                  <span role="img" aria-label="QR Code icon">📱</span>
+                </div>
+                <div className={styles.qrBtnContent}>
+                  <span className={styles.qrBtnTitle}>Upload via QR Code</span>
+                  <span className={styles.qrBtnSubtitle}>Use mobile device to scan & upload</span>
+                </div>
+              </button>
+              <div className={styles.uploadOptionsOr}>
+                <div className={styles.uploadOptionsOrLine}></div>
+                <span className={styles.uploadOptionsOrText}>OR</span>
+                <div className={styles.uploadOptionsOrLine}></div>
+              </div>
+              <div className={styles.uploadContainer}>
+                <div className={styles.uploadOptionLabel}>
+                  <span className={styles.uploadOptionTitle}>Upload from this device</span>
+                  <span className={styles.uploadOptionSubtitle}>Choose file from computer</span>
+                </div>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -968,7 +1125,7 @@ export default function ProductRegistrationPage() {
                       >
                         📤
                       </span>
-                      <span>Choose Image File</span>
+                      <span>Click to browse files</span>
                     </div>
                   )}
                 </label>
@@ -1009,10 +1166,38 @@ export default function ProductRegistrationPage() {
                 )}
               </div>
             </div>
+            </div>
+          </div>
+
+          <div className={styles.separator}>
+            <div className={styles.separatorLine}></div>
+            <div className={styles.separatorContent}>
+              <span className={styles.separatorIcon} role="img" aria-label="Sparkle icon">✨</span>
+              <span className={styles.separatorText}>Or manually add products below</span>
+            </div>
+            <div className={styles.separatorLine}></div>
           </div>
 
           {/* Products Section */}
-          <div className={styles.productsSection}>
+          <div className={styles.productsSection} ref={productsSectionRef}>
+            {showReviewBanner && (
+              <div className={styles.reviewBanner}>
+                <div className={styles.reviewBannerContent}>
+                  <span className={styles.reviewBannerIcon} role="img" aria-label="Clipboard icon">📋</span>
+                  <div className={styles.reviewBannerText}>
+                    <strong>Review Required:</strong> Please review the {reviewBannerItemsCount} item(s) below and fill in any missing information before submitting.
+                  </div>
+                  <button
+                    type="button"
+                    className={styles.reviewBannerClose}
+                    onClick={() => setShowReviewBanner(false)}
+                    aria-label="Close review banner"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            )}
             <div className={styles.productsHeader}>
               <h3 className={styles.sectionTitle}>Products</h3>
               <button
@@ -1253,6 +1438,119 @@ export default function ProductRegistrationPage() {
                 disabled={isCreatingVendor}
               >
                 {isCreatingVendor ? 'Creating...' : 'Create Vendor'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* QR Code Upload Modal */}
+      {showQrModal && (
+        <div
+          className={styles.modalOverlay}
+          onClick={handleCloseQrModal}
+        >
+          <div
+            className={styles.modalContent}
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '500px' }}
+          >
+            <div className={styles.modalHeader}>
+              <h3>Scan QR Code to Upload Invoice</h3>
+              <button
+                type="button"
+                className={styles.modalCloseBtn}
+                onClick={handleCloseQrModal}
+              >
+                ×
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '20px',
+                  padding: '20px',
+                }}
+              >
+                {uploadUrl && (
+                  <div
+                    style={{
+                      padding: '20px',
+                      backgroundColor: '#fff',
+                      borderRadius: '8px',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <QRCodeSVG value={uploadUrl} size={256} />
+                  </div>
+                )}
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{ marginBottom: '12px', fontWeight: 500 }}>
+                    Scan this QR code with your mobile device to upload the
+                    invoice image.
+                  </p>
+                  <p
+                    style={{
+                      fontSize: '0.9rem',
+                      color: 'var(--text-secondary)',
+                      marginBottom: '8px',
+                    }}
+                  >
+                    Status: <strong>{uploadStatus || 'PENDING'}</strong>
+                  </p>
+                  {isPolling && (
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        marginTop: '12px',
+                      }}
+                    >
+                      <div className={styles.progressSpinner}></div>
+                      <span style={{ fontSize: '0.9rem' }}>
+                        Waiting for upload...
+                      </span>
+                    </div>
+                  )}
+                  {uploadStatus === 'UPLOADING' && (
+                    <p
+                      style={{
+                        fontSize: '0.85rem',
+                        color: 'var(--text-secondary)',
+                        marginTop: '8px',
+                      }}
+                    >
+                      Image is being uploaded...
+                    </p>
+                  )}
+                  {uploadStatus === 'PROCESSING' && (
+                    <p
+                      style={{
+                        fontSize: '0.85rem',
+                        color: 'var(--text-secondary)',
+                        marginTop: '8px',
+                      }}
+                    >
+                      Processing invoice...
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className={styles.modalFooter}>
+              <button
+                type="button"
+                className={styles.cancelBtn}
+                onClick={handleCloseQrModal}
+              >
+                Cancel
               </button>
             </div>
           </div>

@@ -19,3 +19,4 @@ export * from './lib/refunds';
 export * from './lib/vendors';
 export * from './lib/customers';
 export * from './lib/dashboard';
+export * from './lib/upload';

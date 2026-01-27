@@ -7,6 +7,7 @@ export default [
   route('shop-selection', './routes/shop-selection.tsx'),
   route('request-join-shop', './routes/request-join-shop.tsx'),
   route('onboarding', './routes/onboarding.tsx'),
+  route('m/upload', './routes/m.upload.tsx'),
   route('dashboard', './routes/dashboard._layout.tsx', [
     route('', './routes/dashboard.tsx'),
     route('product-registration', './routes/dashboard.product-registration.tsx'),
