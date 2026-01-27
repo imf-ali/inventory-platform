@@ -48,6 +48,9 @@ export default function ProductRegistrationPage() {
   const [uploadStatus, setUploadStatus] = useState<UploadStatus | null>(null);
   const [isPolling, setIsPolling] = useState(false);
   const [pollingInterval, setPollingInterval] = useState<ReturnType<typeof setInterval> | null>(null);
+  const productsSectionRef = useRef<HTMLDivElement>(null);
+  const [showReviewBanner, setShowReviewBanner] = useState(false);
+  const [reviewBannerItemsCount, setReviewBannerItemsCount] = useState(0);
 
   // Shared vendor and lot ID (applied to all products)
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
@@ -264,12 +267,14 @@ export default function ProductRegistrationPage() {
         const parsedProducts = response.items.map(transformParsedItemToProduct);
         setProducts(parsedProducts);
         notifySuccess(
-          `Successfully parsed invoice! Found ${response.totalItems} item(s). Please review and fill in any missing information.`
+          `✅ Successfully parsed invoice! Found ${response.totalItems} item(s).`
         );
         setSelectedFile(null);
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
+        // Scroll to products section
+        scrollToProducts(response.totalItems);
       } else {
         notifyError(
           'No items found in the invoice image. Please try a different image.'
@@ -294,6 +299,26 @@ export default function ProductRegistrationPage() {
     }
     setError(null);
     setUploadProgress('');
+  };
+
+  const scrollToProducts = (itemsCount?: number) => {
+    if (productsSectionRef.current) {
+      setTimeout(() => {
+        productsSectionRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+        // Show review banner
+        if (itemsCount) {
+          setReviewBannerItemsCount(itemsCount);
+          setShowReviewBanner(true);
+          // Auto-hide after 10 seconds
+          setTimeout(() => {
+            setShowReviewBanner(false);
+          }, 10000);
+        }
+      }, 300);
+    }
   };
 
   // QR Code Upload Functions
@@ -338,9 +363,11 @@ export default function ProductRegistrationPage() {
               const parsedProducts = parsedResponse.items.map(transformParsedItemToProduct);
               setProducts(parsedProducts);
               notifySuccess(
-                `Successfully parsed invoice! Found ${parsedResponse.totalItems} item(s). Please review and fill in any missing information.`
+                `✅ Successfully parsed invoice! Found ${parsedResponse.totalItems} item(s).`
               );
               handleCloseQrModal();
+              // Scroll to products section
+              scrollToProducts(parsedResponse.totalItems);
             } else {
               notifyError('No items found in the parsed invoice.');
             }
@@ -1152,7 +1179,25 @@ export default function ProductRegistrationPage() {
           </div>
 
           {/* Products Section */}
-          <div className={styles.productsSection}>
+          <div className={styles.productsSection} ref={productsSectionRef}>
+            {showReviewBanner && (
+              <div className={styles.reviewBanner}>
+                <div className={styles.reviewBannerContent}>
+                  <span className={styles.reviewBannerIcon} role="img" aria-label="Clipboard icon">📋</span>
+                  <div className={styles.reviewBannerText}>
+                    <strong>Review Required:</strong> Please review the {reviewBannerItemsCount} item(s) below and fill in any missing information before submitting.
+                  </div>
+                  <button
+                    type="button"
+                    className={styles.reviewBannerClose}
+                    onClick={() => setShowReviewBanner(false)}
+                    aria-label="Close review banner"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            )}
             <div className={styles.productsHeader}>
               <h3 className={styles.sectionTitle}>Products</h3>
               <button
