@@ -48,7 +48,7 @@ export default function RefundPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const { success: notifySuccess } = useNotify;
+  const { success: notifySuccess, error: notifyError } = useNotify;
 
   // Search state
   const [searchParams, setSearchParams] = useState<SearchPurchasesParams>({

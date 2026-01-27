@@ -14,6 +14,7 @@ export function meta() {
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
+  const { error: notifyError } = useNotify;
   const [checkoutData, setCheckoutData] = useState<CartResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
