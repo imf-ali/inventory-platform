@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAnalyticsStore } from '@inventory-platform/store';
 import styles from './analytics.module.css';
 import { ProfitSummaryCards } from './ProfitSummaryCards';
@@ -10,12 +10,13 @@ import { LowMarginProductsTable } from './LowMarginProductsTable';
 
 export function ProfitAnalytics() {
   const { profitData, isLoading, error, fetchProfit } = useAnalyticsStore();
+  const hasInitialFetch = useRef(false);
   const [localFilters, setLocalFilters] = useState<{
     startDate: string;
     endDate: string;
     groupBy: 'product' | 'lotId' | 'businessType' | null;
     timeSeries: 'hour' | 'day' | 'week' | 'month' | null;
-    lowMarginThreshold: number;
+    lowMarginThreshold: number | '';
   }>({
     startDate: '',
     endDate: '',
@@ -23,6 +24,8 @@ export function ProfitAnalytics() {
     timeSeries: null,
     lowMarginThreshold: 10,
   });
+
+  const numLowMargin = localFilters.lowMarginThreshold === '' ? 10 : localFilters.lowMarginThreshold;
 
   // Set default dates (30 days ago to now)
   useEffect(() => {
@@ -44,18 +47,18 @@ export function ProfitAnalytics() {
      
   }, []);
 
-  // Fetch data when filters change
+  // Fetch once on first load when default dates are set; after that only on "Apply Filters"
   useEffect(() => {
-    if (localFilters.startDate && localFilters.endDate) {
-      fetchProfit({
-        startDate: localFilters.startDate,
-        endDate: localFilters.endDate,
-        groupBy: localFilters.groupBy,
-        timeSeries: localFilters.timeSeries,
-        lowMarginThreshold: localFilters.lowMarginThreshold,
-      });
-    }
-  }, [localFilters, fetchProfit]);
+    if (!localFilters.startDate || !localFilters.endDate || hasInitialFetch.current) return;
+    hasInitialFetch.current = true;
+    fetchProfit({
+      startDate: localFilters.startDate,
+      endDate: localFilters.endDate,
+      groupBy: localFilters.groupBy,
+      timeSeries: localFilters.timeSeries,
+      lowMarginThreshold: numLowMargin,
+    });
+  }, [localFilters.startDate, localFilters.endDate, localFilters.groupBy, localFilters.timeSeries, localFilters.lowMarginThreshold, fetchProfit]);
 
   const handleFilterChange = (key: string, value: string | number | null) => {
     setLocalFilters((prev) => ({ ...prev, [key]: value }));
@@ -67,7 +70,7 @@ export function ProfitAnalytics() {
       endDate: localFilters.endDate,
       groupBy: localFilters.groupBy,
       timeSeries: localFilters.timeSeries,
-      lowMarginThreshold: localFilters.lowMarginThreshold,
+      lowMarginThreshold: numLowMargin,
     });
   };
 
@@ -160,8 +163,15 @@ export function ProfitAnalytics() {
             type="number"
             min="0"
             max="100"
-            value={localFilters.lowMarginThreshold}
-            onChange={(e) => handleFilterChange('lowMarginThreshold', parseFloat(e.target.value) || 10)}
+            value={localFilters.lowMarginThreshold === '' ? '' : localFilters.lowMarginThreshold}
+            onChange={(e) => {
+              if (e.target.value === '') {
+                handleFilterChange('lowMarginThreshold', '');
+                return;
+              }
+              const n = parseFloat(e.target.value);
+              if (!Number.isNaN(n) && n >= 0) handleFilterChange('lowMarginThreshold', n);
+            }}
             className={styles.input}
           />
         </div>

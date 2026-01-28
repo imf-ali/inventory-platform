@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAnalyticsStore } from '@inventory-platform/store';
 import styles from './analytics.module.css';
 import { SummaryCards } from './SummaryCards';
@@ -10,12 +10,13 @@ import { ComparisonMetrics } from './ComparisonMetrics';
 
 export function SalesAnalytics() {
   const { data, isLoading, error, fetchSales } = useAnalyticsStore();
+  const hasInitialFetch = useRef(false);
   const [localFilters, setLocalFilters] = useState<{
     startDate: string;
     endDate: string;
     groupBy: 'product' | 'lotId' | 'company' | null;
     timeSeries: 'hour' | 'day' | 'week' | 'month' | null;
-    topN: number;
+    topN: number | '';
     compare: boolean;
   }>({
     startDate: '',
@@ -25,6 +26,8 @@ export function SalesAnalytics() {
     topN: 10,
     compare: true,
   });
+
+  const numTopN = localFilters.topN === '' ? 10 : localFilters.topN;
 
   // Set default dates (30 days ago to now)
   useEffect(() => {
@@ -46,19 +49,19 @@ export function SalesAnalytics() {
      
   }, []);
 
-  // Fetch data when filters change
+  // Fetch once on first load when default dates are set; after that only on "Apply Filters"
   useEffect(() => {
-    if (localFilters.startDate && localFilters.endDate) {
-      fetchSales({
-        startDate: localFilters.startDate,
-        endDate: localFilters.endDate,
-        groupBy: localFilters.groupBy,
-        timeSeries: localFilters.timeSeries,
-        topN: localFilters.topN,
-        compare: localFilters.compare,
-      });
-    }
-  }, [localFilters, fetchSales]);
+    if (!localFilters.startDate || !localFilters.endDate || hasInitialFetch.current) return;
+    hasInitialFetch.current = true;
+    fetchSales({
+      startDate: localFilters.startDate,
+      endDate: localFilters.endDate,
+      groupBy: localFilters.groupBy,
+      timeSeries: localFilters.timeSeries,
+      topN: numTopN,
+      compare: localFilters.compare,
+    });
+  }, [localFilters.startDate, localFilters.endDate, localFilters.groupBy, localFilters.timeSeries, numTopN, localFilters.compare, fetchSales]);
 
   const handleFilterChange = (key: string, value: string | number | boolean | null) => {
     setLocalFilters((prev) => ({ ...prev, [key]: value }));
@@ -70,7 +73,7 @@ export function SalesAnalytics() {
       endDate: localFilters.endDate,
       groupBy: localFilters.groupBy,
       timeSeries: localFilters.timeSeries,
-      topN: localFilters.topN,
+      topN: numTopN,
       compare: localFilters.compare,
     });
   };
@@ -162,10 +165,17 @@ export function SalesAnalytics() {
           <input
             id="topN"
             type="number"
-            min="1"
+            min="0"
             max="50"
-            value={localFilters.topN}
-            onChange={(e) => handleFilterChange('topN', parseInt(e.target.value, 10))}
+            value={localFilters.topN === '' ? '' : localFilters.topN}
+            onChange={(e) => {
+              if (e.target.value === '') {
+                handleFilterChange('topN', '');
+                return;
+              }
+              const n = parseInt(e.target.value, 10);
+              if (!Number.isNaN(n) && n >= 0) handleFilterChange('topN', n);
+            }}
             className={styles.input}
           />
         </div>

@@ -1,22 +1,18 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAnalyticsStore } from '@inventory-platform/store';
 import type { InventoryItemAnalytics } from '@inventory-platform/types';
 import styles from './analytics.module.css';
 
-// Module-level tracking to prevent duplicate calls across StrictMode remounts
-let pendingFetch: { params: string; timestamp: number } | null = null;
-const FETCH_DEBOUNCE_MS = 200;
-
 export function InventoryAnalytics() {
   const { inventoryData, isLoading, error, fetchInventory } = useAnalyticsStore();
-  const prevFiltersRef = useRef<string | null>(null);
+  const hasInitialFetch = useRef(false);
   const [localFilters, setLocalFilters] = useState<{
     startDate: string;
     endDate: string;
     includeAll: boolean;
-    lowStockThreshold: number;
-    deadStockDays: number;
-    expiringSoonDays: number;
+    lowStockThreshold: number | '';
+    deadStockDays: number | '';
+    expiringSoonDays: number | '';
   }>({
     startDate: '',
     endDate: '',
@@ -25,6 +21,10 @@ export function InventoryAnalytics() {
     deadStockDays: 60,
     expiringSoonDays: 15,
   });
+
+  const numLowStock = localFilters.lowStockThreshold === '' ? 10 : localFilters.lowStockThreshold;
+  const numDeadStock = localFilters.deadStockDays === '' ? 60 : localFilters.deadStockDays;
+  const numExpiringSoon = localFilters.expiringSoonDays === '' ? 15 : localFilters.expiringSoonDays;
 
   // Set default dates (30 days ago to now)
   useEffect(() => {
@@ -44,6 +44,20 @@ export function InventoryAnalytics() {
       endDate: prev.endDate || formatDate(endDate),
     }));
   }, []);
+
+  // Fetch once on first load when default dates are set; after that only on "Apply Filters"
+  useEffect(() => {
+    if (!localFilters.startDate || !localFilters.endDate || hasInitialFetch.current) return;
+    hasInitialFetch.current = true;
+    fetchInventory({
+      startDate: localFilters.startDate,
+      endDate: localFilters.endDate,
+      includeAll: localFilters.includeAll,
+      lowStockThreshold: numLowStock,
+      deadStockDays: numDeadStock,
+      expiringSoonDays: numExpiringSoon,
+    });
+  }, [localFilters.startDate, localFilters.endDate, localFilters.includeAll, localFilters.lowStockThreshold, localFilters.deadStockDays, localFilters.expiringSoonDays, fetchInventory]);
 
   const [expandedSections, setExpandedSections] = useState<{
     lowStock: boolean;
@@ -68,53 +82,19 @@ export function InventoryAnalytics() {
     }));
   };
 
-  // Fetch data on mount and when filters change
-  useEffect(() => {
-    const currentFiltersKey = JSON.stringify(localFilters);
-    
-    // Skip if filters haven't changed (prevents duplicate calls)
-    if (prevFiltersRef.current === currentFiltersKey) {
-      return;
-    }
-    
-    // Skip if there's a pending fetch with the same params (prevents StrictMode duplicate)
-    const now = Date.now();
-    if (
-      pendingFetch &&
-      pendingFetch.params === currentFiltersKey &&
-      now - pendingFetch.timestamp < FETCH_DEBOUNCE_MS
-    ) {
-      return;
-    }
-    
-    prevFiltersRef.current = currentFiltersKey;
-    pendingFetch = { params: currentFiltersKey, timestamp: now };
-    
-    // Only fetch if dates are set
-    if (!localFilters.startDate || !localFilters.endDate) {
-      return;
-    }
-    
-    fetchInventory({
-      startDate: localFilters.startDate,
-      endDate: localFilters.endDate,
-      includeAll: localFilters.includeAll,
-      lowStockThreshold: localFilters.lowStockThreshold,
-      deadStockDays: localFilters.deadStockDays,
-      expiringSoonDays: localFilters.expiringSoonDays,
-    }).finally(() => {
-      // Clear pending fetch after a delay to handle rapid remounts
-      setTimeout(() => {
-        if (pendingFetch?.params === currentFiltersKey) {
-          pendingFetch = null;
-        }
-      }, FETCH_DEBOUNCE_MS);
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localFilters]);
+  // Backend is only called when user clicks "Apply Filters" (see handleApplyFilters)
 
   const handleFilterChange = (key: string, value: string | number | boolean) => {
     setLocalFilters((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleNumberChange = (key: 'lowStockThreshold' | 'deadStockDays' | 'expiringSoonDays', raw: string) => {
+    if (raw === '') {
+      handleFilterChange(key, '');
+      return;
+    }
+    const n = parseInt(raw, 10);
+    if (!Number.isNaN(n) && n >= 0) handleFilterChange(key, n);
   };
 
   const handleApplyFilters = () => {
@@ -125,9 +105,9 @@ export function InventoryAnalytics() {
       startDate: localFilters.startDate,
       endDate: localFilters.endDate,
       includeAll: localFilters.includeAll,
-      lowStockThreshold: localFilters.lowStockThreshold,
-      deadStockDays: localFilters.deadStockDays,
-      expiringSoonDays: localFilters.expiringSoonDays,
+      lowStockThreshold: numLowStock,
+      deadStockDays: numDeadStock,
+      expiringSoonDays: numExpiringSoon,
     });
   };
 
@@ -227,7 +207,7 @@ export function InventoryAnalytics() {
                       className={
                         item.daysUntilExpiry < 0
                           ? styles.riskCritical
-                          : item.daysUntilExpiry <= localFilters.expiringSoonDays
+                          : item.daysUntilExpiry <= numExpiringSoon
                           ? styles.riskHigh
                           : ''
                       }
@@ -322,14 +302,14 @@ export function InventoryAnalytics() {
         </div>
 
         <div className={styles.filterGroup}>
-          <label htmlFor="lowStockThreshold">Low Stock Threshold (%)</label>
+          <label htmlFor="lowStockThreshold">Low Stock Threshold</label>
           <input
             id="lowStockThreshold"
             type="number"
             min="0"
             max="100"
-            value={localFilters.lowStockThreshold}
-            onChange={(e) => handleFilterChange('lowStockThreshold', parseInt(e.target.value, 10) || 10)}
+            value={localFilters.lowStockThreshold === '' ? '' : localFilters.lowStockThreshold}
+            onChange={(e) => handleNumberChange('lowStockThreshold', e.target.value)}
             className={styles.input}
           />
         </div>
@@ -340,8 +320,8 @@ export function InventoryAnalytics() {
             id="deadStockDays"
             type="number"
             min="0"
-            value={localFilters.deadStockDays}
-            onChange={(e) => handleFilterChange('deadStockDays', parseInt(e.target.value, 10) || 60)}
+            value={localFilters.deadStockDays === '' ? '' : localFilters.deadStockDays}
+            onChange={(e) => handleNumberChange('deadStockDays', e.target.value)}
             className={styles.input}
           />
         </div>
@@ -352,8 +332,8 @@ export function InventoryAnalytics() {
             id="expiringSoonDays"
             type="number"
             min="0"
-            value={localFilters.expiringSoonDays}
-            onChange={(e) => handleFilterChange('expiringSoonDays', parseInt(e.target.value, 10) || 15)}
+            value={localFilters.expiringSoonDays === '' ? '' : localFilters.expiringSoonDays}
+            onChange={(e) => handleNumberChange('expiringSoonDays', e.target.value)}
             className={styles.input}
           />
         </div>

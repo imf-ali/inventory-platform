@@ -235,19 +235,31 @@ export default function CheckoutPage() {
     }
   };
 
-  // Get SGST and CGST percentages from items if available, otherwise calculate from amounts
-  const firstItem = checkoutData.items[0];
-  const sgstPercentage = firstItem?.sgst
-    ? parseFloat(firstItem.sgst).toFixed(1)
-    : checkoutData.subTotal > 0 && checkoutData.sgstAmount
-    ? ((checkoutData.sgstAmount / checkoutData.subTotal) * 100).toFixed(1)
-    : '0';
+  // Taxable base for SGST/CGST = Subtotal - Additional Discount
+  const taxableBase = Math.max(
+    0,
+    checkoutData.subTotal - (checkoutData.additionalDiscountTotal ?? 0)
+  );
 
-  const cgstPercentage = firstItem?.cgst
-    ? parseFloat(firstItem.cgst).toFixed(1)
+  const firstItem = checkoutData.items[0];
+  const sgstRate = firstItem?.sgst
+    ? parseFloat(firstItem.sgst)
+    : checkoutData.subTotal > 0 && checkoutData.sgstAmount
+      ? (checkoutData.sgstAmount / checkoutData.subTotal) * 100
+      : 0;
+  const cgstRate = firstItem?.cgst
+    ? parseFloat(firstItem.cgst)
     : checkoutData.subTotal > 0 && checkoutData.cgstAmount
-    ? ((checkoutData.cgstAmount / checkoutData.subTotal) * 100).toFixed(1)
-    : '0';
+      ? (checkoutData.cgstAmount / checkoutData.subTotal) * 100
+      : 0;
+
+  const sgstPercentage = sgstRate.toFixed(1);
+  const cgstPercentage = cgstRate.toFixed(1);
+
+  const displaySgstAmount = taxableBase * (sgstRate / 100);
+  const displayCgstAmount = taxableBase * (cgstRate / 100);
+  const displayTaxTotal = displaySgstAmount + displayCgstAmount;
+  const displayGrandTotal = taxableBase + displayTaxTotal;
 
   // Get current date
   const currentDate = new Date().toLocaleDateString('en-US', {
@@ -492,23 +504,21 @@ export default function CheckoutPage() {
               <span>Subtotal:</span>
               <span>₹{checkoutData.subTotal.toFixed(2)}</span>
             </div>
-            {checkoutData.sgstAmount !== undefined &&
-              checkoutData.sgstAmount > 0 && (
-                <div className={styles.summaryRow}>
-                  <span>SGST ({sgstPercentage}%):</span>
-                  <span>₹{checkoutData.sgstAmount.toFixed(2)}</span>
-                </div>
-              )}
-            {checkoutData.cgstAmount !== undefined &&
-              checkoutData.cgstAmount > 0 && (
-                <div className={styles.summaryRow}>
-                  <span>CGST ({cgstPercentage}%):</span>
-                  <span>₹{checkoutData.cgstAmount.toFixed(2)}</span>
-                </div>
-              )}
+            {displaySgstAmount > 0 && (
+              <div className={styles.summaryRow}>
+                <span>SGST ({sgstPercentage}%):</span>
+                <span>₹{displaySgstAmount.toFixed(2)}</span>
+              </div>
+            )}
+            {displayCgstAmount > 0 && (
+              <div className={styles.summaryRow}>
+                <span>CGST ({cgstPercentage}%):</span>
+                <span>₹{displayCgstAmount.toFixed(2)}</span>
+              </div>
+            )}
             <div className={styles.summaryRow}>
               <span>Tax:</span>
-              <span>₹{checkoutData.taxTotal.toFixed(2)}</span>
+              <span>₹{displayTaxTotal.toFixed(2)}</span>
             </div>
             {checkoutData.additionalDiscountTotal > 0 && (
               <div className={styles.summaryRow}>
@@ -518,7 +528,7 @@ export default function CheckoutPage() {
             )}
             <div className={styles.summaryRowTotal}>
               <span>Grand Total:</span>
-              <span>₹{checkoutData.grandTotal.toFixed(2)}</span>
+              <span>₹{displayGrandTotal.toFixed(2)}</span>
             </div>
           </div>
         </div>

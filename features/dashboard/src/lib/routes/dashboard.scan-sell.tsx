@@ -640,49 +640,58 @@ export default function ScanSellPage() {
     );
   };
 
-  const calculateSGST = () => {
-    if (cartData?.sgstAmount !== undefined && cartData?.sgstAmount !== null) {
-      return cartData.sgstAmount;
+  const getAdditionalDiscountTotal = () => {
+    if (
+      cartData?.additionalDiscountTotal !== undefined &&
+      cartData?.additionalDiscountTotal !== null
+    ) {
+      return cartData.additionalDiscountTotal;
     }
-    // Fallback: calculate 4.5% if not provided
-    return calculateSubtotal() * 0.045;
+    return cartItems.reduce((total, item) => {
+      const pct = item.inventoryItem.additionalDiscount ?? 0;
+      return total + (item.price * item.quantity * pct) / 100;
+    }, 0);
+  };
+
+  // Taxable base for SGST/CGST = Subtotal - Additional Discount
+  const getTaxableBase = () => {
+    return Math.max(0, calculateSubtotal() - getAdditionalDiscountTotal());
+  };
+
+  const getSGSTRate = () => {
+    const first = cartData?.items?.[0] ?? cartItems[0]?.inventoryItem;
+    const pct = first?.sgst != null ? parseFloat(String(first.sgst)) : NaN;
+    return Number.isNaN(pct) ? 4.5 : pct;
+  };
+
+  const getCGSTRate = () => {
+    const first = cartData?.items?.[0] ?? cartItems[0]?.inventoryItem;
+    const pct = first?.cgst != null ? parseFloat(String(first.cgst)) : NaN;
+    return Number.isNaN(pct) ? 4.5 : pct;
+  };
+
+  const calculateSGST = () => {
+    return getTaxableBase() * (getSGSTRate() / 100);
   };
 
   const calculateCGST = () => {
-    if (cartData?.cgstAmount !== undefined && cartData?.cgstAmount !== null) {
-      return cartData.cgstAmount;
-    }
-    // Fallback: calculate 4.5% if not provided
-    return calculateSubtotal() * 0.045;
+    return getTaxableBase() * (getCGSTRate() / 100);
   };
 
   const calculateTax = () => {
-    if (cartData?.taxTotal !== undefined && cartData?.taxTotal !== null) {
-      return cartData.taxTotal;
-    }
-    // Fallback: sum of SGST and CGST
     return calculateSGST() + calculateCGST();
   };
 
   const calculateTotal = () => {
-    if (cartData?.grandTotal !== undefined && cartData?.grandTotal !== null) {
-      return cartData.grandTotal;
-    }
-    return calculateSubtotal() + calculateTax();
+    return getTaxableBase() + calculateTax();
   };
 
   const getSGSTPercentage = () => {
-    const subtotal = calculateSubtotal();
-    if (subtotal === 0) return '0.0';
-    const sgst = calculateSGST();
-    return ((sgst / subtotal) * 100).toFixed(1);
+    return getSGSTRate().toFixed(1);
   };
 
   const getCGSTPercentage = () => {
-    const subtotal = calculateSubtotal();
-    if (subtotal === 0) return '0.0';
-    const cgst = calculateCGST();
-    return ((cgst / subtotal) * 100).toFixed(1);
+    return getCGSTRate().toFixed(1);
   };
 
   const handleCustomerSearch = async () => {

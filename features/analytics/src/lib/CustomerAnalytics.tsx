@@ -1,13 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAnalyticsStore } from '@inventory-platform/store';
 import styles from './analytics.module.css';
 
 export function CustomerAnalytics() {
   const { customerData, isLoading, error, fetchCustomers } = useAnalyticsStore();
+  const hasInitialFetch = useRef(false);
   const [localFilters, setLocalFilters] = useState<{
     startDate: string;
     endDate: string;
-    topN: number;
+    topN: number | '';
     includeAll: boolean;
   }>({
     startDate: '',
@@ -15,6 +16,8 @@ export function CustomerAnalytics() {
     topN: 10,
     includeAll: false,
   });
+
+  const numTopN = localFilters.topN === '' ? 10 : localFilters.topN;
 
   const [expandedSections, setExpandedSections] = useState<{
     topCustomers: boolean;
@@ -51,17 +54,17 @@ export function CustomerAnalytics() {
      
   }, []);
 
-  // Fetch data when filters change
+  // Fetch once on first load when default dates are set; after that only on "Apply Filters"
   useEffect(() => {
-    if (localFilters.startDate && localFilters.endDate) {
-      fetchCustomers({
-        startDate: localFilters.startDate,
-        endDate: localFilters.endDate,
-        topN: localFilters.topN,
-        includeAll: localFilters.includeAll,
-      });
-    }
-  }, [localFilters, fetchCustomers]);
+    if (!localFilters.startDate || !localFilters.endDate || hasInitialFetch.current) return;
+    hasInitialFetch.current = true;
+    fetchCustomers({
+      startDate: localFilters.startDate,
+      endDate: localFilters.endDate,
+      topN: numTopN,
+      includeAll: localFilters.includeAll,
+    });
+  }, [localFilters.startDate, localFilters.endDate, localFilters.topN, localFilters.includeAll, fetchCustomers]);
 
   const handleFilterChange = (key: string, value: string | number | boolean) => {
     setLocalFilters((prev) => ({ ...prev, [key]: value }));
@@ -71,7 +74,7 @@ export function CustomerAnalytics() {
     fetchCustomers({
       startDate: localFilters.startDate,
       endDate: localFilters.endDate,
-      topN: localFilters.topN,
+      topN: numTopN,
       includeAll: localFilters.includeAll,
     });
   };
@@ -145,10 +148,17 @@ export function CustomerAnalytics() {
           <input
             id="topN"
             type="number"
-            min="1"
+            min="0"
             max="100"
-            value={localFilters.topN}
-            onChange={(e) => handleFilterChange('topN', parseInt(e.target.value, 10) || 10)}
+            value={localFilters.topN === '' ? '' : localFilters.topN}
+            onChange={(e) => {
+              if (e.target.value === '') {
+                handleFilterChange('topN', '');
+                return;
+              }
+              const n = parseInt(e.target.value, 10);
+              if (!Number.isNaN(n) && n >= 0) handleFilterChange('topN', n);
+            }}
             className={styles.input}
           />
         </div>

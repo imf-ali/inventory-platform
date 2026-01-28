@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAnalyticsStore } from '@inventory-platform/store';
 import styles from './analytics.module.css';
 
 export function VendorAnalytics() {
   const { vendorData, isLoading, error, fetchVendors } = useAnalyticsStore();
+  const hasInitialFetch = useRef(false);
   const [localFilters, setLocalFilters] = useState<{
     startDate: string;
     endDate: string;
@@ -53,15 +54,15 @@ export function VendorAnalytics() {
      
   }, []);
 
-  // Fetch data when filters change
+  // Fetch once on first load when default dates are set; after that only on "Apply Filters"
   useEffect(() => {
-    if (localFilters.startDate && localFilters.endDate) {
-      fetchVendors({
-        startDate: localFilters.startDate,
-        endDate: localFilters.endDate,
-      });
-    }
-  }, [localFilters, fetchVendors]);
+    if (!localFilters.startDate || !localFilters.endDate || hasInitialFetch.current) return;
+    hasInitialFetch.current = true;
+    fetchVendors({
+      startDate: localFilters.startDate,
+      endDate: localFilters.endDate,
+    });
+  }, [localFilters.startDate, localFilters.endDate, fetchVendors]);
 
   const handleFilterChange = (key: string, value: string) => {
     setLocalFilters((prev) => ({ ...prev, [key]: value }));
