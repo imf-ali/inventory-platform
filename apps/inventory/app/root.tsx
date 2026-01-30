@@ -23,6 +23,7 @@ export const meta: MetaFunction = () => [
 ];
 
 export const links: LinksFunction = () => [
+  { rel: 'icon', href: '/assets/logo/inventory-pic.png', type: 'image/png' },
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
   {
     rel: 'preconnect',
