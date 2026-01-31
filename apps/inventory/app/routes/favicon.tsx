@@ -1,11 +1,9 @@
-import { redirect } from 'react-router';
-
 /**
  * Handle /favicon.ico so it doesn't hit the document handler and cause "No routes matched".
- * Redirect to the app logo so the tab gets an icon.
+ * Return 204 so the tab has no custom icon.
  */
 export async function loader() {
-  return redirect('/assets/logo/inventory-pic.png');
+  return new Response(null, { status: 204 });
 }
 
 export default function FaviconRoute() {
