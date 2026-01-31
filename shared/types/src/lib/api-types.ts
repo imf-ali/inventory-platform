@@ -152,6 +152,7 @@ export interface SalesAnalytics {
     averageOrderValue: number;
     totalTax: number;
     totalDiscount: number;
+    additionalTotalDiscount: number;
   };
   topProducts: Array<{
     inventoryId: string;

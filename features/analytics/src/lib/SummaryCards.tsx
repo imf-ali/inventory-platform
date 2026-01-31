@@ -8,6 +8,7 @@ interface SummaryCardsProps {
       averageOrderValue: number;
       totalTax: number;
       totalDiscount: number;
+      additionalTotalDiscount: number;
     };
   };
 }
@@ -56,9 +57,17 @@ export function SummaryCards({ data }: SummaryCardsProps) {
 
       <div className={styles.summaryCard}>
         <div className={styles.summaryHeader}>
-          <span className={styles.summaryLabel}>Total Discount</span>
+          <span className={styles.summaryLabel}>Discount on MRP</span>
         </div>
         <div className={styles.summaryValue}>{formatCurrency(data.summary.totalDiscount)}</div>
+        <div className={styles.summaryPeriod}>Discounts Applied</div>
+      </div>
+
+      <div className={styles.summaryCard}>
+        <div className={styles.summaryHeader}>
+          <span className={styles.summaryLabel}>Discount on PTR</span>
+        </div>
+        <div className={styles.summaryValue}>{formatCurrency(data.summary.additionalTotalDiscount)}</div>
         <div className={styles.summaryPeriod}>Discounts Applied</div>
       </div>
     </div>

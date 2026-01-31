@@ -21,6 +21,13 @@ interface ProfitGroupData {
   numberOfSales: number;
 }
 
+const MAX_LABEL_LENGTH = 12;
+
+function truncateLabel(str: string, max = MAX_LABEL_LENGTH): string {
+  if (!str || str.length <= max) return str;
+  return str.slice(0, max) + '...';
+}
+
 interface ProfitByGroupChartProps {
   data: ProfitGroupData[];
   groupBy: 'product' | 'lotId' | 'businessType';
@@ -33,7 +40,7 @@ export function ProfitByGroupChart({ data, groupBy }: ProfitByGroupChartProps) {
 
   const chartData = data
     .map((item) => ({
-      name: item.groupKey || 'No Lot ID',
+      name: item.groupKey || 'Unknown',
       revenue: item.totalRevenue,
       cost: item.totalCost,
       profit: item.grossProfit,
@@ -101,15 +108,28 @@ export function ProfitByGroupChart({ data, groupBy }: ProfitByGroupChartProps) {
       </div>
       <div className={styles.chartContent}>
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} margin={{ top: 10, right: 30, left: 10, bottom: 50 }}>
+          <BarChart data={chartData} margin={{ top: 10, right: 30, left: 10, bottom: 20 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
             <XAxis
               dataKey="name"
               angle={-45}
               textAnchor="end"
-              height={60}
-              tick={{ fontSize: 11 }}
+              height={65}
               stroke="#6b7280"
+              tick={({ x, y, payload }) => (
+                <g transform={`translate(${x},${y})`}>
+                  <text
+                    transform="rotate(-45)"
+                    textAnchor="end"
+                    fontSize={11}
+                    fill="#6b7280"
+                    title={payload.value}
+                    style={{ cursor: 'default' }}
+                  >
+                    {truncateLabel(payload.value)}
+                  </text>
+                </g>
+              )}
             />
             {(showRevenue || showCost || showProfit) && <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />}
             {showProfit && <YAxis yAxisId="right" orientation="right" stroke="#10b981" />}
@@ -131,7 +151,7 @@ export function ProfitByGroupChart({ data, groupBy }: ProfitByGroupChartProps) {
                 padding: '8px',
               }}
             />
-            <Legend wrapperStyle={{ paddingTop: '10px' }} />
+            <Legend wrapperStyle={{ paddingTop: '8px' }} />
             {showRevenue && (
               <Bar yAxisId="left" dataKey="revenue" fill="#8884d8" name="Revenue" />
             )}
