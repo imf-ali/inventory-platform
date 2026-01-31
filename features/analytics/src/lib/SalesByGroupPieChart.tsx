@@ -6,6 +6,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+import type { LegendProps } from 'recharts';
 import styles from './analytics.module.css';
 
 interface GroupData {
@@ -23,10 +24,17 @@ interface SalesByGroupPieChartProps {
 
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#00ff00', '#0088fe', '#00c49f', '#ffbb28', '#ff8042'];
 
+const MAX_LABEL_LENGTH = 12;
+
+function truncateLabel(str: string, max = MAX_LABEL_LENGTH): string {
+  if (!str || str.length <= max) return str;
+  return str.slice(0, max) + '...';
+}
+
 export function SalesByGroupPieChart({ data, groupBy, showRevenue }: SalesByGroupPieChartProps) {
   const chartData = data
     .map((item) => ({
-      name: item.groupKey || 'No Lot ID',
+      name: item.groupKey || 'Unknown',
       revenue: item.totalRevenue,
       quantity: item.totalQuantitySold,
     }))
@@ -34,7 +42,7 @@ export function SalesByGroupPieChart({ data, groupBy, showRevenue }: SalesByGrou
     .slice(0, 10);
 
   const pieData = chartData.map((item) => ({
-    name: item.name.length > 15 ? item.name.substring(0, 15) + '...' : item.name,
+    name: truncateLabel(item.name),
     value: showRevenue ? item.revenue : item.quantity,
     fullName: item.name,
   }));
@@ -78,17 +86,17 @@ export function SalesByGroupPieChart({ data, groupBy, showRevenue }: SalesByGrou
       </div>
       <div className={styles.pieChartContent}>
         <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
+          <PieChart margin={{ top: 36, right: 36, bottom: 36, left: 36 }}>
             <Pie
               data={pieData}
               cx="50%"
               cy="50%"
               labelLine={false}
               label={({ name, percent }) => {
-                if (!percent || percent < 0.05) return ''; // Hide labels for very small slices
+                if (!percent || percent < 0.08) return ''; // Hide labels for small slices to reduce clutter
                 return `${name}: ${(percent * 100).toFixed(0)}%`;
               }}
-              outerRadius={120}
+              outerRadius={115}
               fill="#8884d8"
               dataKey="value"
             >
@@ -111,10 +119,42 @@ export function SalesByGroupPieChart({ data, groupBy, showRevenue }: SalesByGrou
               }}
             />
             <Legend
-              wrapperStyle={{ paddingTop: '10px' }}
-              formatter={(value, entry) => {
-                const item = pieData.find((d) => d.name === value);
-                return item ? item.fullName : value;
+              wrapperStyle={{ paddingTop: '28px', display: 'flex', flexWrap: 'wrap', gap: '8px 16px', justifyContent: 'center' }}
+              content={(props: LegendProps) => {
+                const { payload } = props;
+                return (
+                  <ul style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px', justifyContent: 'center', listStyle: 'none', padding: 0, margin: 0 }}>
+                    {payload?.map((entry, index) => {
+                      const fullName = pieData.find((d) => d.name === entry.value)?.fullName ?? entry.value;
+                      return (
+                        <li
+                          key={`legend-${index}`}
+                          title={fullName}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            fontSize: '12px',
+                            cursor: 'default',
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: 12,
+                              height: 12,
+                              borderRadius: 2,
+                              backgroundColor: entry.color,
+                              flexShrink: 0,
+                            }}
+                          />
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>
+                            {entry.value}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                );
               }}
             />
           </PieChart>
