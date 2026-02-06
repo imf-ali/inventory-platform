@@ -79,6 +79,64 @@ function CartQuantityInput({
   );
 }
 
+function CartAdditionalDiscountInput({
+  id,
+  value,
+  onCommit,
+  disabled,
+}: {
+  id?: string;
+  value: number | null;
+  onCommit: (value: number | null) => void;
+  disabled: boolean;
+}) {
+  const [draft, setDraft] = useState(
+    value !== null && value !== undefined ? value.toString() : ''
+  );
+
+  useEffect(() => {
+    const next =
+      value !== null && value !== undefined ? value.toString() : '';
+    setDraft(next);
+  }, [value]);
+
+  const commit = () => {
+    const trimmed = draft.trim();
+    if (trimmed === '') {
+      onCommit(null);
+      return;
+    }
+    const num = parseFloat(trimmed);
+    if (isNaN(num) || num < 0 || num > 100) {
+      setDraft(value !== null && value !== undefined ? value.toString() : '');
+      return;
+    }
+    onCommit(num);
+  };
+
+  return (
+    <input
+      id={id}
+      type="number"
+      className={styles.itemAdditionalInput}
+      value={draft}
+      placeholder="0"
+      min={0}
+      max={100}
+      step={0.01}
+      disabled={disabled}
+      onChange={(e: ChangeEvent<HTMLInputElement>) => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          commit();
+          e.currentTarget.blur();
+        }
+      }}
+    />
+  );
+}
+
 export default function ScanSellPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -107,6 +165,9 @@ export default function ScanSellPage() {
   const [isSearchingCustomer, setIsSearchingCustomer] = useState(false);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [customerSectionOpen, setCustomerSectionOpen] = useState(false);
+  const [additionalDiscountOverrides, setAdditionalDiscountOverrides] = useState<
+    Record<string, number | null>
+  >({});
   const searchWrapperRef = useRef<HTMLDivElement>(null);
   const { error: notifyError } = useNotify;
 
@@ -187,12 +248,14 @@ export default function ScanSellPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showSearchDropdown]);
 
-  // Load cart on mount (only once, even in StrictMode)
+  // Load cart on mount (once; time guard avoids double run in React Strict Mode)
+  const lastLoadCartTimeRef = useRef(0);
   useEffect(() => {
-    if (!cartLoadedRef.current) {
-      cartLoadedRef.current = true;
-      loadCart();
-    }
+    const now = Date.now();
+    if (now - lastLoadCartTimeRef.current < 1500) return;
+    lastLoadCartTimeRef.current = now;
+    cartLoadedRef.current = true;
+    loadCart();
   }, []);
 
   // Auto-dismiss error message after 5 seconds
@@ -227,13 +290,12 @@ export default function ScanSellPage() {
       // If status is CREATED, stay on scan-sell page
       if (cart.status === 'CREATED') {
         setCartData(cart);
-        // Load customer fields from cart
         setCustomerName(cart.customerName || '');
         setCustomerAddress(cart.customerAddress || '');
         setCustomerPhone(cart.customerPhone || '');
         setCustomerEmail(cart.customerEmail || '');
-        // Convert cart items to local format
-        await convertCartToLocalItems(cart);
+        // Build cart items from response only (no per-item inventory/search API calls)
+        setCartItems(mergeCartResponseToItems(cart, []));
         return;
       }
 
@@ -267,99 +329,114 @@ export default function ScanSellPage() {
     }
   };
 
-  const convertCartToLocalItems = async (cart: CartResponse) => {
-    try {
-      // Create minimal inventory items from cart data
-      // We'll try to fetch full details, but use cart data as fallback
-      const localItems: CartItem[] = [];
+  /** Build CartItem[] from cart response, reusing existing inventoryItem when possible (no API calls). */
+  const mergeCartResponseToItems = useCallback(
+    (cart: CartResponse, previousItems: CartItem[]): CartItem[] => {
+      return cart.items.map((resItem: CheckoutItemResponse) => {
+        const existing = previousItems.find(
+          (i) => i.inventoryItem.id === resItem.inventoryId
+        );
+        const inventoryItem: InventoryItem = existing
+          ? { ...existing.inventoryItem, additionalDiscount: resItem.additionalDiscount ?? existing.inventoryItem.additionalDiscount }
+          : {
+              id: resItem.inventoryId,
+              lotId: '',
+              barcode: null,
+              name: resItem.name,
+              description: null,
+              companyName: null,
+              maximumRetailPrice: resItem.maximumRetailPrice,
+              costPrice: 0,
+              sellingPrice: resItem.sellingPrice,
+              receivedCount: 0,
+              soldCount: 0,
+              currentCount: 999999,
+              location: '',
+              expiryDate: '',
+              shopId: cart.shopId,
+              additionalDiscount: resItem.additionalDiscount ?? null,
+            };
+        return {
+          inventoryItem,
+          quantity: resItem.quantity,
+          price: resItem.sellingPrice,
+        };
+      });
+    },
+    []
+  );
 
-      for (const cartItem of cart.items) {
-        // Try to fetch full inventory details to get accurate stock count and additionalDiscount
-        let inventoryItem: InventoryItem | null = null;
-        try {
-          // Search for the inventory item by ID to get full details including additionalDiscount
-          const searchResult = await inventoryApi.search(cartItem.inventoryId);
-          inventoryItem =
-            searchResult.data?.find((inv) => inv.id === cartItem.inventoryId) ||
-            null;
-
-          // If search didn't find it, try searching all inventory
-          if (!inventoryItem) {
-            const allInventory = await inventoryApi.getAll(0, 1000);
-            inventoryItem =
-              allInventory.data?.find(
-                (inv) => inv.id === cartItem.inventoryId
-              ) || null;
-          }
-        } catch {
-          // If search fails, we'll create a minimal item
-        }
-
-        if (inventoryItem) {
-          // Use the actual inventory item with correct stock count and additionalDiscount
-          localItems.push({
-            inventoryItem,
-            quantity: cartItem.quantity,
-            price: cartItem.sellingPrice,
-          });
-        } else {
-          // Create minimal inventory item from cart data
-          // Note: We don't know the actual stock, so we'll set a high value to avoid false errors
-          // The API will handle stock validation
-          const minimalItem: InventoryItem = {
-            id: cartItem.inventoryId,
-            lotId: '', // Will be populated when we fetch full details
-            barcode: null,
-            name: cartItem.name,
-            description: null,
-            companyName: null,
-            maximumRetailPrice: cartItem.maximumRetailPrice,
-            costPrice: 0,
-            sellingPrice: cartItem.sellingPrice,
-            receivedCount: 0,
-            soldCount: 0,
-            currentCount: 999999, // Set high to avoid false stock errors - API will validate
-            location: '',
-            expiryDate: '',
-            shopId: cart.shopId,
-            additionalDiscount: null, // Will be populated when we fetch full details
-          };
-          localItems.push({
-            inventoryItem: minimalItem,
-            quantity: cartItem.quantity,
-            price: cartItem.sellingPrice,
-          });
-        }
-      }
-      setCartItems(localItems);
-    } catch (err) {
-      console.error('Error converting cart items:', err);
-    }
-  };
+  const getEffectiveAdditionalDiscount = useCallback(
+    (inventoryId: string, item: CartItem) =>
+      additionalDiscountOverrides[inventoryId] ??
+      item.inventoryItem.additionalDiscount ??
+      null,
+    [additionalDiscountOverrides]
+  );
 
   const syncCartToAPI = async (
     items: CartItem[],
     changedItemId?: string,
     quantityDelta?: number,
-    originalItem?: CartItem
+    originalItem?: CartItem,
+    overrides?: Record<string, number | null>,
+    additionalDiscountUpdate?: { inventoryId: string; additionalDiscount: number | null }
   ) => {
     // Prevent duplicate calls
     if (isUpdatingRef.current) {
       return;
     }
 
+    const effectiveOverrides = overrides ?? additionalDiscountOverrides;
+    const withAdditionalDiscount = (
+      id: string,
+      quantity: number,
+      sellingPrice: number,
+      cartItem?: CartItem
+    ) => {
+      const base = { id, quantity, sellingPrice };
+      const addDisc =
+        cartItem != null
+          ? effectiveOverrides[id] ??
+            cartItem.inventoryItem.additionalDiscount ??
+            undefined
+          : undefined;
+      return addDisc !== undefined && addDisc !== null
+        ? { ...base, additionalDiscount: addDisc }
+        : base;
+    };
+
     isUpdatingRef.current = true;
     setIsUpdatingCart(true);
     try {
-      // If a specific item changed, only send that item with quantity: 1 (the increment)
-      // Otherwise, send all items (for initial load or bulk updates)
+      // If only additional discount changed, send just that item (id + additionalDiscount)
       let itemsToSend: Array<{
         id: string;
         quantity: number;
         sellingPrice: number;
+        additionalDiscount?: number | null;
       }>;
 
-      if (changedItemId && quantityDelta !== undefined) {
+      if (additionalDiscountUpdate) {
+        const item = items.find(
+          (i) => i.inventoryItem.id === additionalDiscountUpdate.inventoryId
+        );
+        if (!item) {
+          isUpdatingRef.current = false;
+          setIsUpdatingCart(false);
+          return;
+        }
+        // Only id and additionalDiscount when updating discount (no quantity or sellingPrice)
+        const addDisc = additionalDiscountUpdate.additionalDiscount;
+        itemsToSend = [
+          {
+            id: item.inventoryItem.id,
+            ...(addDisc !== null && addDisc !== undefined
+              ? { additionalDiscount: addDisc }
+              : {}),
+          } as { id: string; quantity: number; sellingPrice: number; additionalDiscount?: number | null },
+        ];
+      } else if (changedItemId && quantityDelta !== undefined) {
         // Only send the changed item with the delta quantity (1 for increment, -1 for decrement)
         const changedItem = items.find(
           (item) => item.inventoryItem.id === changedItemId
@@ -367,11 +444,12 @@ export default function ScanSellPage() {
         if (changedItem) {
           // Send the actual delta value (1 for +, -1 for -)
           itemsToSend = [
-            {
-              id: changedItem.inventoryItem.id,
-              quantity: quantityDelta, // Send the actual delta: 1 for increment, -1 for decrement
-              sellingPrice: changedItem.price,
-            },
+            withAdditionalDiscount(
+              changedItem.inventoryItem.id,
+              quantityDelta,
+              changedItem.price,
+              changedItem
+            ),
           ];
         } else {
           // Item was removed from local state (quantity became 0)
@@ -412,28 +490,34 @@ export default function ScanSellPage() {
 
           if (itemToRemove) {
             itemsToSend = [
-              {
-                id: changedItemId,
-                quantity: quantityDelta, // Send -1 to remove the item
-                sellingPrice: itemToRemove.price,
-              },
+              withAdditionalDiscount(
+                changedItemId,
+                quantityDelta,
+                itemToRemove.price
+              ),
             ];
           } else {
             // Fallback: send all remaining items
-            itemsToSend = items.map((item) => ({
-              id: item.inventoryItem.id,
-              quantity: item.quantity,
-              sellingPrice: item.price,
-            }));
+            itemsToSend = items.map((item) =>
+              withAdditionalDiscount(
+                item.inventoryItem.id,
+                item.quantity,
+                item.price,
+                item
+              )
+            );
           }
         }
       } else {
         // Send all items (for initial load or bulk operations)
-        itemsToSend = items.map((item) => ({
-          id: item.inventoryItem.id,
-          quantity: item.quantity,
-          sellingPrice: item.price,
-        }));
+        itemsToSend = items.map((item) =>
+          withAdditionalDiscount(
+            item.inventoryItem.id,
+            item.quantity,
+            item.price,
+            item
+          )
+        );
       }
 
       const cartPayload = {
@@ -450,9 +534,8 @@ export default function ScanSellPage() {
 
       const updatedCart = await cartApi.add(cartPayload);
       setCartData(updatedCart);
-      // Update local items with latest data from API
-      await convertCartToLocalItems(updatedCart);
-      // Clear any previous errors on successful update
+      // Merge response into local state (no extra inventory/search API calls)
+      setCartItems(mergeCartResponseToItems(updatedCart, items));
       setError(null);
     } catch (err) {
       // Handle API errors - might include stock validation errors
@@ -462,8 +545,8 @@ export default function ScanSellPage() {
       // Revert to previous cart state on error by reloading cart
       try {
         const currentCart = await cartApi.get();
-        await convertCartToLocalItems(currentCart);
         setCartData(currentCart);
+        setCartItems(mergeCartResponseToItems(currentCart, items));
       } catch {
         // If reload fails, just show the error
       }
@@ -669,12 +752,27 @@ export default function ScanSellPage() {
     });
   };
 
+  const handleAdditionalDiscountChange = (inventoryId: string, value: number | null) => {
+    const next = { ...additionalDiscountOverrides, [inventoryId]: value };
+    setAdditionalDiscountOverrides(next);
+    // Send only this item to API (id + additionalDiscount), like quantity update
+    syncCartToAPI(
+      cartItems,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      { inventoryId, additionalDiscount: value }
+    );
+  };
+
   const handleClearCart = async () => {
     // Get current cart items before clearing
     const currentItems = [...cartItems];
 
     // Clear local state
     setCartItems([]);
+    setAdditionalDiscountOverrides({});
     setError(null);
 
     // Send all items with negative quantities to remove them from cart
@@ -1000,17 +1098,28 @@ export default function ScanSellPage() {
                             % off MRP
                           </span>
                         )}
-                        {cartItem.inventoryItem.additionalDiscount !== null &&
-                          cartItem.inventoryItem.additionalDiscount !==
-                            undefined && (
-                            <span className={styles.itemDiscount}>
-                              Additional:{' '}
-                              {cartItem.inventoryItem.additionalDiscount.toFixed(
-                                2
-                              )}
-                              %
-                            </span>
-                          )}
+                        <div className={styles.itemAdditionalRow}>
+                          <label className={styles.itemAdditionalLabel} htmlFor={`add-disc-${cartItem.inventoryItem.id}`}>
+                            Additional discount
+                          </label>
+                          <CartAdditionalDiscountInput
+                            id={`add-disc-${cartItem.inventoryItem.id}`}
+                            value={
+                              getEffectiveAdditionalDiscount(
+                                cartItem.inventoryItem.id,
+                                cartItem
+                              )
+                            }
+                            onCommit={(num) =>
+                              handleAdditionalDiscountChange(
+                                cartItem.inventoryItem.id,
+                                num
+                              )
+                            }
+                            disabled={isUpdatingCart}
+                          />
+                          <span className={styles.itemAdditionalSuffix}>%</span>
+                        </div>
                       </div>
                     </div>
                     <div className={styles.itemActions}>
