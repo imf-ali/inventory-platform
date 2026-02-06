@@ -1,6 +1,5 @@
 import {
   useState,
-  FormEvent,
   useEffect,
   useRef,
   useCallback,
@@ -142,10 +141,10 @@ export default function ScanSellPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<InventoryItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [searchPage, setSearchPage] = useState(0);
+  const [_searchPage, setSearchPage] = useState(0);
   const [searchPageSize, setSearchPageSize] = useState(10);
-  const [searchTotalPages, setSearchTotalPages] = useState(0);
-  const [searchTotalItems, setSearchTotalItems] = useState(0);
+  const [_searchTotalPages, setSearchTotalPages] = useState(0);
+  const [_searchTotalItems, setSearchTotalItems] = useState(0);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [cartData, setCartData] = useState<CartResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -554,105 +553,6 @@ export default function ScanSellPage() {
     } finally {
       setIsUpdatingCart(false);
       isUpdatingRef.current = false;
-    }
-  };
-
-  const handleSearch = async (
-    e?: FormEvent<HTMLFormElement>,
-    pageNum?: number,
-    pageSize?: number
-  ) => {
-    e?.preventDefault();
-    if (!searchQuery.trim()) {
-      setSearchResults([]);
-      setSearchPage(0);
-      setSearchTotalPages(0);
-      setSearchTotalItems(0);
-      return;
-    }
-
-    const currentPage = pageNum !== undefined ? pageNum : 0;
-    const currentPageSize = pageSize !== undefined ? pageSize : searchPageSize;
-
-    if (pageNum === undefined && pageSize === undefined) {
-      setSearchPage(0); // Reset to first page on new search
-    }
-
-    if (pageSize !== undefined) {
-      setSearchPageSize(pageSize);
-    }
-
-    setIsSearching(true);
-    setError(null);
-    try {
-      const response = await inventoryApi.search(
-        searchQuery.trim(),
-        currentPage,
-        currentPageSize
-      );
-
-      if (import.meta.env.DEV) {
-        console.log('Raw search response from API:', response);
-        console.log('Response type:', typeof response);
-        console.log('Response.data:', response?.data);
-        console.log('Response.page:', response?.page);
-        console.log(
-          'Is response.data an array?',
-          Array.isArray(response?.data)
-        );
-      }
-
-      // Response should be InventoryListResponse: { data: InventoryItem[], meta: unknown | null, page: {...} }
-      // So response.data should be the array of InventoryItem[]
-      let items: InventoryItem[] = [];
-
-      if (response) {
-        if (Array.isArray(response)) {
-          // If response is directly an array
-          items = response;
-        } else if (response.data) {
-          if (Array.isArray(response.data)) {
-            // response.data is the array - this is the expected case
-            items = response.data;
-          } else if (
-            response.data &&
-            typeof response.data === 'object' &&
-            'data' in response.data
-          ) {
-            // Handle nested structure: { data: { data: [...] } }
-            const nestedData = (response.data as { data?: InventoryItem[] })
-              .data;
-            items = Array.isArray(nestedData) ? nestedData : [];
-          }
-        }
-      }
-
-      // Update pagination info
-      if (response?.page) {
-        setSearchTotalPages(response.page.totalPages);
-        setSearchTotalItems(response.page.totalItems);
-        setSearchPage(response.page.page);
-      }
-
-      if (import.meta.env.DEV) {
-        console.log('Final extracted items:', items);
-        console.log('Items count:', items.length);
-        if (items.length > 0) {
-          console.log('First item:', items[0]);
-        }
-      }
-
-      setSearchResults(items);
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to search products';
-      notifyError(errorMessage);
-      setSearchResults([]);
-      if (import.meta.env.DEV) {
-        console.error('Search error:', err);
-      }
-    } finally {
-      setIsSearching(false);
     }
   };
 
@@ -1501,101 +1401,3 @@ function SearchDropdownItem({
   );
 }
 
-// Product Result Item Component (full detail, e.g. for modal if needed later)
-interface ProductResultItemProps {
-  item: InventoryItem;
-  onAddToCart: (item: InventoryItem, price?: number) => void;
-}
-
-function ProductResultItem({ item, onAddToCart }: ProductResultItemProps) {
-  const [price, setPrice] = useState(item.sellingPrice.toString());
-
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      });
-    } catch {
-      return dateString;
-    }
-  };
-
-  const handleAdd = () => {
-    const priceValue = parseFloat(price);
-    if (isNaN(priceValue) || priceValue <= 0) {
-      return;
-    }
-    // Use the price from input (defaults to sellingPrice if not changed)
-    if (priceValue !== item.sellingPrice) {
-      onAddToCart(item, priceValue);
-    } else {
-      onAddToCart(item); // Use default sellingPrice
-    }
-    // Reset to sellingPrice after adding
-    setPrice(item.sellingPrice.toString());
-  };
-
-  return (
-    <div className={styles.resultItem}>
-      <div className={styles.resultItemInfo}>
-        <h4 className={styles.resultItemName}>
-          {item.name || 'Unnamed Product'}
-        </h4>
-        {item.companyName && (
-          <p className={styles.resultItemCompany}>
-            Company: {item.companyName}
-          </p>
-        )}
-        {item.barcode && (
-          <p className={styles.resultItemBarcode}>Barcode: {item.barcode}</p>
-        )}
-        <p className={styles.resultItemStock}>Current: {item.currentCount}</p>
-        <p className={styles.resultItemMRP}>
-          MRP: ₹{item.maximumRetailPrice.toFixed(2)}
-        </p>
-        <p className={styles.resultItemPTR}>
-          Price to Retailer (PTR): ₹{item.sellingPrice.toFixed(2)}
-        </p>
-        {item.additionalDiscount !== null &&
-          item.additionalDiscount !== undefined && (
-            <p className={styles.resultItemDiscount}>
-              Additional Discount: {item.additionalDiscount.toFixed(2)}%
-            </p>
-          )}
-        <p className={styles.resultItemExpiry}>
-          Expires: {formatDate(item.expiryDate)}
-        </p>
-      </div>
-      <div className={styles.resultItemActions}>
-        <div className={styles.priceInputGroup}>
-          <label className={styles.priceLabel}>Price:</label>
-          <input
-            type="number"
-            className={styles.priceInput}
-            placeholder={item.sellingPrice.toString()}
-            value={price}
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              setPrice(e.currentTarget.value)
-            }
-            step="0.01"
-            min="0"
-          />
-        </div>
-        <button
-          className={styles.addBtn}
-          onClick={handleAdd}
-          disabled={
-            item.currentCount <= 0 ||
-            (price.trim() !== '' && parseFloat(price) <= 0) ||
-            (price.trim() !== '' && isNaN(parseFloat(price)))
-          }
-        >
-          Add
-        </button>
-      </div>
-    </div>
-  );
-}
