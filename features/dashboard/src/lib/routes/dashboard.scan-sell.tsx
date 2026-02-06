@@ -1,4 +1,11 @@
-import { useState, FormEvent, useEffect, useRef, ChangeEvent } from 'react';
+import {
+  useState,
+  FormEvent,
+  useEffect,
+  useRef,
+  useCallback,
+  ChangeEvent,
+} from 'react';
 import { useNavigate } from 'react-router';
 import { inventoryApi, cartApi, customersApi } from '@inventory-platform/api';
 import type {
@@ -98,7 +105,87 @@ export default function ScanSellPage() {
   const [customerDlNo, setCustomerDlNo] = useState('');
   const [customerPan, setCustomerPan] = useState('');
   const [isSearchingCustomer, setIsSearchingCustomer] = useState(false);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [customerSectionOpen, setCustomerSectionOpen] = useState(false);
+  const searchWrapperRef = useRef<HTMLDivElement>(null);
   const { error: notifyError } = useNotify;
+
+  // Product search for dropdown (only on Enter or Search button)
+  const runSearch = useCallback(
+    async (query: string, pageNum = 0, pageSize = 8) => {
+      if (!query.trim()) {
+        setSearchResults([]);
+        setSearchPage(0);
+        setSearchTotalPages(0);
+        setSearchTotalItems(0);
+        return;
+      }
+      setSearchPage(pageNum);
+      if (pageSize !== searchPageSize) setSearchPageSize(pageSize);
+      setIsSearching(true);
+      setError(null);
+      try {
+        const response = await inventoryApi.search(query.trim(), pageNum, pageSize);
+        let items: InventoryItem[] = [];
+        if (response) {
+          if (Array.isArray(response)) items = response;
+          else if (response.data) {
+            if (Array.isArray(response.data)) items = response.data;
+            else if (
+              response.data &&
+              typeof response.data === 'object' &&
+              'data' in response.data
+            ) {
+              const nestedData = (response.data as { data?: InventoryItem[] }).data;
+              items = Array.isArray(nestedData) ? nestedData : [];
+            }
+          }
+        }
+        if (response?.page) {
+          setSearchTotalPages(response.page.totalPages);
+          setSearchTotalItems(response.page.totalItems);
+          setSearchPage(response.page.page);
+        }
+        setSearchResults(items);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Search failed';
+        notifyError(msg);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    },
+    [searchPageSize, notifyError]
+  );
+
+  const handleSearchSubmit = useCallback(
+    (e?: React.FormEvent) => {
+      e?.preventDefault();
+      if (!searchQuery.trim()) {
+        setSearchResults([]);
+        setShowSearchDropdown(false);
+        return;
+      }
+      setShowSearchDropdown(true);
+      runSearch(searchQuery, 0, 8);
+    },
+    [searchQuery, runSearch]
+  );
+
+  // Close search dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        showSearchDropdown &&
+        searchWrapperRef.current &&
+        !searchWrapperRef.current.contains(e.target as Node)
+      ) {
+        setShowSearchDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showSearchDropdown]);
 
   // Load cart on mount (only once, even in StrictMode)
   useEffect(() => {
@@ -801,364 +888,352 @@ export default function ScanSellPage() {
 
   return (
     <div className={styles.page}>
+      {error && <div className={styles.errorMessage}>{error}</div>}
+
       <div className={styles.header}>
         <h2 className={styles.title}>Scan and Sell</h2>
-        <p className={styles.subtitle}>Speed up sales with barcode scanning</p>
+        <p className={styles.subtitle}>
+          Speed up sales with barcode scanning
+        </p>
       </div>
-      {error && <div className={styles.errorMessage}>{error}</div>}
-      {/* Customer Information Section */}
-      <div className={styles.customerSection}>
-        <h4 className={styles.customerTitle}>Customer Information</h4>
-        <div className={styles.customerFields}>
-          <div className={styles.customerField}>
-            <label htmlFor="customerPhone" className={styles.customerLabel}>
-              Phone
-            </label>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <input
-                id="customerPhone"
-                type="tel"
-                className={styles.customerInput}
-                placeholder="Enter customer phone"
-                value={customerPhone}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                  setCustomerPhone(e.currentTarget.value);
-                }}
-                disabled={isSearchingCustomer}
-                style={{ flex: 1 }}
-              />
-              <button
-                type="button"
-                className={styles.searchBtn}
-                onClick={handleCustomerSearch}
-                disabled={isSearchingCustomer || !customerPhone.trim()}
-              >
-                {isSearchingCustomer ? 'Searching...' : 'Search'}
-              </button>
-            </div>
-          </div>
-          <div className={styles.customerField}>
-            <label htmlFor="customerName" className={styles.customerLabel}>
-              Customer Name
-            </label>
-            <input
-              id="customerName"
-              type="text"
-              className={styles.customerInput}
-              placeholder="Enter customer name"
-              value={customerName}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                setCustomerName(e.currentTarget.value);
-              }}
-            />
-          </div>
-          <div className={styles.customerField}>
-            <label htmlFor="customerEmail" className={styles.customerLabel}>
-              Email
-            </label>
-            <input
-              id="customerEmail"
-              type="email"
-              className={styles.customerInput}
-              placeholder="Enter customer email"
-              value={customerEmail}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                setCustomerEmail(e.currentTarget.value);
-              }}
-            />
-          </div>
-          <div className={styles.customerField}>
-            <label htmlFor="customerAddress" className={styles.customerLabel}>
-              Address
-            </label>
-            <input
-              id="customerAddress"
-              type="text"
-              className={styles.customerInput}
-              placeholder="Enter customer address"
-              value={customerAddress}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                setCustomerAddress(e.currentTarget.value);
-              }}
-            />
-          </div>
-        </div>
 
-        {/* Retailer Checkbox */}
-        <div className={styles.retailerCheckboxContainer}>
-          <label className={styles.retailerCheckboxLabel}>
-            <input
-              type="checkbox"
-              checked={isRetailer}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                setIsRetailer(e.currentTarget.checked);
-                // Clear retailer fields when unchecked
-                if (!e.currentTarget.checked) {
-                  setCustomerGstin('');
-                  setCustomerDlNo('');
-                  setCustomerPan('');
-                }
-              }}
-              className={styles.retailerCheckbox}
-            />
-            <span>Is Retailer</span>
-          </label>
-        </div>
-
-        {/* Retailer Information Section */}
-        {isRetailer && (
-          <div className={styles.retailerSection}>
-            <h5 className={styles.retailerSectionTitle}>
-              Retailer Information
-            </h5>
-            <div className={styles.customerFields}>
-              <div className={styles.customerField}>
-                <label htmlFor="customerGstin" className={styles.customerLabel}>
-                  Customer GSTIN
-                </label>
-                <input
-                  id="customerGstin"
-                  type="text"
-                  className={styles.customerInput}
-                  placeholder="Enter customer GSTIN"
-                  value={customerGstin}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                    setCustomerGstin(e.currentTarget.value);
-                  }}
-                />
-              </div>
-              <div className={styles.customerField}>
-                <label htmlFor="customerDlNo" className={styles.customerLabel}>
-                  Customer DL No
-                </label>
-                <input
-                  id="customerDlNo"
-                  type="text"
-                  className={styles.customerInput}
-                  placeholder="Enter customer DL No"
-                  value={customerDlNo}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                    setCustomerDlNo(e.currentTarget.value);
-                  }}
-                />
-              </div>
-              <div className={styles.customerField}>
-                <label htmlFor="customerPan" className={styles.customerLabel}>
-                  Customer PAN
-                </label>
-                <input
-                  id="customerPan"
-                  type="text"
-                  className={styles.customerInput}
-                  placeholder="Enter customer PAN"
-                  value={customerPan}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                    setCustomerPan(e.currentTarget.value);
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-      <div className={styles.container}>
-        {/* Product Search Section */}
-        <div className={styles.searchSection}>
-          <h3 className={styles.sectionTitle}>Product Search</h3>
-          <form onSubmit={handleSearch} className={styles.searchForm}>
-            <div className={styles.searchInputWrapper}>
-              <span
-                className={styles.searchIcon}
-                role="img"
-                aria-label="Search"
+      {/* Main: cart (wider) + totals sidebar (narrow fixed) */}
+      <div className={styles.mainRow}>
+        <div className={styles.cartArea}>
+          <div className={styles.cartSection}>
+            {/* Search inside cart: API only on Enter or Search button */}
+            <div className={styles.searchRow} ref={searchWrapperRef}>
+              <form
+                className={styles.searchForm}
+                onSubmit={handleSearchSubmit}
               >
-                🔍
-              </span>
-              <input
-                type="text"
-                className={styles.searchInput}
-                placeholder="Search by product name, company, or barcode..."
-                value={searchQuery}
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  setSearchQuery(e.currentTarget.value)
-                }
-                disabled={isSearching}
-                autoFocus
-              />
-              <button
-                type="submit"
-                className={styles.searchBtn}
-                disabled={isSearching}
-              >
-                {isSearching ? 'Searching...' : 'Search'}
-              </button>
-            </div>
-          </form>
-
-          <div className={styles.resultsContainer}>
-            {isSearching ? (
-              <div className={styles.loading}>Searching...</div>
-            ) : searchResults.length === 0 && searchQuery ? (
-              <div className={styles.emptyState}>No products found</div>
-            ) : searchResults.length > 0 ? (
-              <>
-                <div className={styles.resultsList}>
-                  {searchResults.map((item) => (
-                    <ProductResultItem
-                      key={item.id}
-                      item={item}
-                      onAddToCart={handleAddToCart}
-                    />
-                  ))}
+                <div className={styles.searchInputWrapper}>
+                  <span
+                    className={styles.searchIcon}
+                    role="img"
+                    aria-label="Search"
+                  >
+                    🔍
+                  </span>
+                  <input
+                    type="text"
+                    className={styles.searchInput}
+                    placeholder="Search products..."
+                    value={searchQuery}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                      setSearchQuery(e.currentTarget.value)
+                    }
+                    disabled={isSearching}
+                    autoFocus
+                    aria-expanded={showSearchDropdown}
+                    aria-haspopup="listbox"
+                    aria-controls="search-results-list"
+                  />
+                  <button
+                    type="submit"
+                    className={styles.searchSubmitBtn}
+                    disabled={isSearching}
+                  >
+                    {isSearching ? 'Searching...' : 'Search'}
+                  </button>
                 </div>
-                {searchTotalPages > 1 && (
-                  <div className={styles.paginationBar}>
-                    <button
-                      className={styles.pageBtn}
-                      disabled={searchPage === 0 || isSearching}
-                      onClick={() => handleSearch(undefined, searchPage - 1)}
-                    >
-                      Previous
-                    </button>
-                    <span className={styles.pageInfo}>
-                      Page {searchPage + 1} of {searchTotalPages} •{' '}
-                      {searchTotalItems} items
-                    </span>
-                    <button
-                      className={styles.pageBtn}
-                      disabled={
-                        searchPage >= searchTotalPages - 1 || isSearching
-                      }
-                      onClick={() => handleSearch(undefined, searchPage + 1)}
-                    >
-                      Next
-                    </button>
-                    <select
-                      className={styles.pageSizeSelect}
-                      value={searchPageSize}
-                      onChange={(e) => {
-                        const newSize = Number(e.target.value);
-                        handleSearch(undefined, 0, newSize);
-                      }}
-                      disabled={isSearching}
-                    >
-                      <option value={10}>10 / page</option>
-                      <option value={20}>20 / page</option>
-                      <option value={50}>50 / page</option>
-                    </select>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className={styles.emptyState}>
-                Enter a search query to find products
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Cart and Total Section */}
-        <div className={styles.cartSection}>
-          <h3 className={styles.cartTitle}>Cart</h3>
-          <div className={styles.cartItems}>
-            {isLoadingCart ? (
-              <div className={styles.loading}>Loading cart...</div>
-            ) : cartItems.length === 0 ? (
-              <div className={styles.emptyCart}>Cart is empty</div>
-            ) : (
-              cartItems.map((cartItem) => (
+              </form>
+              {showSearchDropdown && (
                 <div
-                  key={cartItem.inventoryItem.id}
-                  className={styles.cartItem}
+                  id="search-results-list"
+                  className={styles.searchDropdown}
+                  role="listbox"
                 >
-                  <div className={styles.itemInfo}>
-                    <span className={styles.itemName}>
-                      {cartItem.inventoryItem.name || 'Unnamed Product'}
-                    </span>
-                    {cartItem.inventoryItem.companyName && (
-                      <span className={styles.itemCompany}>
-                        {cartItem.inventoryItem.companyName}
+                  {isSearching ? (
+                    <div className={styles.dropdownLoading}>Searching...</div>
+                  ) : searchResults.length === 0 ? (
+                    <div className={styles.dropdownEmpty}>No products found</div>
+                  ) : (
+                    <ul className={styles.dropdownList}>
+                      {searchResults.map((item) => (
+                        <SearchDropdownItem
+                          key={item.id}
+                          item={item}
+                          onAddToCart={handleAddToCart}
+                          disabled={item.currentCount <= 0 || isUpdatingCart}
+                        />
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className={styles.cartItems}>
+              {isLoadingCart ? (
+                <div className={styles.loading}>Loading cart...</div>
+              ) : cartItems.length === 0 ? (
+                <div className={styles.emptyCart}>Cart is empty</div>
+              ) : (
+                cartItems.map((cartItem) => (
+                  <div
+                    key={cartItem.inventoryItem.id}
+                    className={styles.cartItem}
+                  >
+                    <div className={styles.itemInfo}>
+                      <span className={styles.itemName}>
+                        {cartItem.inventoryItem.name || 'Unnamed Product'}
                       </span>
-                    )}
-                    <div className={styles.itemPriceInfo}>
-                      <span className={styles.itemPrice}>
-                        ₹{cartItem.price.toFixed(2)} each
-                      </span>
-                      {cartItem.inventoryItem.maximumRetailPrice >
-                        cartItem.price && (
-                        <span className={styles.itemDiscount}>
-                          {(
-                            ((cartItem.inventoryItem.maximumRetailPrice -
-                              cartItem.price) /
-                              cartItem.inventoryItem.maximumRetailPrice) *
-                            100
-                          ).toFixed(1)}
-                          % off MRP
+                      {cartItem.inventoryItem.companyName && (
+                        <span className={styles.itemCompany}>
+                          {cartItem.inventoryItem.companyName}
                         </span>
                       )}
-                      {cartItem.inventoryItem.additionalDiscount !== null &&
-                        cartItem.inventoryItem.additionalDiscount !==
-                          undefined && (
+                      <div className={styles.itemPriceInfo}>
+                        <span className={styles.itemPrice}>
+                          ₹{cartItem.price.toFixed(2)} each
+                        </span>
+                        {cartItem.inventoryItem.maximumRetailPrice >
+                          cartItem.price && (
                           <span className={styles.itemDiscount}>
-                            Additional:{' '}
-                            {cartItem.inventoryItem.additionalDiscount.toFixed(
-                              2
-                            )}
-                            %
+                            {(
+                              ((cartItem.inventoryItem.maximumRetailPrice -
+                                cartItem.price) /
+                                cartItem.inventoryItem.maximumRetailPrice) *
+                              100
+                            ).toFixed(1)}
+                            % off MRP
                           </span>
                         )}
+                        {cartItem.inventoryItem.additionalDiscount !== null &&
+                          cartItem.inventoryItem.additionalDiscount !==
+                            undefined && (
+                            <span className={styles.itemDiscount}>
+                              Additional:{' '}
+                              {cartItem.inventoryItem.additionalDiscount.toFixed(
+                                2
+                              )}
+                              %
+                            </span>
+                          )}
+                      </div>
+                    </div>
+                    <div className={styles.itemActions}>
+                      <button
+                        className={styles.qtyBtn}
+                        onClick={() =>
+                          handleUpdateQuantity(cartItem.inventoryItem.id, -1)
+                        }
+                        disabled={isUpdatingCart}
+                      >
+                        -
+                      </button>
+                      <CartQuantityInput
+                        value={cartItem.quantity}
+                        disabled={isUpdatingCart}
+                        onCommit={async (newQty) => {
+                          const delta = newQty - cartItem.quantity;
+                          if (delta !== 0) {
+                            await handleUpdateQuantity(
+                              cartItem.inventoryItem.id,
+                              delta
+                            );
+                          }
+                        }}
+                      />
+                      <button
+                        className={styles.qtyBtn}
+                        onClick={() =>
+                          handleUpdateQuantity(cartItem.inventoryItem.id, 1)
+                        }
+                        disabled={isUpdatingCart}
+                      >
+                        +
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.removeBtn}
+                        onClick={() =>
+                          handleRemoveItem(cartItem.inventoryItem.id)
+                        }
+                        disabled={isUpdatingCart}
+                      >
+                        Remove
+                      </button>
                     </div>
                   </div>
-                  <div className={styles.itemActions}>
-                    <button
-                      className={styles.qtyBtn}
-                      onClick={() =>
-                        handleUpdateQuantity(cartItem.inventoryItem.id, -1)
-                      }
-                      disabled={isUpdatingCart}
-                    >
-                      -
-                    </button>
-                    <CartQuantityInput
-                      value={cartItem.quantity}
-                      disabled={isUpdatingCart}
-                      onCommit={async (newQty) => {
-                        const delta = newQty - cartItem.quantity;
-                        if (delta !== 0) {
-                          await handleUpdateQuantity(
-                            cartItem.inventoryItem.id,
-                            delta
-                          );
-                        }
-                      }}
-                    />
+                ))
+              )}
+            </div>
+          </div>
+        </div>
 
-                    <button
-                      className={styles.qtyBtn}
-                      onClick={() =>
-                        handleUpdateQuantity(cartItem.inventoryItem.id, 1)
+        {/* Totals and actions sidebar */}
+        <aside className={styles.summarySidebar}>
+          <div className={styles.customerBlock}>
+            <button
+              type="button"
+              className={styles.customerToggle}
+              onClick={() => setCustomerSectionOpen((o) => !o)}
+              aria-expanded={customerSectionOpen}
+            >
+              <span className={styles.customerToggleLabel}>Customer</span>
+              {customerName || customerPhone ? (
+                <span className={styles.customerToggleValue}>
+                  {customerName || customerPhone}
+                </span>
+              ) : (
+                <span className={styles.customerToggleHint}>Optional</span>
+              )}
+              <span className={styles.customerToggleIcon}>
+                {customerSectionOpen ? '▼' : '▶'}
+              </span>
+            </button>
+            {customerSectionOpen && (
+              <div className={styles.customerForm}>
+                <div className={styles.customerFieldsVertical}>
+                  <div className={styles.customerField}>
+                    <label htmlFor="sidebar-customerPhone" className={styles.customerLabel}>
+                      Phone
+                    </label>
+                    <div className={styles.customerInputRow}>
+                      <input
+                        id="sidebar-customerPhone"
+                        type="tel"
+                        className={styles.customerInput}
+                        placeholder="Phone"
+                        value={customerPhone}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                          setCustomerPhone(e.currentTarget.value)
+                        }
+                        disabled={isSearchingCustomer}
+                      />
+                      <button
+                        type="button"
+                        className={styles.sidebarSearchBtn}
+                        onClick={handleCustomerSearch}
+                        disabled={isSearchingCustomer || !customerPhone.trim()}
+                        title="Search customer"
+                      >
+                        {isSearchingCustomer ? '…' : '⌕'}
+                      </button>
+                    </div>
+                  </div>
+                  <div className={styles.customerField}>
+                    <label htmlFor="sidebar-customerName" className={styles.customerLabel}>
+                      Name
+                    </label>
+                    <input
+                      id="sidebar-customerName"
+                      type="text"
+                      className={styles.customerInput}
+                      placeholder="Name"
+                      value={customerName}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                        setCustomerName(e.currentTarget.value)
                       }
-                      disabled={isUpdatingCart}
-                    >
-                      +
-                    </button>
-                    <button
-                      className={styles.removeBtn}
-                      onClick={() =>
-                        handleRemoveItem(cartItem.inventoryItem.id)
+                    />
+                  </div>
+                  <div className={styles.customerField}>
+                    <label htmlFor="sidebar-customerEmail" className={styles.customerLabel}>
+                      Email
+                    </label>
+                    <input
+                      id="sidebar-customerEmail"
+                      type="email"
+                      className={styles.customerInput}
+                      placeholder="Email"
+                      value={customerEmail}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                        setCustomerEmail(e.currentTarget.value)
                       }
-                      disabled={isUpdatingCart}
-                    >
-                      ×
-                    </button>
+                    />
+                  </div>
+                  <div className={styles.customerField}>
+                    <label htmlFor="sidebar-customerAddress" className={styles.customerLabel}>
+                      Address
+                    </label>
+                    <input
+                      id="sidebar-customerAddress"
+                      type="text"
+                      className={styles.customerInput}
+                      placeholder="Address"
+                      value={customerAddress}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                        setCustomerAddress(e.currentTarget.value)
+                      }
+                    />
                   </div>
                 </div>
-              ))
+                <div className={styles.retailerCheckboxContainer}>
+                  <label className={styles.retailerCheckboxLabel}>
+                    <input
+                      type="checkbox"
+                      checked={isRetailer}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                        setIsRetailer(e.currentTarget.checked);
+                        if (!e.currentTarget.checked) {
+                          setCustomerGstin('');
+                          setCustomerDlNo('');
+                          setCustomerPan('');
+                        }
+                      }}
+                      className={styles.retailerCheckbox}
+                    />
+                    <span>Is Retailer</span>
+                  </label>
+                </div>
+                {isRetailer && (
+                  <div className={styles.retailerSection}>
+                    <div className={styles.customerField}>
+                      <label htmlFor="sidebar-customerGstin" className={styles.customerLabel}>
+                        GSTIN
+                      </label>
+                      <input
+                        id="sidebar-customerGstin"
+                        type="text"
+                        className={styles.customerInput}
+                        placeholder="GSTIN"
+                        value={customerGstin}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                          setCustomerGstin(e.currentTarget.value)
+                        }
+                      />
+                    </div>
+                    <div className={styles.customerField}>
+                      <label htmlFor="sidebar-customerDlNo" className={styles.customerLabel}>
+                        DL No
+                      </label>
+                      <input
+                        id="sidebar-customerDlNo"
+                        type="text"
+                        className={styles.customerInput}
+                        placeholder="DL No"
+                        value={customerDlNo}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                          setCustomerDlNo(e.currentTarget.value)
+                        }
+                      />
+                    </div>
+                    <div className={styles.customerField}>
+                      <label htmlFor="sidebar-customerPan" className={styles.customerLabel}>
+                        PAN
+                      </label>
+                      <input
+                        id="sidebar-customerPan"
+                        type="text"
+                        className={styles.customerInput}
+                        placeholder="PAN"
+                        value={customerPan}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                          setCustomerPan(e.currentTarget.value)
+                        }
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </div>
+
           <div className={styles.cartSummary}>
             {isLoadingCart ? (
-              <div className={styles.loading}>Loading cart...</div>
+              <div className={styles.loading}>Loading...</div>
             ) : (
               <>
                 <div className={styles.summaryRow}>
@@ -1216,13 +1291,108 @@ export default function ScanSellPage() {
                 : 'Process Payment'}
             </button>
           </div>
-        </div>
+        </aside>
       </div>
     </div>
   );
 }
 
-// Product Result Item Component
+// Search dropdown item with full details (like original product result)
+function SearchDropdownItem({
+  item,
+  onAddToCart,
+  disabled,
+}: {
+  item: InventoryItem;
+  onAddToCart: (item: InventoryItem, price?: number) => void;
+  disabled: boolean;
+}) {
+  const [price, setPrice] = useState(item.sellingPrice.toString());
+
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
+  const handleAdd = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const priceValue = parseFloat(price);
+    if (isNaN(priceValue) || priceValue <= 0) return;
+    if (priceValue !== item.sellingPrice) {
+      onAddToCart(item, priceValue);
+    } else {
+      onAddToCart(item);
+    }
+    setPrice(item.sellingPrice.toString());
+  };
+
+  return (
+    <li className={styles.dropdownItem} role="option">
+      <div className={styles.dropdownItemInfo}>
+        <span className={styles.dropdownItemName}>
+          {item.name || 'Unnamed Product'}
+        </span>
+        {item.companyName && (
+          <span className={styles.dropdownItemCompany}>
+            Company: {item.companyName}
+          </span>
+        )}
+        {item.barcode && (
+          <span className={styles.dropdownItemMeta}>
+            Barcode: {item.barcode}
+          </span>
+        )}
+        <span className={styles.dropdownItemMeta}>
+          Current: {item.currentCount}
+        </span>
+        <span className={`${styles.dropdownItemMeta} ${styles.dropdownItemMetaBold}`}>
+          MRP: ₹{item.maximumRetailPrice.toFixed(2)}
+        </span>
+        <span className={`${styles.dropdownItemMeta} ${styles.dropdownItemMetaBold}`}>
+          PTR: ₹{item.sellingPrice.toFixed(2)}
+        </span>
+        {item.expiryDate && (
+          <span className={`${styles.dropdownItemMeta} ${styles.dropdownItemMetaBold}`}>
+            Expires: {formatDate(item.expiryDate)}
+          </span>
+        )}
+      </div>
+      <div className={styles.dropdownItemActions}>
+        <div className={styles.priceInputGroup}>
+          <label className={styles.priceLabel}>Price:</label>
+          <input
+            type="number"
+            className={styles.priceInput}
+            value={price}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setPrice(e.currentTarget.value)
+            }
+            step="0.01"
+            min="0"
+          />
+        </div>
+        <button
+          type="button"
+          className={styles.dropdownAddBtn}
+          onClick={handleAdd}
+          disabled={disabled}
+        >
+          Add
+        </button>
+      </div>
+    </li>
+  );
+}
+
+// Product Result Item Component (full detail, e.g. for modal if needed later)
 interface ProductResultItemProps {
   item: InventoryItem;
   onAddToCart: (item: InventoryItem, price?: number) => void;
