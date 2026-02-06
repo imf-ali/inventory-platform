@@ -27,9 +27,15 @@ export function meta() {
 }
 
 interface ProductFormData
-  extends Omit<CreateInventoryDto, 'vendorId' | 'lotId'> {
+  extends Omit<
+    CreateInventoryDto,
+    'vendorId' | 'lotId' | 'sellingPrice' | 'costPrice' | 'maximumRetailPrice'
+  > {
   id: string; // Unique ID for each product form
   isExpanded: boolean;
+  sellingPrice: number | string;
+  costPrice: number | string;
+  maximumRetailPrice: number | string;
   sgst?: string;
   cgst?: string;
   additionalDiscount?: number | null;
@@ -468,11 +474,8 @@ export default function ProductRegistrationPage() {
       return;
     }
     if (!/^\d*\.?\d*$/.test(value)) return;
-    handleProductChange(
-      productId,
-      field as keyof ProductFormData,
-      parseFloat(value) || 0
-    );
+    // Keep raw string so decimal point is preserved while typing (e.g. "10.")
+    handleProductChange(productId, field as keyof ProductFormData, value);
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -569,9 +572,9 @@ export default function ProductRegistrationPage() {
           name: product.name,
           description: product.description || undefined,
           companyName: product.companyName,
-          maximumRetailPrice: product.maximumRetailPrice,
-          costPrice: product.costPrice,
-          sellingPrice: product.sellingPrice,
+          maximumRetailPrice: Number(product.maximumRetailPrice) || 0,
+          costPrice: Number(product.costPrice) || 0,
+          sellingPrice: Number(product.sellingPrice) || 0,
           businessType: product.businessType.toUpperCase(),
           location: product.location,
           count: product.count,
@@ -1792,15 +1795,19 @@ function ProductAccordion({
           <div className={styles.formRow}>
             <div className={styles.formGroup}>
               <label htmlFor={`scheme-${product.id}`} className={styles.label}>
-                Scheme/Promotion
+                Scheme/Free
               </label>
               <input
                 type="text"
                 id={`scheme-${product.id}`}
                 className={styles.input}
-                placeholder="Enter the scheme/promotion"
+                placeholder="Enter the scheme/free"
                 value={product.scheme || ''}
-                onChange={(e) => onChange(product.id, 'scheme', e.target.value)}
+                onChange={(e) => {
+                  // Do not allow decimal point or decimal values in scheme
+                  const v = e.target.value.replace(/\./g, '');
+                  onChange(product.id, 'scheme', v);
+                }}
                 disabled={isLoading}
               />
             </div>
