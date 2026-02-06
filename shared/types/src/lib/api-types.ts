@@ -656,6 +656,7 @@ export interface CheckoutItem {
   id: string;
   quantity: number;
   sellingPrice: number;
+  additionalDiscount?: number | null;
 }
 
 export interface CreateCheckoutDto {
