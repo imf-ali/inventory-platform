@@ -26,6 +26,8 @@ interface CartItem {
   inventoryItem: InventoryItem;
   quantity: number;
   price: number;
+  schemePayFor?: number | null;
+  schemeFree?: number | null;
 }
 
 function CartQuantityInput({
@@ -74,6 +76,113 @@ function CartQuantityInput({
         }
       }}
       onFocus={(e) => e.currentTarget.select()}
+    />
+  );
+}
+
+function CartSellingPriceInput({
+  id,
+  value,
+  onCommit,
+  disabled,
+}: {
+  id?: string;
+  value: number;
+  onCommit: (value: number) => void;
+  disabled: boolean;
+}) {
+  const [draft, setDraft] = useState(value.toFixed(2));
+
+  useEffect(() => {
+    setDraft(value.toFixed(2));
+  }, [value]);
+
+  const commit = () => {
+    const trimmed = draft.trim();
+    const num = parseFloat(trimmed);
+    if (isNaN(num) || num < 0) {
+      setDraft(value.toFixed(2));
+      return;
+    }
+    onCommit(num);
+  };
+
+  return (
+    <input
+      id={id}
+      type="number"
+      className={styles.itemSellingPriceInput}
+      value={draft}
+      min={0}
+      step={0.01}
+      disabled={disabled}
+      onChange={(e: ChangeEvent<HTMLInputElement>) => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          commit();
+          e.currentTarget.blur();
+        }
+      }}
+    />
+  );
+}
+
+function CartSchemeIntegerInput({
+  id,
+  value,
+  onCommit,
+  disabled,
+  placeholder = '0',
+}: {
+  id?: string;
+  value: number | null;
+  onCommit: (value: number | null) => void;
+  disabled: boolean;
+  placeholder?: string;
+}) {
+  const [draft, setDraft] = useState(
+    value !== null && value !== undefined ? value.toString() : ''
+  );
+
+  useEffect(() => {
+    const next =
+      value !== null && value !== undefined ? value.toString() : '';
+    setDraft(next);
+  }, [value]);
+
+  const commit = () => {
+    const trimmed = draft.trim();
+    if (trimmed === '') {
+      onCommit(null);
+      return;
+    }
+    const num = parseInt(trimmed, 10);
+    if (isNaN(num) || num < 0 || !Number.isInteger(num)) {
+      setDraft(value !== null && value !== undefined ? value.toString() : '');
+      return;
+    }
+    onCommit(num);
+  };
+
+  return (
+    <input
+      id={id}
+      type="number"
+      className={styles.itemAdditionalInput}
+      value={draft}
+      placeholder={placeholder}
+      min={0}
+      step={1}
+      disabled={disabled}
+      onChange={(e: ChangeEvent<HTMLInputElement>) => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          commit();
+          e.currentTarget.blur();
+        }
+      }}
     />
   );
 }
@@ -359,6 +468,8 @@ export default function ScanSellPage() {
           inventoryItem,
           quantity: resItem.quantity,
           price: resItem.sellingPrice,
+          schemePayFor: resItem.schemePayFor ?? null,
+          schemeFree: resItem.schemeFree ?? null,
         };
       });
     },
@@ -379,44 +490,97 @@ export default function ScanSellPage() {
     quantityDelta?: number,
     originalItem?: CartItem,
     overrides?: Record<string, number | null>,
-    additionalDiscountUpdate?: { inventoryId: string; additionalDiscount: number | null }
+    additionalDiscountUpdate?: { inventoryId: string; additionalDiscount: number | null },
+    schemeUpdate?: { inventoryId: string; schemePayFor: number | null; schemeFree: number | null },
+    sellingPriceUpdate?: { inventoryId: string; sellingPrice: number }
   ) => {
     // Prevent duplicate calls
     if (isUpdatingRef.current) {
       return;
     }
 
+    type CartItemPayload = {
+      id: string;
+      quantity?: number;
+      sellingPrice?: number;
+      additionalDiscount?: number | null;
+      schemePayFor?: number | null;
+      schemeFree?: number | null;
+    };
+
     const effectiveOverrides = overrides ?? additionalDiscountOverrides;
+    const withItemFields = (
+      base: CartItemPayload,
+      cartItem?: CartItem
+    ): CartItemPayload => {
+      let result = { ...base };
+      if (cartItem != null) {
+        const addDisc =
+          effectiveOverrides[cartItem.inventoryItem.id] ??
+          cartItem.inventoryItem.additionalDiscount ??
+          undefined;
+        if (addDisc !== undefined && addDisc !== null) {
+          result = { ...result, additionalDiscount: addDisc };
+        }
+        if (
+          cartItem.schemePayFor !== undefined &&
+          cartItem.schemePayFor !== null
+        ) {
+          result = { ...result, schemePayFor: cartItem.schemePayFor };
+        }
+        if (cartItem.schemeFree !== undefined && cartItem.schemeFree !== null) {
+          result = { ...result, schemeFree: cartItem.schemeFree };
+        }
+      }
+      return result;
+    };
+
     const withAdditionalDiscount = (
       id: string,
       quantity: number,
       sellingPrice: number,
       cartItem?: CartItem
-    ) => {
-      const base = { id, quantity, sellingPrice };
-      const addDisc =
-        cartItem != null
-          ? effectiveOverrides[id] ??
-            cartItem.inventoryItem.additionalDiscount ??
-            undefined
-          : undefined;
-      return addDisc !== undefined && addDisc !== null
-        ? { ...base, additionalDiscount: addDisc }
-        : base;
-    };
+    ) => withItemFields({ id, quantity, sellingPrice }, cartItem);
 
     isUpdatingRef.current = true;
     setIsUpdatingCart(true);
     try {
-      // If only additional discount changed, send just that item (id + additionalDiscount)
-      let itemsToSend: Array<{
-        id: string;
-        quantity: number;
-        sellingPrice: number;
-        additionalDiscount?: number | null;
-      }>;
+      let itemsToSend: CartItemPayload[];
 
-      if (additionalDiscountUpdate) {
+      if (sellingPriceUpdate) {
+        // Only selling price changed: send id + sellingPrice
+        const item = items.find(
+          (i) => i.inventoryItem.id === sellingPriceUpdate.inventoryId
+        );
+        if (!item) {
+          isUpdatingRef.current = false;
+          setIsUpdatingCart(false);
+          return;
+        }
+        itemsToSend = [
+          {
+            id: item.inventoryItem.id,
+            sellingPrice: sellingPriceUpdate.sellingPrice,
+          },
+        ];
+      } else if (schemeUpdate) {
+        // Only scheme changed: send id + schemePayFor + schemeFree
+        const item = items.find(
+          (i) => i.inventoryItem.id === schemeUpdate.inventoryId
+        );
+        if (!item) {
+          isUpdatingRef.current = false;
+          setIsUpdatingCart(false);
+          return;
+        }
+        itemsToSend = [
+          {
+            id: item.inventoryItem.id,
+            schemePayFor: schemeUpdate.schemePayFor ?? null,
+            schemeFree: schemeUpdate.schemeFree ?? null,
+          },
+        ];
+      } else if (additionalDiscountUpdate) {
         const item = items.find(
           (i) => i.inventoryItem.id === additionalDiscountUpdate.inventoryId
         );
@@ -425,7 +589,6 @@ export default function ScanSellPage() {
           setIsUpdatingCart(false);
           return;
         }
-        // Only id and additionalDiscount when updating discount (no quantity or sellingPrice)
         const addDisc = additionalDiscountUpdate.additionalDiscount;
         itemsToSend = [
           {
@@ -433,7 +596,7 @@ export default function ScanSellPage() {
             ...(addDisc !== null && addDisc !== undefined
               ? { additionalDiscount: addDisc }
               : {}),
-          } as { id: string; quantity: number; sellingPrice: number; additionalDiscount?: number | null },
+          } as CartItemPayload,
         ];
       } else if (changedItemId && quantityDelta !== undefined) {
         // Only send the changed item with the delta quantity (1 for increment, -1 for decrement)
@@ -458,8 +621,7 @@ export default function ScanSellPage() {
             originalItem ||
             (() => {
               const cartItem = cartData?.items.find(
-                (cartItem: CheckoutItemResponse) =>
-                  cartItem.inventoryId === changedItemId
+                (ci: CheckoutItemResponse) => ci.inventoryId === changedItemId
               );
               return cartItem
                 ? {
@@ -483,6 +645,8 @@ export default function ScanSellPage() {
                     },
                     quantity: 0,
                     price: cartItem.sellingPrice,
+                    schemePayFor: cartItem.schemePayFor ?? null,
+                    schemeFree: cartItem.schemeFree ?? null,
                   }
                 : null;
             })();
@@ -663,6 +827,43 @@ export default function ScanSellPage() {
       undefined,
       undefined,
       { inventoryId, additionalDiscount: value }
+    );
+  };
+
+  const handleSchemeChange = (
+    inventoryId: string,
+    schemePayFor: number | null,
+    schemeFree: number | null
+  ) => {
+    setCartItems((prev) =>
+      prev.map((item) =>
+        item.inventoryItem.id === inventoryId
+          ? { ...item, schemePayFor, schemeFree }
+          : item
+      )
+    );
+    syncCartToAPI(cartItems, undefined, undefined, undefined, undefined, undefined, {
+      inventoryId,
+      schemePayFor,
+      schemeFree,
+    });
+  };
+
+  const handleSellingPriceChange = (inventoryId: string, sellingPrice: number) => {
+    setCartItems((prev) =>
+      prev.map((item) =>
+        item.inventoryItem.id === inventoryId ? { ...item, price: sellingPrice } : item
+      )
+    );
+    syncCartToAPI(
+      cartItems,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      { inventoryId, sellingPrice }
     );
   };
 
@@ -974,18 +1175,15 @@ export default function ScanSellPage() {
                     className={styles.cartItem}
                   >
                     <div className={styles.itemInfo}>
-                      <span className={styles.itemName}>
-                        {cartItem.inventoryItem.name || 'Unnamed Product'}
-                      </span>
-                      {cartItem.inventoryItem.companyName && (
-                        <span className={styles.itemCompany}>
-                          {cartItem.inventoryItem.companyName}
+                      <div className={styles.itemHeader}>
+                        <span className={styles.itemName}>
+                          {cartItem.inventoryItem.name || 'Unnamed Product'}
                         </span>
-                      )}
-                      <div className={styles.itemPriceInfo}>
-                        <span className={styles.itemPrice}>
-                          ₹{cartItem.price.toFixed(2)} each
-                        </span>
+                        {cartItem.inventoryItem.companyName && (
+                          <span className={styles.itemCompany}>
+                            {cartItem.inventoryItem.companyName}
+                          </span>
+                        )}
                         {cartItem.inventoryItem.maximumRetailPrice >
                           cartItem.price && (
                           <span className={styles.itemDiscount}>
@@ -998,62 +1196,123 @@ export default function ScanSellPage() {
                             % off MRP
                           </span>
                         )}
-                        <div className={styles.itemAdditionalRow}>
-                          <label className={styles.itemAdditionalLabel} htmlFor={`add-disc-${cartItem.inventoryItem.id}`}>
-                            Additional discount
-                          </label>
-                          <CartAdditionalDiscountInput
-                            id={`add-disc-${cartItem.inventoryItem.id}`}
-                            value={
-                              getEffectiveAdditionalDiscount(
-                                cartItem.inventoryItem.id,
-                                cartItem
-                              )
-                            }
-                            onCommit={(num) =>
-                              handleAdditionalDiscountChange(
-                                cartItem.inventoryItem.id,
-                                num
-                              )
-                            }
-                            disabled={isUpdatingCart}
-                          />
-                          <span className={styles.itemAdditionalSuffix}>%</span>
-                        </div>
                       </div>
-                    </div>
-                    <div className={styles.itemActions}>
-                      <button
-                        className={styles.qtyBtn}
-                        onClick={() =>
-                          handleUpdateQuantity(cartItem.inventoryItem.id, -1)
-                        }
-                        disabled={isUpdatingCart}
-                      >
-                        -
-                      </button>
-                      <CartQuantityInput
-                        value={cartItem.quantity}
-                        disabled={isUpdatingCart}
-                        onCommit={async (newQty) => {
-                          const delta = newQty - cartItem.quantity;
-                          if (delta !== 0) {
-                            await handleUpdateQuantity(
-                              cartItem.inventoryItem.id,
-                              delta
-                            );
+                      <div className={styles.itemEditRow}>
+                        <div className={styles.itemEditFields}>
+                          <div className={styles.itemFieldGroup}>
+                            <label className={styles.itemFieldLabel} htmlFor={`price-${cartItem.inventoryItem.id}`}>
+                              Price
+                            </label>
+                            <div className={styles.itemFieldInputWrap}>
+                              <CartSellingPriceInput
+                                id={`price-${cartItem.inventoryItem.id}`}
+                                value={cartItem.price}
+                                onCommit={(num) =>
+                                  handleSellingPriceChange(
+                                    cartItem.inventoryItem.id,
+                                    num
+                                  )
+                                }
+                                disabled={isUpdatingCart}
+                              />
+                              <span className={styles.itemFieldUnit}>each</span>
+                            </div>
+                          </div>
+                          <div className={styles.itemFieldGroup}>
+                            <label className={styles.itemFieldLabel} htmlFor={`add-disc-${cartItem.inventoryItem.id}`}>
+                              Add. discount
+                            </label>
+                            <div className={styles.itemFieldInputWrap}>
+                              <CartAdditionalDiscountInput
+                                id={`add-disc-${cartItem.inventoryItem.id}`}
+                                value={
+                                  getEffectiveAdditionalDiscount(
+                                    cartItem.inventoryItem.id,
+                                    cartItem
+                                  )
+                                }
+                                onCommit={(num) =>
+                                  handleAdditionalDiscountChange(
+                                    cartItem.inventoryItem.id,
+                                    num
+                                  )
+                                }
+                                disabled={isUpdatingCart}
+                              />
+                              <span className={styles.itemFieldUnit}>%</span>
+                            </div>
+                          </div>
+                          <div className={styles.itemFieldGroup}>
+                            <label className={styles.itemFieldLabel}>
+                              Scheme
+                            </label>
+                            <div className={styles.itemSchemeInputs}>
+                              <CartSchemeIntegerInput
+                                id={`scheme-pay-${cartItem.inventoryItem.id}`}
+                                value={cartItem.schemePayFor ?? null}
+                                onCommit={(num) =>
+                                  handleSchemeChange(
+                                    cartItem.inventoryItem.id,
+                                    num,
+                                    cartItem.schemeFree ?? null
+                                  )
+                                }
+                                disabled={isUpdatingCart}
+                                placeholder="Pay"
+                              />
+                              <span className={styles.itemSchemeSeparator}>+</span>
+                              <CartSchemeIntegerInput
+                                id={`scheme-free-${cartItem.inventoryItem.id}`}
+                                value={cartItem.schemeFree ?? null}
+                                onCommit={(num) =>
+                                  handleSchemeChange(
+                                    cartItem.inventoryItem.id,
+                                    cartItem.schemePayFor ?? null,
+                                    num
+                                  )
+                                }
+                                disabled={isUpdatingCart}
+                                placeholder="Free"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        <div className={styles.itemActions}>
+                      <div className={styles.qtyStepper}>
+                        <button
+                          className={styles.qtyBtn}
+                          onClick={() =>
+                            handleUpdateQuantity(cartItem.inventoryItem.id, -1)
                           }
-                        }}
-                      />
-                      <button
-                        className={styles.qtyBtn}
-                        onClick={() =>
-                          handleUpdateQuantity(cartItem.inventoryItem.id, 1)
-                        }
-                        disabled={isUpdatingCart}
-                      >
-                        +
-                      </button>
+                          disabled={isUpdatingCart}
+                          aria-label="Decrease quantity"
+                        >
+                          −
+                        </button>
+                        <CartQuantityInput
+                          value={cartItem.quantity}
+                          disabled={isUpdatingCart}
+                          onCommit={async (newQty) => {
+                            const delta = newQty - cartItem.quantity;
+                            if (delta !== 0) {
+                              await handleUpdateQuantity(
+                                cartItem.inventoryItem.id,
+                                delta
+                              );
+                            }
+                          }}
+                        />
+                        <button
+                          className={styles.qtyBtn}
+                          onClick={() =>
+                            handleUpdateQuantity(cartItem.inventoryItem.id, 1)
+                          }
+                          disabled={isUpdatingCart}
+                          aria-label="Increase quantity"
+                        >
+                          +
+                        </button>
+                      </div>
                       <button
                         type="button"
                         className={styles.removeBtn}
@@ -1064,6 +1323,8 @@ export default function ScanSellPage() {
                       >
                         Remove
                       </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))
@@ -1316,8 +1577,6 @@ function SearchDropdownItem({
   onAddToCart: (item: InventoryItem, price?: number) => void;
   disabled: boolean;
 }) {
-  const [price, setPrice] = useState(item.sellingPrice.toString());
-
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
@@ -1333,14 +1592,7 @@ function SearchDropdownItem({
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
-    const priceValue = parseFloat(price);
-    if (isNaN(priceValue) || priceValue <= 0) return;
-    if (priceValue !== item.sellingPrice) {
-      onAddToCart(item, priceValue);
-    } else {
-      onAddToCart(item);
-    }
-    setPrice(item.sellingPrice.toString());
+    onAddToCart(item);
   };
 
   return (
@@ -1375,19 +1627,6 @@ function SearchDropdownItem({
         )}
       </div>
       <div className={styles.dropdownItemActions}>
-        <div className={styles.priceInputGroup}>
-          <label className={styles.priceLabel}>Price:</label>
-          <input
-            type="number"
-            className={styles.priceInput}
-            value={price}
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              setPrice(e.currentTarget.value)
-            }
-            step="0.01"
-            min="0"
-          />
-        </div>
         <button
           type="button"
           className={styles.dropdownAddBtn}

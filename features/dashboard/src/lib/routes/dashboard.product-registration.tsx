@@ -72,6 +72,7 @@ export default function ProductRegistrationPage() {
     contactPhone: '',
     address: '',
     businessType: 'WHOLESALE',
+    gstinUin: '',
   });
   const [customBusinessType, setCustomBusinessType] = useState('');
   const [showCustomBusinessType, setShowCustomBusinessType] = useState(false);
@@ -112,7 +113,7 @@ export default function ProductRegistrationPage() {
     customReminders: [],
     hsn: '',
     batchNo: '',
-    scheme: '',
+    scheme: null,
     sgst: '',
     cgst: '',
     additionalDiscount: null,
@@ -157,7 +158,12 @@ export default function ProductRegistrationPage() {
       customReminders,
       hsn: item.hsn || '',
       batchNo: item.batchNo || '',
-      scheme: item.scheme || '',
+      scheme:
+        item.scheme != null
+          ? (typeof item.scheme === 'number'
+              ? item.scheme
+              : parseInt(String(item.scheme), 10)) || null
+          : null,
       sgst: item.sgst || '',
       cgst: item.cgst || '',
       additionalDiscount: item.additionalDiscount ?? null,
@@ -583,7 +589,7 @@ export default function ProductRegistrationPage() {
           customReminders: customReminders,
           hsn: product.hsn || null,
           batchNo: product.batchNo || null,
-          scheme: product.scheme || null,
+          scheme: product.scheme ?? null,
           ...(product.sgst && product.sgst.trim()
             ? { sgst: product.sgst.trim() }
             : {}),
@@ -731,6 +737,7 @@ export default function ProductRegistrationPage() {
       contactPhone: '',
       address: '',
       businessType: 'WHOLESALE',
+      gstinUin: '',
     });
   };
 
@@ -762,6 +769,9 @@ export default function ProductRegistrationPage() {
           contactEmail: vendorFormData.contactEmail,
         }),
         ...(vendorFormData.address && { address: vendorFormData.address }),
+        ...(vendorFormData.gstinUin?.trim() && {
+          gstinUin: vendorFormData.gstinUin.trim(),
+        }),
       };
       const vendor = await vendorsApi.create(vendorPayload);
       setSelectedVendor(vendor);
@@ -787,6 +797,7 @@ export default function ProductRegistrationPage() {
       contactPhone: '',
       address: '',
       businessType: 'WHOLESALE',
+      gstinUin: '',
     });
     setShowCustomBusinessType(false);
     setCustomBusinessType('');
@@ -998,6 +1009,16 @@ export default function ProductRegistrationPage() {
                               {vendor.contactPhone}
                             </div>
                           )}
+                          {vendor.gstinUin && (
+                            <div
+                              style={{
+                                fontSize: '0.8rem',
+                                color: 'var(--text-tertiary)',
+                              }}
+                            >
+                              GSTIN: {vendor.gstinUin}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -1040,6 +1061,11 @@ export default function ProductRegistrationPage() {
                     {selectedVendor.address && (
                       <p>
                         <strong>Address:</strong> {selectedVendor.address}
+                      </p>
+                    )}
+                    {selectedVendor.gstinUin && (
+                      <p>
+                        <strong>GSTIN / UIN:</strong> {selectedVendor.gstinUin}
                       </p>
                     )}
                     <p>
@@ -1368,6 +1394,25 @@ export default function ProductRegistrationPage() {
                     setVendorFormData((prev) => ({
                       ...prev,
                       address: e.target.value,
+                    }))
+                  }
+                  disabled={isCreatingVendor}
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label htmlFor="vendorGstinUin" className={styles.label}>
+                  GSTIN / UIN
+                </label>
+                <input
+                  type="text"
+                  id="vendorGstinUin"
+                  className={styles.input}
+                  placeholder="Enter GSTIN / UIN number"
+                  value={vendorFormData.gstinUin ?? ''}
+                  onChange={(e) =>
+                    setVendorFormData((prev) => ({
+                      ...prev,
+                      gstinUin: e.target.value,
                     }))
                   }
                   disabled={isCreatingVendor}
@@ -1798,15 +1843,27 @@ function ProductAccordion({
                 Scheme/Free
               </label>
               <input
-                type="text"
+                type="number"
                 id={`scheme-${product.id}`}
                 className={styles.input}
                 placeholder="Enter the scheme/free"
-                value={product.scheme || ''}
+                min={0}
+                step={1}
+                value={
+                  product.scheme !== null && product.scheme !== undefined
+                    ? product.scheme
+                    : ''
+                }
                 onChange={(e) => {
-                  // Do not allow decimal point or decimal values in scheme
-                  const v = e.target.value.replace(/\./g, '');
-                  onChange(product.id, 'scheme', v);
+                  const val = e.target.value;
+                  if (val === '') {
+                    onChange(product.id, 'scheme', null);
+                  } else {
+                    const num = parseInt(val, 10);
+                    if (!isNaN(num) && num >= 0 && Number.isInteger(num)) {
+                      onChange(product.id, 'scheme', num);
+                    }
+                  }
                 }}
                 disabled={isLoading}
               />
