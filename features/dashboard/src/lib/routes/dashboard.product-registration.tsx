@@ -72,6 +72,7 @@ export default function ProductRegistrationPage() {
     contactPhone: '',
     address: '',
     businessType: 'WHOLESALE',
+    gstinUin: '',
   });
   const [customBusinessType, setCustomBusinessType] = useState('');
   const [showCustomBusinessType, setShowCustomBusinessType] = useState(false);
@@ -731,6 +732,7 @@ export default function ProductRegistrationPage() {
       contactPhone: '',
       address: '',
       businessType: 'WHOLESALE',
+      gstinUin: '',
     });
   };
 
@@ -762,6 +764,9 @@ export default function ProductRegistrationPage() {
           contactEmail: vendorFormData.contactEmail,
         }),
         ...(vendorFormData.address && { address: vendorFormData.address }),
+        ...(vendorFormData.gstinUin?.trim() && {
+          gstinUin: vendorFormData.gstinUin.trim(),
+        }),
       };
       const vendor = await vendorsApi.create(vendorPayload);
       setSelectedVendor(vendor);
@@ -787,6 +792,7 @@ export default function ProductRegistrationPage() {
       contactPhone: '',
       address: '',
       businessType: 'WHOLESALE',
+      gstinUin: '',
     });
     setShowCustomBusinessType(false);
     setCustomBusinessType('');
@@ -998,6 +1004,16 @@ export default function ProductRegistrationPage() {
                               {vendor.contactPhone}
                             </div>
                           )}
+                          {vendor.gstinUin && (
+                            <div
+                              style={{
+                                fontSize: '0.8rem',
+                                color: 'var(--text-tertiary)',
+                              }}
+                            >
+                              GSTIN: {vendor.gstinUin}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -1040,6 +1056,11 @@ export default function ProductRegistrationPage() {
                     {selectedVendor.address && (
                       <p>
                         <strong>Address:</strong> {selectedVendor.address}
+                      </p>
+                    )}
+                    {selectedVendor.gstinUin && (
+                      <p>
+                        <strong>GSTIN / UIN:</strong> {selectedVendor.gstinUin}
                       </p>
                     )}
                     <p>
@@ -1368,6 +1389,25 @@ export default function ProductRegistrationPage() {
                     setVendorFormData((prev) => ({
                       ...prev,
                       address: e.target.value,
+                    }))
+                  }
+                  disabled={isCreatingVendor}
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label htmlFor="vendorGstinUin" className={styles.label}>
+                  GSTIN / UIN
+                </label>
+                <input
+                  type="text"
+                  id="vendorGstinUin"
+                  className={styles.input}
+                  placeholder="Enter GSTIN / UIN number"
+                  value={vendorFormData.gstinUin ?? ''}
+                  onChange={(e) =>
+                    setVendorFormData((prev) => ({
+                      ...prev,
+                      gstinUin: e.target.value,
                     }))
                   }
                   disabled={isCreatingVendor}

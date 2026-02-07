@@ -937,6 +937,7 @@ export interface Vendor {
   address: string;
   companyName: string;
   businessType: VendorBusinessType;
+  gstinUin?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -947,6 +948,7 @@ export interface CreateVendorDto {
   contactPhone: string;
   address?: string;
   businessType: VendorBusinessType;
+  gstinUin?: string;
 }
 
 export interface VendorResponse {
@@ -957,6 +959,7 @@ export interface VendorResponse {
   address: string;
   companyName: string;
   businessType: VendorBusinessType;
+  gstinUin?: string | null;
   createdAt: string;
   updatedAt: string;
 }
