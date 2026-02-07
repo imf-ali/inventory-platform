@@ -507,7 +507,7 @@ export interface CreateInventoryDto {
   hsn?: string;
   sac?: string;
   batchNo?: string;
-  scheme?: string;
+  scheme?: number | null;
   additionalDiscount?: number | null;
 }
 
@@ -539,7 +539,7 @@ export interface BulkCreateInventoryItem {
   hsn?: string | null;
   sac?: string | null;
   batchNo?: string | null;
-  scheme?: string | null;
+  scheme?: number | null;
   sgst?: string | null;
   cgst?: string | null;
   additionalDiscount?: number | null;
@@ -580,7 +580,7 @@ export interface ParseInvoiceItem {
   hsn?: string | null;
   sac?: string | null;
   batchNo?: string | null;
-  scheme?: string | null;
+  scheme?: number | null;
   sgst?: string | null;
   cgst?: string | null;
   additionalDiscount?: number | null;
@@ -612,7 +612,7 @@ export interface InventoryItem {
   hsn?: string | null;
   sac?: string | null;
   batchNo?: string | null;
-  scheme?: string | null;
+  scheme?: number | null;
   sgst?: string | null;
   cgst?: string | null;
   additionalDiscount?: number | null;
@@ -654,9 +654,11 @@ export interface LotsListResponse {
 // Checkout types
 export interface CheckoutItem {
   id: string;
-  quantity: number;
-  sellingPrice: number;
+  quantity?: number;
+  sellingPrice?: number;
   additionalDiscount?: number | null;
+  schemePayFor?: number | null;
+  schemeFree?: number | null;
 }
 
 export interface CreateCheckoutDto {
@@ -676,6 +678,8 @@ export interface CheckoutItemResponse {
   totalAmount: number;
   sgst?: string | null;
   cgst?: string | null;
+  schemePayFor?: number | null;
+  schemeFree?: number | null;
 }
 
 export interface CheckoutResponse {

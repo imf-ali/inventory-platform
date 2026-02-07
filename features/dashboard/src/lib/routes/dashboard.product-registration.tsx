@@ -113,7 +113,7 @@ export default function ProductRegistrationPage() {
     customReminders: [],
     hsn: '',
     batchNo: '',
-    scheme: '',
+    scheme: null,
     sgst: '',
     cgst: '',
     additionalDiscount: null,
@@ -158,7 +158,12 @@ export default function ProductRegistrationPage() {
       customReminders,
       hsn: item.hsn || '',
       batchNo: item.batchNo || '',
-      scheme: item.scheme || '',
+      scheme:
+        item.scheme != null
+          ? (typeof item.scheme === 'number'
+              ? item.scheme
+              : parseInt(String(item.scheme), 10)) || null
+          : null,
       sgst: item.sgst || '',
       cgst: item.cgst || '',
       additionalDiscount: item.additionalDiscount ?? null,
@@ -584,7 +589,7 @@ export default function ProductRegistrationPage() {
           customReminders: customReminders,
           hsn: product.hsn || null,
           batchNo: product.batchNo || null,
-          scheme: product.scheme || null,
+          scheme: product.scheme ?? null,
           ...(product.sgst && product.sgst.trim()
             ? { sgst: product.sgst.trim() }
             : {}),
@@ -1838,15 +1843,27 @@ function ProductAccordion({
                 Scheme/Free
               </label>
               <input
-                type="text"
+                type="number"
                 id={`scheme-${product.id}`}
                 className={styles.input}
                 placeholder="Enter the scheme/free"
-                value={product.scheme || ''}
+                min={0}
+                step={1}
+                value={
+                  product.scheme !== null && product.scheme !== undefined
+                    ? product.scheme
+                    : ''
+                }
                 onChange={(e) => {
-                  // Do not allow decimal point or decimal values in scheme
-                  const v = e.target.value.replace(/\./g, '');
-                  onChange(product.id, 'scheme', v);
+                  const val = e.target.value;
+                  if (val === '') {
+                    onChange(product.id, 'scheme', null);
+                  } else {
+                    const num = parseInt(val, 10);
+                    if (!isNaN(num) && num >= 0 && Number.isInteger(num)) {
+                      onChange(product.id, 'scheme', num);
+                    }
+                  }
                 }}
                 disabled={isLoading}
               />
