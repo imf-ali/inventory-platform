@@ -441,6 +441,7 @@ export default function CheckoutPage() {
                   <th>Selling Price</th>
                   <th>Discount</th>
                   <th>Additional Discount</th>
+                  <th>Scheme</th>
                   <th>CGST%</th>
                   <th>SGST%</th>
                   <th>Total</th>
@@ -463,6 +464,11 @@ export default function CheckoutPage() {
                         {item.additionalDiscount !== null &&
                         item.additionalDiscount !== undefined
                           ? `${item.additionalDiscount.toFixed(2)}%`
+                          : '—'}
+                      </td>
+                      <td>
+                        {item.schemePayFor != null || item.schemeFree != null
+                          ? `${item.schemePayFor ?? '—'} + ${item.schemeFree ?? '—'}`
                           : '—'}
                       </td>
                       <td>

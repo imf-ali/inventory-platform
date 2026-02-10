@@ -180,7 +180,7 @@
 }
 
 .itemsTable th {
-  padding: 1rem;
+  padding: 0.85rem 1.25rem;
   text-align: left;
   font-size: 0.9rem;
   font-weight: 600;
@@ -189,7 +189,7 @@
 }
 
 .itemsTable td {
-  padding: 1rem;
+  padding: 0.85rem 1.25rem;
   font-size: 0.9rem;
   color: var(--text-primary);
   border-bottom: 1px solid var(--border-color);
