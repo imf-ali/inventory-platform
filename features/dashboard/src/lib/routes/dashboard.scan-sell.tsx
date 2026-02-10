@@ -734,6 +734,8 @@ export default function ScanSellPage() {
       return;
     }
 
+    setShowSearchDropdown(false);
+
     setCartItems((prev) => {
       const existingItem = prev.find(
         (cartItem) => cartItem.inventoryItem.id === item.id
