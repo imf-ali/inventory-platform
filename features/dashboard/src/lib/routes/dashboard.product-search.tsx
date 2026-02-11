@@ -295,6 +295,34 @@ export default function ProductSearchPage() {
                           Expires: {formatDate(item.expiryDate)}
                         </span>
                       </div>
+                      {(item.itemType || item.discountApplicable || item.purchaseDate) && (
+                        <div className={styles.productMeta}>
+                          {item.itemType && item.itemType !== 'NORMAL' && (
+                            <span className={styles.productMetaItem}>
+                              Type:{' '}
+                              {item.itemType === 'DEGREE' && item.itemTypeDegree != null
+                                ? `Temperature (${item.itemTypeDegree}°)`
+                                : item.itemType === 'COSTLY'
+                                  ? 'Costly'
+                                  : item.itemType}
+                            </span>
+                          )}
+                          {item.discountApplicable && (
+                            <span className={styles.productMetaItem}>
+                              {item.discountApplicable === 'DISCOUNT'
+                                ? 'Discount applicable'
+                                : item.discountApplicable === 'SCHEME'
+                                  ? 'Scheme applicable'
+                                  : 'Both discount and scheme applicable'}
+                            </span>
+                          )}
+                          {item.purchaseDate && (
+                            <span className={styles.productMetaItem}>
+                              Purchased: {formatDate(item.purchaseDate)}
+                            </span>
+                          )}
+                        </div>
+                      )}
                       {item.createdAt && (
                         <div className={styles.createdInfo}>
                           <span className={styles.createdDate}>

@@ -11,6 +11,8 @@ import type {
   BulkCreateInventoryDto,
   ParseInvoiceItem,
   UploadStatus,
+  ItemType,
+  DiscountApplicable,
 } from '@inventory-platform/types';
 import { CustomRemindersSection } from '@inventory-platform/ui';
 import { useNotify } from '@inventory-platform/store';
@@ -117,6 +119,10 @@ export default function ProductRegistrationPage() {
     sgst: '',
     cgst: '',
     additionalDiscount: null,
+    itemType: 'NORMAL',
+    itemTypeDegree: undefined,
+    discountApplicable: undefined,
+    purchaseDate: undefined,
   });
 
   const handleAddProduct = () => {
@@ -167,6 +173,10 @@ export default function ProductRegistrationPage() {
       sgst: item.sgst || '',
       cgst: item.cgst || '',
       additionalDiscount: item.additionalDiscount ?? null,
+      itemType: item.itemType ?? 'NORMAL',
+      itemTypeDegree: item.itemTypeDegree,
+      discountApplicable: item.discountApplicable,
+      purchaseDate: item.purchaseDate || undefined,
     };
   };
 
@@ -446,8 +456,8 @@ export default function ProductRegistrationPage() {
     field: keyof ProductFormData,
     value: ProductFormData[keyof ProductFormData]
   ) => {
-    setProducts(
-      products.map((p) => (p.id === productId ? { ...p, [field]: value } : p))
+    setProducts((prev) =>
+      prev.map((p) => (p.id === productId ? { ...p, [field]: value } : p))
     );
     setError(null);
     setSuccess(null);
@@ -532,6 +542,21 @@ export default function ProductRegistrationPage() {
           setIsLoading(false);
           return;
         }
+
+        if (
+          product.itemType === 'DEGREE' &&
+          (product.itemTypeDegree == null ||
+            product.itemTypeDegree <= 0 ||
+            !Number.isInteger(product.itemTypeDegree))
+        ) {
+          notifyError(
+            `Product "${
+              product.name || 'Unnamed'
+            }": when Item type is DEGREE, a positive degree (e.g. 8, 24) is required`
+          );
+          setIsLoading(false);
+          return;
+        }
       }
 
       // Transform products to bulk API format
@@ -599,6 +624,24 @@ export default function ProductRegistrationPage() {
           ...(product.additionalDiscount !== null &&
           product.additionalDiscount !== undefined
             ? { additionalDiscount: product.additionalDiscount }
+            : {}),
+          ...(product.itemType != null ? { itemType: product.itemType } : {}),
+          ...(product.itemType === 'DEGREE' &&
+          product.itemTypeDegree != null &&
+          product.itemTypeDegree > 0
+            ? { itemTypeDegree: product.itemTypeDegree }
+            : {}),
+          ...(product.discountApplicable != null
+            ? { discountApplicable: product.discountApplicable }
+            : {}),
+          ...(product.purchaseDate
+            ? {
+                purchaseDate:
+                  product.purchaseDate.includes('T') ||
+                  product.purchaseDate.includes('Z')
+                    ? new Date(product.purchaseDate).toISOString()
+                    : `${product.purchaseDate}T00:00:00Z`,
+              }
             : {}),
         };
       });
@@ -1898,6 +1941,132 @@ function ProductAccordion({
                     if (!isNaN(numValue) && numValue >= 0 && numValue <= 100) {
                       onChange(product.id, 'additionalDiscount', numValue);
                     }
+                  }
+                }}
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+
+          <div className={styles.formRow}>
+            <div className={styles.formGroup}>
+              <label
+                htmlFor={`itemType-${product.id}`}
+                className={styles.label}
+              >
+                Item Type
+              </label>
+              <select
+                id={`itemType-${product.id}`}
+                className={styles.input}
+                value={product.itemType ?? 'NORMAL'}
+                onChange={(e) => {
+                  const val = e.target.value as ItemType | '';
+                  const itemType = val === '' ? 'NORMAL' : (val as ItemType);
+                  onChange(product.id, 'itemType', itemType);
+                  if (itemType !== 'DEGREE') {
+                    onChange(product.id, 'itemTypeDegree', undefined);
+                  }
+                }}
+                disabled={isLoading}
+              >
+                <option value="NORMAL">Normal</option>
+                <option value="COSTLY">Costly</option>
+                <option value="DEGREE">Temperature for the item</option>
+              </select>
+            </div>
+            {product.itemType === 'DEGREE' && (
+              <div className={styles.formGroup}>
+                <label
+                  htmlFor={`itemTypeDegree-${product.id}`}
+                  className={styles.label}
+                >
+                  Temperature / Degree *
+                </label>
+                <input
+                  type="number"
+                  id={`itemTypeDegree-${product.id}`}
+                  className={styles.input}
+                  placeholder="e.g. 8, 24"
+                  min={1}
+                  step={1}
+                  value={
+                    product.itemTypeDegree != null ? product.itemTypeDegree : ''
+                  }
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '') {
+                      onChange(product.id, 'itemTypeDegree', undefined);
+                    } else {
+                      const num = parseInt(val, 10);
+                      if (
+                        !isNaN(num) &&
+                        num > 0 &&
+                        Number.isInteger(num)
+                      ) {
+                        onChange(product.id, 'itemTypeDegree', num);
+                      }
+                    }
+                  }}
+                  disabled={isLoading}
+                />
+              </div>
+            )}
+            <div className={styles.formGroup}>
+              <label
+                htmlFor={`discountApplicable-${product.id}`}
+                className={styles.label}
+              >
+                Discount applicable
+              </label>
+              <select
+                id={`discountApplicable-${product.id}`}
+                className={styles.input}
+                value={product.discountApplicable ?? ''}
+                onChange={(e) => {
+                  const val = e.target.value as DiscountApplicable | '';
+                  onChange(
+                    product.id,
+                    'discountApplicable',
+                    val === '' ? undefined : (val as DiscountApplicable)
+                  );
+                }}
+                disabled={isLoading}
+              >
+                <option value="">— Select —</option>
+                <option value="DISCOUNT">Discount applicable</option>
+                <option value="SCHEME">Scheme applicable</option>
+                <option value="DISCOUNT_AND_SCHEME">
+                  Both discount and scheme applicable
+                </option>
+              </select>
+            </div>
+            <div className={styles.formGroup}>
+              <label
+                htmlFor={`purchaseDate-${product.id}`}
+                className={styles.label}
+              >
+                Purchase date
+              </label>
+              <input
+                type="date"
+                id={`purchaseDate-${product.id}`}
+                className={styles.input}
+                value={
+                  product.purchaseDate
+                    ? new Date(product.purchaseDate).toISOString().split('T')[0]
+                    : ''
+                }
+                onChange={(e) => {
+                  const dateValue = e.target.value;
+                  if (dateValue) {
+                    onChange(
+                      product.id,
+                      'purchaseDate',
+                      `${dateValue}T00:00:00.000Z`
+                    );
+                  } else {
+                    onChange(product.id, 'purchaseDate', undefined);
                   }
                 }}
                 disabled={isLoading}

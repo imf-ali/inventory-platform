@@ -487,6 +487,12 @@ export interface ProcessJoinRequestResponse {
 }
 
 // Inventory types
+export type ItemType = 'NORMAL' | 'COSTLY' | 'DEGREE';
+export type DiscountApplicable =
+  | 'DISCOUNT'
+  | 'SCHEME'
+  | 'DISCOUNT_AND_SCHEME';
+
 export interface CreateInventoryDto {
   barcode: string;
   name: string;
@@ -509,6 +515,10 @@ export interface CreateInventoryDto {
   batchNo?: string;
   scheme?: number | null;
   additionalDiscount?: number | null;
+  itemType?: ItemType;
+  itemTypeDegree?: number;
+  discountApplicable?: DiscountApplicable;
+  purchaseDate?: string;
 }
 
 export interface InventoryResponse {
@@ -543,6 +553,10 @@ export interface BulkCreateInventoryItem {
   sgst?: string | null;
   cgst?: string | null;
   additionalDiscount?: number | null;
+  itemType?: ItemType;
+  itemTypeDegree?: number;
+  discountApplicable?: DiscountApplicable;
+  purchaseDate?: string;
 }
 
 export interface BulkCreateInventoryDto {
@@ -584,6 +598,10 @@ export interface ParseInvoiceItem {
   sgst?: string | null;
   cgst?: string | null;
   additionalDiscount?: number | null;
+  itemType?: ItemType;
+  itemTypeDegree?: number;
+  discountApplicable?: DiscountApplicable;
+  purchaseDate?: string | null;
 }
 
 export interface ParseInvoiceResponse {
@@ -617,6 +635,10 @@ export interface InventoryItem {
   cgst?: string | null;
   additionalDiscount?: number | null;
   createdAt?: string;
+  itemType?: ItemType;
+  itemTypeDegree?: number;
+  discountApplicable?: DiscountApplicable;
+  purchaseDate?: string;
 }
 
 export interface InventoryListResponse {
