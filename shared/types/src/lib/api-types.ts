@@ -493,6 +493,8 @@ export type DiscountApplicable =
   | 'SCHEME'
   | 'DISCOUNT_AND_SCHEME';
 
+export type SchemeType = 'FIXED_UNITS' | 'PERCENTAGE';
+
 export interface CreateInventoryDto {
   barcode: string;
   name: string;
@@ -514,6 +516,8 @@ export interface CreateInventoryDto {
   sac?: string;
   batchNo?: string;
   scheme?: number | null;
+  schemeType?: SchemeType;
+  schemePercentage?: number | null;
   additionalDiscount?: number | null;
   itemType?: ItemType;
   itemTypeDegree?: number;
@@ -550,6 +554,8 @@ export interface BulkCreateInventoryItem {
   sac?: string | null;
   batchNo?: string | null;
   scheme?: number | null;
+  schemeType?: SchemeType;
+  schemePercentage?: number | null;
   sgst?: string | null;
   cgst?: string | null;
   additionalDiscount?: number | null;
@@ -595,6 +601,8 @@ export interface ParseInvoiceItem {
   sac?: string | null;
   batchNo?: string | null;
   scheme?: number | null;
+  schemeType?: SchemeType;
+  schemePercentage?: number | null;
   sgst?: string | null;
   cgst?: string | null;
   additionalDiscount?: number | null;
@@ -631,6 +639,8 @@ export interface InventoryItem {
   sac?: string | null;
   batchNo?: string | null;
   scheme?: number | null;
+  schemeType?: SchemeType;
+  schemePercentage?: number | null;
   sgst?: string | null;
   cgst?: string | null;
   additionalDiscount?: number | null;

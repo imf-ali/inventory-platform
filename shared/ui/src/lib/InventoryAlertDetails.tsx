@@ -235,15 +235,40 @@ export function InventoryAlertDetails({
                   </div>
                 </div>
               )}
-              {item?.scheme && (
-                <div className={styles.detailCard}>
-                  <div className={styles.detailIcon}>🎁</div>
-                  <div className={styles.detailContent}>
-                    <span className={styles.detailLabel}>Scheme</span>
-                    <span className={styles.detailValue}>{item.scheme}</span>
-                  </div>
-                </div>
-              )}
+              {(() => {
+                const schemeType = item?.schemeType ?? 'FIXED_UNITS';
+                if (schemeType === 'PERCENTAGE' && item?.schemePercentage != null) {
+                  return (
+                    <div className={styles.detailCard}>
+                      <div className={styles.detailIcon}>🎁</div>
+                      <div className={styles.detailContent}>
+                        <span className={styles.detailLabel}>Scheme</span>
+                        <span className={styles.detailValue}>
+                          {item.schemePercentage}% extra free
+                        </span>
+                      </div>
+                    </div>
+                  );
+                }
+                if (
+                  (schemeType === 'FIXED_UNITS' || !item?.schemeType) &&
+                  item?.scheme != null &&
+                  item.scheme > 0
+                ) {
+                  return (
+                    <div className={styles.detailCard}>
+                      <div className={styles.detailIcon}>🎁</div>
+                      <div className={styles.detailContent}>
+                        <span className={styles.detailLabel}>Scheme</span>
+                        <span className={styles.detailValue}>
+                          {item.scheme} free
+                        </span>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
               {item?.description && (
                 <div className={styles.detailCardFull}>
                   <div className={styles.detailIcon}>📝</div>

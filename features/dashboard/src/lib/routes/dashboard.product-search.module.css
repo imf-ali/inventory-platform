@@ -246,6 +246,10 @@
   font-weight: 500;
 }
 
+.productMetaScheme {
+  margin-top: 0.5rem;
+}
+
 .location {
   font-size: 0.85rem;
   color: var(--text-secondary);
