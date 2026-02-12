@@ -408,6 +408,7 @@ export default function ScanSellPage() {
   const [additionalDiscountOverrides, setAdditionalDiscountOverrides] = useState<
     Record<string, number | null>
   >({});
+  const [detailModalItem, setDetailModalItem] = useState<CartItem | null>(null);
   const searchWrapperRef = useRef<HTMLDivElement>(null);
   const { error: notifyError } = useNotify;
 
@@ -1405,9 +1406,14 @@ export default function ScanSellPage() {
                   >
                     <div className={styles.itemInfo}>
                       <div className={styles.itemHeader}>
-                        <span className={styles.itemName}>
+                        <button
+                          type="button"
+                          className={styles.itemNameButton}
+                          onClick={() => setDetailModalItem(cartItem)}
+                          aria-label="View pricing details"
+                        >
                           {cartItem.inventoryItem.name || 'Unnamed Product'}
-                        </span>
+                        </button>
                         {cartItem.inventoryItem.companyName && (
                           <span className={styles.itemCompany}>
                             {cartItem.inventoryItem.companyName}
@@ -1786,6 +1792,192 @@ export default function ScanSellPage() {
           </div>
         </aside>
       </div>
+
+      {detailModalItem && (() => {
+        const apiItem = cartData?.items?.find(
+          (i: CheckoutItemResponse) => i.inventoryId === detailModalItem.inventoryItem.id
+        );
+        const mrp = detailModalItem.inventoryItem.maximumRetailPrice;
+        const price = detailModalItem.price;
+        const qty = detailModalItem.quantity;
+        const addDisc = getEffectiveAdditionalDiscount(
+          detailModalItem.inventoryItem.id,
+          detailModalItem
+        );
+        const schemeLabel =
+          detailModalItem.schemeType === 'PERCENTAGE' &&
+          detailModalItem.schemePercentage != null
+            ? `${detailModalItem.schemePercentage}%`
+            : (detailModalItem.schemePayFor != null || detailModalItem.schemeFree != null)
+              ? `${detailModalItem.schemePayFor ?? 0} + ${detailModalItem.schemeFree ?? 0}`
+              : '—';
+        return (
+          <div
+            className={styles.detailModalOverlay}
+            onClick={() => setDetailModalItem(null)}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cart-detail-modal-title"
+          >
+            <div
+              className={styles.detailModalContent}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className={styles.detailModalHeader}>
+                <div className={styles.detailModalHeaderContent}>
+                  <span className={styles.detailModalProductIcon} aria-hidden>📦</span>
+                  <div>
+                    <h3 id="cart-detail-modal-title" className={styles.detailModalTitle}>
+                      {detailModalItem.inventoryItem.name || 'Product'}
+                    </h3>
+                    {detailModalItem.inventoryItem.companyName && (
+                      <p className={styles.detailModalSubtitle}>
+                        {detailModalItem.inventoryItem.companyName}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className={styles.detailModalClose}
+                  onClick={() => setDetailModalItem(null)}
+                  aria-label="Close"
+                >
+                  ×
+                </button>
+              </div>
+              <div className={styles.detailModalBody}>
+                <div className={styles.detailModalSection}>
+                  <div className={styles.detailModalSectionHeader}>
+                    <span className={styles.detailModalSectionIcon} aria-hidden>📋</span>
+                    <h4 className={styles.detailModalSectionTitle}>Product Information</h4>
+                  </div>
+                  <div className={styles.detailModalDetailsGrid}>
+                    <div className={styles.detailModalDetailCard}>
+                      <div className={styles.detailModalDetailIcon}>🏷️</div>
+                      <div className={styles.detailModalDetailContent}>
+                        <span className={styles.detailModalDetailLabel}>Product name</span>
+                        <span className={styles.detailModalDetailValue}>
+                          {detailModalItem.inventoryItem.name || '—'}
+                        </span>
+                      </div>
+                    </div>
+                    {detailModalItem.inventoryItem.companyName && (
+                      <div className={styles.detailModalDetailCard}>
+                        <div className={styles.detailModalDetailIcon}>🏢</div>
+                        <div className={styles.detailModalDetailContent}>
+                          <span className={styles.detailModalDetailLabel}>Company</span>
+                          <span className={styles.detailModalDetailValue}>
+                            {detailModalItem.inventoryItem.companyName}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    <div className={styles.detailModalDetailCard}>
+                      <div className={styles.detailModalDetailIcon}>🔢</div>
+                      <div className={styles.detailModalDetailContent}>
+                        <span className={styles.detailModalDetailLabel}>Quantity</span>
+                        <span className={styles.detailModalDetailValue}>{qty}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className={styles.detailModalSection}>
+                  <div className={styles.detailModalSectionHeader}>
+                    <span className={styles.detailModalSectionIcon} aria-hidden>💰</span>
+                    <h4 className={styles.detailModalSectionTitle}>Pricing</h4>
+                  </div>
+                  <div className={styles.detailModalPricingGrid}>
+                    <div className={`${styles.detailModalDetailCard} ${styles.detailModalPricingCard}`}>
+                      <div className={styles.detailModalDetailIcon}>💵</div>
+                      <div className={styles.detailModalDetailContent}>
+                        <span className={styles.detailModalDetailLabel}>Price to Retailer (PTR)</span>
+                        <span className={`${styles.detailModalDetailValue} ${styles.detailModalPriceValue}`}>
+                          ₹{price.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className={`${styles.detailModalDetailCard} ${styles.detailModalPricingCard}`}>
+                      <div className={styles.detailModalDetailIcon}>🏷️</div>
+                      <div className={styles.detailModalDetailContent}>
+                        <span className={styles.detailModalDetailLabel}>MRP</span>
+                        <span className={`${styles.detailModalDetailValue} ${styles.detailModalMrpValue}`}>
+                          ₹{mrp.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                    {mrp > 0 && (
+                      <div className={`${styles.detailModalDetailCard} ${styles.detailModalPricingCard}`}>
+                        <div className={styles.detailModalDetailIcon}>📉</div>
+                        <div className={styles.detailModalDetailContent}>
+                          <span className={styles.detailModalDetailLabel}>Discount off MRP</span>
+                          <span className={styles.detailModalDetailValue}>
+                            {(((mrp - price) / mrp) * 100).toFixed(1)}%
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    <div className={`${styles.detailModalDetailCard} ${styles.detailModalPricingCard}`}>
+                      <div className={styles.detailModalDetailIcon}>🏷️</div>
+                      <div className={styles.detailModalDetailContent}>
+                        <span className={styles.detailModalDetailLabel}>Additional discount</span>
+                        <span className={styles.detailModalDetailValue}>
+                          {addDisc != null ? `${addDisc}%` : '—'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className={`${styles.detailModalDetailCard} ${styles.detailModalPricingCard}`}>
+                      <div className={styles.detailModalDetailIcon}>🎁</div>
+                      <div className={styles.detailModalDetailContent}>
+                        <span className={styles.detailModalDetailLabel}>Scheme</span>
+                        <span className={styles.detailModalDetailValue}>{schemeLabel}</span>
+                      </div>
+                    </div>
+                    {apiItem?.sgst != null && (
+                      <div className={`${styles.detailModalDetailCard} ${styles.detailModalPricingCard}`}>
+                        <div className={styles.detailModalDetailIcon}>📊</div>
+                        <div className={styles.detailModalDetailContent}>
+                          <span className={styles.detailModalDetailLabel}>SGST</span>
+                          <span className={styles.detailModalDetailValue}>{apiItem.sgst}%</span>
+                        </div>
+                      </div>
+                    )}
+                    {apiItem?.cgst != null && (
+                      <div className={`${styles.detailModalDetailCard} ${styles.detailModalPricingCard}`}>
+                        <div className={styles.detailModalDetailIcon}>📊</div>
+                        <div className={styles.detailModalDetailContent}>
+                          <span className={styles.detailModalDetailLabel}>CGST</span>
+                          <span className={styles.detailModalDetailValue}>{apiItem.cgst}%</span>
+                        </div>
+                      </div>
+                    )}
+                    {apiItem?.discount != null && (
+                      <div className={`${styles.detailModalDetailCard} ${styles.detailModalPricingCard}`}>
+                        <div className={styles.detailModalDetailIcon}>💰</div>
+                        <div className={styles.detailModalDetailContent}>
+                          <span className={styles.detailModalDetailLabel}>Discount (amount)</span>
+                          <span className={styles.detailModalDetailValue}>
+                            ₹{Number(apiItem.discount).toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    <div className={`${styles.detailModalDetailCard} ${styles.detailModalPricingCard}`}>
+                      <div className={styles.detailModalDetailIcon}>₹</div>
+                      <div className={styles.detailModalDetailContent}>
+                        <span className={styles.detailModalDetailLabel}>Total amount</span>
+                        <span className={`${styles.detailModalDetailValue} ${styles.detailModalTotalValue}`}>
+                          ₹{(apiItem?.totalAmount ?? price * qty).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
