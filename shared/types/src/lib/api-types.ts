@@ -689,6 +689,9 @@ export interface CheckoutItem {
   quantity?: number;
   sellingPrice?: number;
   additionalDiscount?: number | null;
+  // Scheme can be represented either as fixed units or percentage
+  schemeType?: SchemeType | null;
+  schemePercentage?: number | null;
   schemePayFor?: number | null;
   schemeFree?: number | null;
 }
@@ -710,8 +713,10 @@ export interface CheckoutItemResponse {
   totalAmount: number;
   sgst?: string | null;
   cgst?: string | null;
+  schemeType?: SchemeType | null;
   schemePayFor?: number | null;
   schemeFree?: number | null;
+  schemePercentage?: number | null;
 }
 
 export interface CheckoutResponse {

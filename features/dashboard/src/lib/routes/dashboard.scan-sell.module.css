@@ -959,6 +959,10 @@
   width: 44px;
 }
 
+.itemSchemeInputs .itemAdditionalInput {
+  width: 120px;
+}
+
 .itemSellingPriceInput:hover:not(:disabled):not(:focus),
 .itemAdditionalInput:hover:not(:disabled):not(:focus) {
   border-color: var(--border-hover, #94a3b8);

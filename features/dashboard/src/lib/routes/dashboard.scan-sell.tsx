@@ -22,12 +22,16 @@ export function meta() {
   ];
 }
 
+type SchemeTypeCart = 'FIXED_UNITS' | 'PERCENTAGE';
+
 interface CartItem {
   inventoryItem: InventoryItem;
   quantity: number;
   price: number;
+  schemeType?: SchemeTypeCart | null;
   schemePayFor?: number | null;
   schemeFree?: number | null;
+  schemePercentage?: number | null;
 }
 
 function CartQuantityInput({
@@ -245,6 +249,134 @@ function CartAdditionalDiscountInput({
   );
 }
 
+function CartSchemeInput({
+  id,
+  schemeType,
+  payFor,
+  free,
+  percentage,
+  onCommitUnits,
+  onCommitPercentage,
+  disabled,
+}: {
+  id?: string;
+  schemeType: SchemeTypeCart | null;
+  payFor: number | null;
+  free: number | null;
+  percentage: number | null;
+  onCommitUnits: (payFor: number | null, free: number | null) => void;
+  onCommitPercentage: (percentage: number | null) => void;
+  disabled: boolean;
+}) {
+  const formatFromProps = () => {
+    // Use schemeType first to decide what to show (API can return both values)
+    if (schemeType === 'PERCENTAGE' && percentage != null && percentage !== undefined) {
+      return `${percentage}%`;
+    }
+    if (
+      (schemeType === 'FIXED_UNITS' || schemeType == null) &&
+      (payFor != null || free != null)
+    ) {
+      const payStr = (payFor ?? 0).toString();
+      const freeStr = (free ?? 0).toString();
+      return `${payStr} + ${freeStr}`;
+    }
+    return '';
+  };
+
+  const [draft, setDraft] = useState(formatFromProps());
+
+  useEffect(() => {
+    setDraft(formatFromProps());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [schemeType, payFor, free, percentage]);
+
+  const handleChange = (value: string) => {
+    // Allow only digits, spaces, '+', and '%'
+    if (!/^[0-9+%\s]*$/.test(value)) {
+      return;
+    }
+    const plusCount = (value.match(/\+/g) ?? []).length;
+    const percCount = (value.match(/%/g) ?? []).length;
+    // At most one '+' and at most one '%'
+    if (plusCount > 1 || percCount > 1) {
+      return;
+    }
+    // Do not allow mixing '+' and '%'
+    if (plusCount > 0 && percCount > 0) {
+      return;
+    }
+    setDraft(value);
+  };
+
+  const commit = () => {
+    const trimmed = draft.trim();
+    if (trimmed === '') {
+      onCommitUnits(null, null);
+      onCommitPercentage(null);
+      return;
+    }
+
+    // Percentage format e.g. "10%" or "10 %"
+    if (trimmed.includes('%')) {
+      const numStr = trimmed.replace('%', '').trim();
+      const num = parseFloat(numStr);
+      if (!isNaN(num) && num >= 0 && num <= 100) {
+        onCommitPercentage(num);
+        return;
+      }
+      setDraft(formatFromProps());
+      return;
+    }
+
+    // Fixed units format e.g. "10 + 1" or "10+1"
+    const plusIndex = trimmed.indexOf('+');
+    if (plusIndex !== -1) {
+      const left = trimmed.slice(0, plusIndex).trim();
+      const right = trimmed.slice(plusIndex + 1).trim();
+      const pay = parseInt(left, 10);
+      const freeVal = parseInt(right, 10);
+      if (
+        !isNaN(pay) &&
+        !isNaN(freeVal) &&
+        pay >= 0 &&
+        freeVal >= 0 &&
+        Number.isInteger(pay) &&
+        Number.isInteger(freeVal)
+      ) {
+        onCommitUnits(pay, freeVal);
+        return;
+      }
+      setDraft(formatFromProps());
+      return;
+    }
+
+    // Invalid format, reset to last valid representation
+    setDraft(formatFromProps());
+  };
+
+  return (
+    <input
+      id={id}
+      type="text"
+      className={styles.itemAdditionalInput}
+      value={draft}
+      placeholder="10 + 1 or 10%"
+      disabled={disabled}
+      onChange={(e: ChangeEvent<HTMLInputElement>) =>
+        handleChange(e.target.value)
+      }
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          commit();
+          e.currentTarget.blur();
+        }
+      }}
+    />
+  );
+}
+
 export default function ScanSellPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -445,7 +577,12 @@ export default function ScanSellPage() {
           (i) => i.inventoryItem.id === resItem.inventoryId
         );
         const inventoryItem: InventoryItem = existing
-          ? { ...existing.inventoryItem, additionalDiscount: resItem.additionalDiscount ?? existing.inventoryItem.additionalDiscount }
+          ? {
+              ...existing.inventoryItem,
+              additionalDiscount:
+                resItem.additionalDiscount ??
+                existing.inventoryItem.additionalDiscount,
+            }
           : {
               id: resItem.inventoryId,
               lotId: '',
@@ -468,8 +605,10 @@ export default function ScanSellPage() {
           inventoryItem,
           quantity: resItem.quantity,
           price: resItem.sellingPrice,
+          schemeType: resItem.schemeType ?? null,
           schemePayFor: resItem.schemePayFor ?? null,
           schemeFree: resItem.schemeFree ?? null,
+          schemePercentage: resItem.schemePercentage ?? null,
         };
       });
     },
@@ -491,7 +630,12 @@ export default function ScanSellPage() {
     originalItem?: CartItem,
     overrides?: Record<string, number | null>,
     additionalDiscountUpdate?: { inventoryId: string; additionalDiscount: number | null },
-    schemeUpdate?: { inventoryId: string; schemePayFor: number | null; schemeFree: number | null },
+    schemeUpdate?: {
+      inventoryId: string;
+      schemePayFor?: number | null;
+      schemeFree?: number | null;
+      schemePercentage?: number | null;
+    },
     sellingPriceUpdate?: { inventoryId: string; sellingPrice: number }
   ) => {
     // Prevent duplicate calls
@@ -506,6 +650,8 @@ export default function ScanSellPage() {
       additionalDiscount?: number | null;
       schemePayFor?: number | null;
       schemeFree?: number | null;
+      schemeType?: 'FIXED_UNITS' | 'PERCENTAGE' | null;
+      schemePercentage?: number | null;
     };
 
     const effectiveOverrides = overrides ?? additionalDiscountOverrides;
@@ -522,14 +668,28 @@ export default function ScanSellPage() {
         if (addDisc !== undefined && addDisc !== null) {
           result = { ...result, additionalDiscount: addDisc };
         }
-        if (
-          cartItem.schemePayFor !== undefined &&
-          cartItem.schemePayFor !== null
-        ) {
-          result = { ...result, schemePayFor: cartItem.schemePayFor };
-        }
-        if (cartItem.schemeFree !== undefined && cartItem.schemeFree !== null) {
-          result = { ...result, schemeFree: cartItem.schemeFree };
+        const hasPercentage =
+          cartItem.schemePercentage !== undefined &&
+          cartItem.schemePercentage !== null;
+        const hasUnits =
+          (cartItem.schemePayFor !== undefined &&
+            cartItem.schemePayFor !== null) ||
+          (cartItem.schemeFree !== undefined &&
+            cartItem.schemeFree !== null);
+
+        if (hasPercentage) {
+          result = {
+            ...result,
+            schemeType: 'PERCENTAGE',
+            schemePercentage: cartItem.schemePercentage ?? null,
+          };
+        } else if (hasUnits) {
+          result = {
+            ...result,
+            schemeType: 'FIXED_UNITS',
+            schemePayFor: cartItem.schemePayFor ?? null,
+            schemeFree: cartItem.schemeFree ?? null,
+          };
         }
       }
       return result;
@@ -564,7 +724,7 @@ export default function ScanSellPage() {
           },
         ];
       } else if (schemeUpdate) {
-        // Only scheme changed: send id + schemePayFor + schemeFree
+        // Only scheme changed: send id + scheme info
         const item = items.find(
           (i) => i.inventoryItem.id === schemeUpdate.inventoryId
         );
@@ -573,11 +733,30 @@ export default function ScanSellPage() {
           setIsUpdatingCart(false);
           return;
         }
+        const hasPercentage =
+          schemeUpdate.schemePercentage !== undefined &&
+          schemeUpdate.schemePercentage !== null;
+        const hasUnits =
+          (schemeUpdate.schemePayFor !== undefined &&
+            schemeUpdate.schemePayFor !== null) ||
+          (schemeUpdate.schemeFree !== undefined &&
+            schemeUpdate.schemeFree !== null);
         itemsToSend = [
           {
             id: item.inventoryItem.id,
-            schemePayFor: schemeUpdate.schemePayFor ?? null,
-            schemeFree: schemeUpdate.schemeFree ?? null,
+            ...(hasPercentage
+              ? {
+                  schemeType: 'PERCENTAGE' as const,
+                  schemePercentage: schemeUpdate.schemePercentage ?? null,
+                }
+              : {}),
+            ...(!hasPercentage && hasUnits
+              ? {
+                  schemeType: 'FIXED_UNITS' as const,
+                  schemePayFor: schemeUpdate.schemePayFor ?? null,
+                  schemeFree: schemeUpdate.schemeFree ?? null,
+                }
+              : {}),
           },
         ];
       } else if (additionalDiscountUpdate) {
@@ -840,15 +1019,63 @@ export default function ScanSellPage() {
     setCartItems((prev) =>
       prev.map((item) =>
         item.inventoryItem.id === inventoryId
-          ? { ...item, schemePayFor, schemeFree }
+          ? {
+              ...item,
+              schemeType: 'FIXED_UNITS',
+              schemePayFor,
+              schemeFree,
+              schemePercentage: null,
+            }
           : item
       )
     );
-    syncCartToAPI(cartItems, undefined, undefined, undefined, undefined, undefined, {
-      inventoryId,
-      schemePayFor,
-      schemeFree,
-    });
+    syncCartToAPI(
+      cartItems,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      {
+        inventoryId,
+        schemePayFor,
+        schemeFree,
+        schemePercentage: null,
+      }
+    );
+  };
+
+  const handleSchemePercentageChange = (
+    inventoryId: string,
+    schemePercentage: number | null
+  ) => {
+    setCartItems((prev) =>
+      prev.map((item) =>
+        item.inventoryItem.id === inventoryId
+          ? {
+              ...item,
+              schemeType: 'PERCENTAGE',
+              schemePercentage,
+              schemePayFor: null,
+              schemeFree: null,
+            }
+          : item
+      )
+    );
+    syncCartToAPI(
+      cartItems,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      {
+        inventoryId,
+        schemePercentage,
+        schemePayFor: null,
+        schemeFree: null,
+      }
+    );
   };
 
   const handleSellingPriceChange = (inventoryId: string, sellingPrice: number) => {
@@ -1249,32 +1476,26 @@ export default function ScanSellPage() {
                               Scheme
                             </label>
                             <div className={styles.itemSchemeInputs}>
-                              <CartSchemeIntegerInput
-                                id={`scheme-pay-${cartItem.inventoryItem.id}`}
-                                value={cartItem.schemePayFor ?? null}
-                                onCommit={(num) =>
+                              <CartSchemeInput
+                                id={`scheme-${cartItem.inventoryItem.id}`}
+                                schemeType={cartItem.schemeType ?? null}
+                                payFor={cartItem.schemePayFor ?? null}
+                                free={cartItem.schemeFree ?? null}
+                                percentage={cartItem.schemePercentage ?? null}
+                                onCommitUnits={(payFor, free) =>
                                   handleSchemeChange(
                                     cartItem.inventoryItem.id,
-                                    num,
-                                    cartItem.schemeFree ?? null
+                                    payFor,
+                                    free
+                                  )
+                                }
+                                onCommitPercentage={(perc) =>
+                                  handleSchemePercentageChange(
+                                    cartItem.inventoryItem.id,
+                                    perc
                                   )
                                 }
                                 disabled={isUpdatingCart}
-                                placeholder="Pay"
-                              />
-                              <span className={styles.itemSchemeSeparator}>+</span>
-                              <CartSchemeIntegerInput
-                                id={`scheme-free-${cartItem.inventoryItem.id}`}
-                                value={cartItem.schemeFree ?? null}
-                                onCommit={(num) =>
-                                  handleSchemeChange(
-                                    cartItem.inventoryItem.id,
-                                    cartItem.schemePayFor ?? null,
-                                    num
-                                  )
-                                }
-                                disabled={isUpdatingCart}
-                                placeholder="Free"
                               />
                             </div>
                           </div>
