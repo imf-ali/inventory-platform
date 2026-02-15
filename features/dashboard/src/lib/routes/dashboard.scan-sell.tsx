@@ -1769,6 +1769,45 @@ export default function ScanSellPage() {
               </>
             )}
           </div>
+          {cartData &&
+            (cartData.totalCost != null ||
+              cartData.revenueBeforeTax != null ||
+              cartData.revenueAfterTax != null ||
+              cartData.totalProfit != null ||
+              cartData.marginPercent != null) && (
+              <div className={styles.costMarginDetail}>
+                <div className={styles.summaryRow}>
+                  <span>Total Cost</span>
+                  <span>
+                    ₹{(cartData.totalCost ?? 0).toFixed(2)}
+                  </span>
+                </div>
+                {cartData.revenueBeforeTax != null && (
+                  <div className={styles.summaryRow}>
+                    <span>Revenue (before tax)</span>
+                    <span>₹{cartData.revenueBeforeTax.toFixed(2)}</span>
+                  </div>
+                )}
+                {cartData.revenueAfterTax != null && (
+                  <div className={styles.summaryRow}>
+                    <span>Revenue (after tax)</span>
+                    <span>₹{cartData.revenueAfterTax.toFixed(2)}</span>
+                  </div>
+                )}
+                {cartData.totalProfit != null && (
+                  <div className={styles.summaryRow}>
+                    <span>Profit</span>
+                    <span>₹{cartData.totalProfit.toFixed(2)}</span>
+                  </div>
+                )}
+                {cartData.marginPercent != null && (
+                  <div className={styles.summaryRow}>
+                    <span>Margin</span>
+                    <span>{cartData.marginPercent.toFixed(1)}%</span>
+                  </div>
+                )}
+              </div>
+            )}
           <div className={styles.cartActions}>
             <button className={styles.clearBtn} onClick={handleClearCart}>
               Clear Cart

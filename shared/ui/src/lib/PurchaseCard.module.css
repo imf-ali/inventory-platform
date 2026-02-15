@@ -232,6 +232,11 @@
   color: #16a34a;
 }
 
+.itemMargin {
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+}
+
 .details {
   display: flex;
   flex-direction: column;
@@ -284,6 +289,12 @@
   font-size: 1.1rem;
   font-weight: 700;
   color: var(--text-primary);
+}
+
+.marginDivider {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-color);
 }
 
 .divider {

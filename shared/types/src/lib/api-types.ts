@@ -717,6 +717,10 @@ export interface CheckoutItemResponse {
   schemePayFor?: number | null;
   schemeFree?: number | null;
   schemePercentage?: number | null;
+  costPrice?: number | null;
+  costTotal?: number | null;
+  profit?: number | null;
+  marginPercent?: number | null;
 }
 
 export interface CheckoutResponse {
@@ -732,6 +736,11 @@ export interface CheckoutResponse {
   grandTotal: number;
   paymentMethod: string;
   status: string;
+  totalCost?: number | null;
+  revenueBeforeTax?: number | null;
+  revenueAfterTax?: number | null;
+  totalProfit?: number | null;
+  marginPercent?: number | null;
 }
 
 // Cart types
@@ -759,6 +768,11 @@ export interface CartResponse {
   customerDlNo?: string;
   customerPan?: string;
   paymentMethod?: string;
+  totalCost?: number | null;
+  revenueBeforeTax?: number | null;
+  revenueAfterTax?: number | null;
+  totalProfit?: number | null;
+  marginPercent?: number | null;
 }
 
 export interface AddToCartDto {
@@ -800,6 +814,11 @@ export interface Purchase {
   customerName: string | null;
   customerAddress: string | null;
   customerPhone: string | null;
+  totalCost?: number | null;
+  revenueBeforeTax?: number | null;
+  revenueAfterTax?: number | null;
+  totalProfit?: number | null;
+  marginPercent?: number | null;
 }
 
 export interface PurchaseHistoryResponse {

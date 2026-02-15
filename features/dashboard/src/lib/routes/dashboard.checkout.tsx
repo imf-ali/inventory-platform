@@ -526,6 +526,43 @@ export default function CheckoutPage() {
               <span>Grand Total:</span>
               <span>₹{checkoutData.grandTotal.toFixed(2)}</span>
             </div>
+            {(checkoutData.totalCost != null ||
+              checkoutData.revenueBeforeTax != null ||
+              checkoutData.revenueAfterTax != null ||
+              checkoutData.totalProfit != null ||
+              checkoutData.marginPercent != null) && (
+              <>
+                <div className={styles.summaryDivider} />
+                <div className={styles.summaryRow}>
+                  <span>Total Cost:</span>
+                  <span>₹{(checkoutData.totalCost ?? 0).toFixed(2)}</span>
+                </div>
+                {checkoutData.revenueBeforeTax != null && (
+                  <div className={styles.summaryRow}>
+                    <span>Revenue (before tax):</span>
+                    <span>₹{checkoutData.revenueBeforeTax.toFixed(2)}</span>
+                  </div>
+                )}
+                {checkoutData.revenueAfterTax != null && (
+                  <div className={styles.summaryRow}>
+                    <span>Revenue (after tax):</span>
+                    <span>₹{checkoutData.revenueAfterTax.toFixed(2)}</span>
+                  </div>
+                )}
+                {checkoutData.totalProfit != null && (
+                  <div className={styles.summaryRow}>
+                    <span>Profit:</span>
+                    <span>₹{checkoutData.totalProfit.toFixed(2)}</span>
+                  </div>
+                )}
+                {checkoutData.marginPercent != null && (
+                  <div className={styles.summaryRow}>
+                    <span>Margin:</span>
+                    <span>{checkoutData.marginPercent.toFixed(1)}%</span>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
 
