@@ -34,9 +34,13 @@
 
 .formRow {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.5rem;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1rem;
   margin-bottom: 1.75rem;
+}
+
+.formRow > * {
+  min-width: 0;
 }
 
 .formRow:last-child {

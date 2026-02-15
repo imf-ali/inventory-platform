@@ -189,6 +189,24 @@ export function PurchaseCard({ purchase }: PurchaseCardProps) {
                         Discount: ₹{item.discount.toFixed(2)}
                       </span>
                     )}
+                    {(item.costTotal != null ||
+                      item.profit != null ||
+                      item.marginPercent != null) && (
+                      <span className={styles.itemMargin}>
+                        {item.costTotal != null && (
+                          <>Cost: ₹{item.costTotal.toFixed(2)}</>
+                        )}
+                        {item.profit != null && (
+                          <>
+                            {' '}
+                            | Profit: ₹{item.profit.toFixed(2)}
+                          </>
+                        )}
+                        {item.marginPercent != null && (
+                          <> | Margin: {item.marginPercent.toFixed(1)}%</>
+                        )}
+                      </span>
+                    )}
                   </div>
                 </div>
               ))}
@@ -246,6 +264,59 @@ export function PurchaseCard({ purchase }: PurchaseCardProps) {
                   ₹{purchase.grandTotal.toFixed(2)}
                 </span>
               </div>
+              {(purchase.totalCost != null ||
+                purchase.revenueBeforeTax != null ||
+                purchase.revenueAfterTax != null ||
+                purchase.totalProfit != null ||
+                purchase.marginPercent != null) && (
+                <>
+                  <div className={styles.marginDivider} />
+                  {purchase.totalCost != null && (
+                    <div className={styles.priceRow}>
+                      <span className={styles.priceLabel}>Total Cost:</span>
+                      <span className={styles.priceValue}>
+                        ₹{purchase.totalCost.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  {purchase.revenueBeforeTax != null && (
+                    <div className={styles.priceRow}>
+                      <span className={styles.priceLabel}>
+                        Revenue (before tax):
+                      </span>
+                      <span className={styles.priceValue}>
+                        ₹{purchase.revenueBeforeTax.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  {purchase.revenueAfterTax != null && (
+                    <div className={styles.priceRow}>
+                      <span className={styles.priceLabel}>
+                        Revenue (after tax):
+                      </span>
+                      <span className={styles.priceValue}>
+                        ₹{purchase.revenueAfterTax.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  {purchase.totalProfit != null && (
+                    <div className={styles.priceRow}>
+                      <span className={styles.priceLabel}>Profit:</span>
+                      <span className={styles.priceValue}>
+                        ₹{purchase.totalProfit.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  {purchase.marginPercent != null && (
+                    <div className={styles.priceRow}>
+                      <span className={styles.priceLabel}>Margin:</span>
+                      <span className={styles.priceValue}>
+                        {purchase.marginPercent.toFixed(1)}%
+                      </span>
+                    </div>
+                  )}
+                </>
+              )}
             </>
           )}
           {!isPriceExpanded && (

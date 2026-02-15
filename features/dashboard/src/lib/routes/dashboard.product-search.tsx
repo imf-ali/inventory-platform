@@ -295,12 +295,57 @@ export default function ProductSearchPage() {
                           Expires: {formatDate(item.expiryDate)}
                         </span>
                       </div>
-                      {item.createdAt && (
-                        <div className={styles.createdInfo}>
-                          <span className={styles.createdDate}>
-                            Created: {formatDate(item.createdAt)}
-                          </span>
-                        </div>
+                      {(item.itemType || item.discountApplicable || item.purchaseDate || item.createdAt || item.schemeType || item.scheme != null) && (
+                        <>
+                          <div className={styles.productMeta}>
+                            {item.itemType && item.itemType !== 'NORMAL' && (
+                              <span className={styles.productMetaItem}>
+                                Type:{' '}
+                                {item.itemType === 'DEGREE' && item.itemTypeDegree != null
+                                  ? `Temperature (${item.itemTypeDegree}°)`
+                                  : item.itemType === 'COSTLY'
+                                    ? 'Costly'
+                                    : item.itemType}
+                              </span>
+                            )}
+                            {item.discountApplicable && (
+                              <span className={styles.productMetaItem}>
+                                {item.discountApplicable === 'DISCOUNT'
+                                  ? 'Discount applicable'
+                                  : item.discountApplicable === 'SCHEME'
+                                    ? 'Scheme applicable'
+                                    : 'Both discount and scheme applicable'}
+                              </span>
+                            )}
+                            {(item.purchaseDate || item.createdAt) && (
+                              <span className={styles.productMetaItem}>
+                                Purchased: {formatDate(item.purchaseDate || item.createdAt!)}
+                              </span>
+                            )}
+                          </div>
+                          {(() => {
+                            const st = item.schemeType ?? 'FIXED_UNITS';
+                            if (st === 'PERCENTAGE' && item.schemePercentage != null) {
+                              return (
+                                <div className={styles.productMetaScheme}>
+                                  <span className={styles.productMetaItem}>
+                                    Scheme: {item.schemePercentage}%
+                                  </span>
+                                </div>
+                              );
+                            }
+                            if ((st === 'FIXED_UNITS' || !item.schemeType) && item.scheme != null && item.scheme > 0) {
+                              return (
+                                <div className={styles.productMetaScheme}>
+                                  <span className={styles.productMetaItem}>
+                                    Scheme: {item.scheme} free
+                                  </span>
+                                </div>
+                              );
+                            }
+                            return null;
+                          })()}
+                        </>
                       )}
                     </div>
                     {item.description && (

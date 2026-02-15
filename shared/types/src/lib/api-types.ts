@@ -487,6 +487,14 @@ export interface ProcessJoinRequestResponse {
 }
 
 // Inventory types
+export type ItemType = 'NORMAL' | 'COSTLY' | 'DEGREE';
+export type DiscountApplicable =
+  | 'DISCOUNT'
+  | 'SCHEME'
+  | 'DISCOUNT_AND_SCHEME';
+
+export type SchemeType = 'FIXED_UNITS' | 'PERCENTAGE';
+
 export interface CreateInventoryDto {
   barcode: string;
   name: string;
@@ -508,7 +516,13 @@ export interface CreateInventoryDto {
   sac?: string;
   batchNo?: string;
   scheme?: number | null;
+  schemeType?: SchemeType;
+  schemePercentage?: number | null;
   additionalDiscount?: number | null;
+  itemType?: ItemType;
+  itemTypeDegree?: number;
+  discountApplicable?: DiscountApplicable;
+  purchaseDate?: string;
 }
 
 export interface InventoryResponse {
@@ -540,9 +554,15 @@ export interface BulkCreateInventoryItem {
   sac?: string | null;
   batchNo?: string | null;
   scheme?: number | null;
+  schemeType?: SchemeType;
+  schemePercentage?: number | null;
   sgst?: string | null;
   cgst?: string | null;
   additionalDiscount?: number | null;
+  itemType?: ItemType;
+  itemTypeDegree?: number;
+  discountApplicable?: DiscountApplicable;
+  purchaseDate?: string;
 }
 
 export interface BulkCreateInventoryDto {
@@ -581,9 +601,15 @@ export interface ParseInvoiceItem {
   sac?: string | null;
   batchNo?: string | null;
   scheme?: number | null;
+  schemeType?: SchemeType;
+  schemePercentage?: number | null;
   sgst?: string | null;
   cgst?: string | null;
   additionalDiscount?: number | null;
+  itemType?: ItemType;
+  itemTypeDegree?: number;
+  discountApplicable?: DiscountApplicable;
+  purchaseDate?: string | null;
 }
 
 export interface ParseInvoiceResponse {
@@ -613,10 +639,16 @@ export interface InventoryItem {
   sac?: string | null;
   batchNo?: string | null;
   scheme?: number | null;
+  schemeType?: SchemeType;
+  schemePercentage?: number | null;
   sgst?: string | null;
   cgst?: string | null;
   additionalDiscount?: number | null;
   createdAt?: string;
+  itemType?: ItemType;
+  itemTypeDegree?: number;
+  discountApplicable?: DiscountApplicable;
+  purchaseDate?: string;
 }
 
 export interface InventoryListResponse {
@@ -657,6 +689,9 @@ export interface CheckoutItem {
   quantity?: number;
   sellingPrice?: number;
   additionalDiscount?: number | null;
+  // Scheme can be represented either as fixed units or percentage
+  schemeType?: SchemeType | null;
+  schemePercentage?: number | null;
   schemePayFor?: number | null;
   schemeFree?: number | null;
 }
@@ -678,8 +713,14 @@ export interface CheckoutItemResponse {
   totalAmount: number;
   sgst?: string | null;
   cgst?: string | null;
+  schemeType?: SchemeType | null;
   schemePayFor?: number | null;
   schemeFree?: number | null;
+  schemePercentage?: number | null;
+  costPrice?: number | null;
+  costTotal?: number | null;
+  profit?: number | null;
+  marginPercent?: number | null;
 }
 
 export interface CheckoutResponse {
@@ -695,6 +736,11 @@ export interface CheckoutResponse {
   grandTotal: number;
   paymentMethod: string;
   status: string;
+  totalCost?: number | null;
+  revenueBeforeTax?: number | null;
+  revenueAfterTax?: number | null;
+  totalProfit?: number | null;
+  marginPercent?: number | null;
 }
 
 // Cart types
@@ -722,6 +768,11 @@ export interface CartResponse {
   customerDlNo?: string;
   customerPan?: string;
   paymentMethod?: string;
+  totalCost?: number | null;
+  revenueBeforeTax?: number | null;
+  revenueAfterTax?: number | null;
+  totalProfit?: number | null;
+  marginPercent?: number | null;
 }
 
 export interface AddToCartDto {
@@ -763,6 +814,11 @@ export interface Purchase {
   customerName: string | null;
   customerAddress: string | null;
   customerPhone: string | null;
+  totalCost?: number | null;
+  revenueBeforeTax?: number | null;
+  revenueAfterTax?: number | null;
+  totalProfit?: number | null;
+  marginPercent?: number | null;
 }
 
 export interface PurchaseHistoryResponse {
