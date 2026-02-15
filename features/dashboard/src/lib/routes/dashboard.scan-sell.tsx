@@ -132,65 +132,6 @@ function CartSellingPriceInput({
   );
 }
 
-function CartSchemeIntegerInput({
-  id,
-  value,
-  onCommit,
-  disabled,
-  placeholder = '0',
-}: {
-  id?: string;
-  value: number | null;
-  onCommit: (value: number | null) => void;
-  disabled: boolean;
-  placeholder?: string;
-}) {
-  const [draft, setDraft] = useState(
-    value !== null && value !== undefined ? value.toString() : ''
-  );
-
-  useEffect(() => {
-    const next =
-      value !== null && value !== undefined ? value.toString() : '';
-    setDraft(next);
-  }, [value]);
-
-  const commit = () => {
-    const trimmed = draft.trim();
-    if (trimmed === '') {
-      onCommit(null);
-      return;
-    }
-    const num = parseInt(trimmed, 10);
-    if (isNaN(num) || num < 0 || !Number.isInteger(num)) {
-      setDraft(value !== null && value !== undefined ? value.toString() : '');
-      return;
-    }
-    onCommit(num);
-  };
-
-  return (
-    <input
-      id={id}
-      type="number"
-      className={styles.itemAdditionalInput}
-      value={draft}
-      placeholder={placeholder}
-      min={0}
-      step={1}
-      disabled={disabled}
-      onChange={(e: ChangeEvent<HTMLInputElement>) => setDraft(e.target.value)}
-      onBlur={commit}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter') {
-          commit();
-          e.currentTarget.blur();
-        }
-      }}
-    />
-  );
-}
-
 function CartAdditionalDiscountInput({
   id,
   value,
