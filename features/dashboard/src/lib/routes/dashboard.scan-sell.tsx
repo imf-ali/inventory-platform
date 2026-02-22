@@ -8,6 +8,7 @@ import {
 import { useNavigate } from 'react-router';
 import { inventoryApi, cartApi, customersApi } from '@inventory-platform/api';
 import type {
+  AvailableUnit,
   InventoryItem,
   CartResponse,
   CheckoutItemResponse,
@@ -26,6 +27,10 @@ type SchemeTypeCart = 'FIXED_UNITS' | 'PERCENTAGE';
 
 interface CartItem {
   inventoryItem: InventoryItem;
+  unit: string;
+  baseQuantity: number;
+  unitFactor: number;
+  availableUnits: AvailableUnit[];
   quantity: number;
   price: number;
   schemeType?: SchemeTypeCart | null;
@@ -353,6 +358,52 @@ export default function ScanSellPage() {
   const searchWrapperRef = useRef<HTMLDivElement>(null);
   const { error: notifyError } = useNotify;
 
+  const toNumber = useCallback((value: unknown, fallback: number) => {
+    const num = typeof value === 'number' ? value : Number(value);
+    return Number.isFinite(num) ? num : fallback;
+  }, []);
+
+  const getAvailableUnitsFromInventory = (item: InventoryItem): AvailableUnit[] => {
+    const fromApi = item.availableUnits ?? [];
+    if (Array.isArray(fromApi) && fromApi.length > 0) {
+      return fromApi;
+    }
+    const units: AvailableUnit[] = [];
+    if (item.baseUnit) {
+      units.push({ unit: item.baseUnit, baseUnit: true });
+    }
+    if (item.unitConversions?.unit) {
+      units.push({ unit: item.unitConversions.unit, baseUnit: false });
+    }
+    return units;
+  };
+
+  const getUnitFactorForUnit = (
+    item: InventoryItem,
+    unit: string | null | undefined,
+    fallback = 1
+  ) => {
+    if (!unit) return fallback;
+    if (item.baseUnit && unit === item.baseUnit) return 1;
+    if (item.unitConversions?.unit && unit === item.unitConversions.unit) {
+      return Math.max(1, toNumber(item.unitConversions.factor, fallback));
+    }
+    return fallback;
+  };
+
+  const getDefaultUnit = (item: InventoryItem): string => {
+    if (item.unitConversions?.unit) {
+      return item.unitConversions.unit;
+    }
+    const availableUnits = getAvailableUnitsFromInventory(item);
+    return (
+      availableUnits.find((u) => !u.baseUnit)?.unit ??
+      availableUnits[0]?.unit ??
+      item.baseUnit ??
+      'UNIT'
+    );
+  };
+
   // Product search for dropdown (only on Enter or Search button)
   const runSearch = useCallback(
     async (query: string, pageNum = 0, pageSize = 8) => {
@@ -518,12 +569,49 @@ export default function ScanSellPage() {
         const existing = previousItems.find(
           (i) => i.inventoryItem.id === resItem.inventoryId
         );
+        const availableUnits =
+          (Array.isArray(resItem.availableUnits) && resItem.availableUnits.length > 0
+            ? resItem.availableUnits
+            : existing?.availableUnits) ?? [];
+        const inferredBaseUnit =
+          availableUnits.find((u) => u.baseUnit)?.unit ??
+          existing?.inventoryItem.baseUnit ??
+          null;
+        const saleUnit =
+          resItem.saleUnit ??
+          existing?.unit ??
+          (availableUnits.find((u) => !u.baseUnit)?.unit ??
+            availableUnits[0]?.unit ??
+            inferredBaseUnit ??
+            'UNIT');
+        const unitFactor = Math.max(
+          1,
+          toNumber(
+            resItem.unitFactor,
+            existing?.unitFactor ??
+              (saleUnit === inferredBaseUnit ? 1 : toNumber(existing?.unitFactor, 1))
+          )
+        );
+        const apiBaseQuantity = toNumber(
+          resItem.baseQuantity,
+          toNumber(resItem.quantity, 0) * unitFactor
+        );
+        const quantity = toNumber(
+          resItem.quantity,
+          unitFactor > 0 ? apiBaseQuantity / unitFactor : apiBaseQuantity
+        );
         const inventoryItem: InventoryItem = existing
           ? {
               ...existing.inventoryItem,
               additionalDiscount:
                 resItem.additionalDiscount ??
                 existing.inventoryItem.additionalDiscount,
+              baseUnit: inferredBaseUnit,
+              availableUnits,
+              unitConversions:
+                saleUnit !== inferredBaseUnit && unitFactor > 1
+                  ? { unit: saleUnit, factor: unitFactor }
+                  : existing.inventoryItem.unitConversions ?? null,
             }
           : {
               id: resItem.inventoryId,
@@ -542,10 +630,20 @@ export default function ScanSellPage() {
               expiryDate: '',
               shopId: cart.shopId,
               additionalDiscount: resItem.additionalDiscount ?? null,
+              baseUnit: inferredBaseUnit,
+              unitConversions:
+                saleUnit !== inferredBaseUnit && unitFactor > 1
+                  ? { unit: saleUnit, factor: unitFactor }
+                  : null,
+              availableUnits,
             };
         return {
           inventoryItem,
-          quantity: resItem.quantity,
+          unit: saleUnit,
+          baseQuantity: apiBaseQuantity,
+          unitFactor,
+          availableUnits,
+          quantity,
           price: resItem.sellingPrice,
           schemeType: resItem.schemeType ?? null,
           schemePayFor: resItem.schemePayFor ?? null,
@@ -554,7 +652,7 @@ export default function ScanSellPage() {
         };
       });
     },
-    []
+    [toNumber]
   );
 
   const getEffectiveAdditionalDiscount = useCallback(
@@ -578,7 +676,8 @@ export default function ScanSellPage() {
       schemeFree?: number | null;
       schemePercentage?: number | null;
     },
-    sellingPriceUpdate?: { inventoryId: string; sellingPrice: number }
+    sellingPriceUpdate?: { inventoryId: string; sellingPrice: number },
+    baseQuantityDeltaMode = false
   ) => {
     // Prevent duplicate calls
     if (isUpdatingRef.current) {
@@ -587,7 +686,9 @@ export default function ScanSellPage() {
 
     type CartItemPayload = {
       id: string;
+      unit?: string;
       quantity?: number;
+      baseQuantity?: number;
       sellingPrice?: number;
       additionalDiscount?: number | null;
       schemePayFor?: number | null;
@@ -639,10 +740,13 @@ export default function ScanSellPage() {
 
     const withAdditionalDiscount = (
       id: string,
+      unit: string,
       quantity: number,
+      baseQuantity: number,
       sellingPrice: number,
       cartItem?: CartItem
-    ) => withItemFields({ id, quantity, sellingPrice }, cartItem);
+    ) =>
+      withItemFields({ id, unit, quantity, baseQuantity, sellingPrice }, cartItem);
 
     isUpdatingRef.current = true;
     setIsUpdatingCart(true);
@@ -662,6 +766,9 @@ export default function ScanSellPage() {
         itemsToSend = [
           {
             id: item.inventoryItem.id,
+            unit: item.unit,
+            baseQuantity: item.baseQuantity,
+            quantity: item.quantity,
             sellingPrice: sellingPriceUpdate.sellingPrice,
           },
         ];
@@ -686,6 +793,9 @@ export default function ScanSellPage() {
         itemsToSend = [
           {
             id: item.inventoryItem.id,
+            unit: item.unit,
+            baseQuantity: item.baseQuantity,
+            quantity: item.quantity,
             ...(hasPercentage
               ? {
                   schemeType: 'PERCENTAGE' as const,
@@ -714,6 +824,9 @@ export default function ScanSellPage() {
         itemsToSend = [
           {
             id: item.inventoryItem.id,
+            unit: item.unit,
+            baseQuantity: item.baseQuantity,
+            quantity: item.quantity,
             ...(addDisc !== null && addDisc !== undefined
               ? { additionalDiscount: addDisc }
               : {}),
@@ -725,11 +838,17 @@ export default function ScanSellPage() {
           (item) => item.inventoryItem.id === changedItemId
         );
         if (changedItem) {
+          const effectiveBaseDelta = baseQuantityDeltaMode
+            ? quantityDelta
+            : quantityDelta * Math.max(1, changedItem.unitFactor);
+          const effectiveQuantityDelta = baseQuantityDeltaMode ? 0 : quantityDelta;
           // Send the actual delta value (1 for +, -1 for -)
           itemsToSend = [
             withAdditionalDiscount(
               changedItem.inventoryItem.id,
-              quantityDelta,
+              changedItem.unit,
+              effectiveQuantityDelta,
+              effectiveBaseDelta,
               changedItem.price,
               changedItem
             ),
@@ -765,6 +884,10 @@ export default function ScanSellPage() {
                       additionalDiscount: null,
                     },
                     quantity: 0,
+                    unit: cartItem.saleUnit ?? 'UNIT',
+                    baseQuantity: toNumber(cartItem.baseQuantity, 0),
+                    unitFactor: Math.max(1, toNumber(cartItem.unitFactor, 1)),
+                    availableUnits: cartItem.availableUnits ?? [],
                     price: cartItem.sellingPrice,
                     schemePayFor: cartItem.schemePayFor ?? null,
                     schemeFree: cartItem.schemeFree ?? null,
@@ -773,10 +896,16 @@ export default function ScanSellPage() {
             })();
 
           if (itemToRemove) {
+            const effectiveBaseDelta = baseQuantityDeltaMode
+              ? quantityDelta
+              : quantityDelta * Math.max(1, itemToRemove.unitFactor);
+            const effectiveQuantityDelta = baseQuantityDeltaMode ? 0 : quantityDelta;
             itemsToSend = [
               withAdditionalDiscount(
                 changedItemId,
-                quantityDelta,
+                itemToRemove.unit,
+                effectiveQuantityDelta,
+                effectiveBaseDelta,
                 itemToRemove.price
               ),
             ];
@@ -785,7 +914,9 @@ export default function ScanSellPage() {
             itemsToSend = items.map((item) =>
               withAdditionalDiscount(
                 item.inventoryItem.id,
+                item.unit,
                 item.quantity,
+                item.baseQuantity,
                 item.price,
                 item
               )
@@ -797,7 +928,9 @@ export default function ScanSellPage() {
         itemsToSend = items.map((item) =>
           withAdditionalDiscount(
             item.inventoryItem.id,
+            item.unit,
             item.quantity,
+            item.baseQuantity,
             item.price,
             item
           )
@@ -866,26 +999,43 @@ export default function ScanSellPage() {
       if (existingItem) {
         // Update quantity if item already in cart
         const newQuantity = existingItem.quantity + 1;
+        const newBaseQuantity = existingItem.baseQuantity + existingItem.unitFactor;
         // Validate stock only if we have accurate inventory data
-        if (item.currentCount > 0 && newQuantity > item.currentCount) {
+        if (item.currentCount > 0 && newBaseQuantity > item.currentCount) {
           notifyError(`Only ${item.currentCount} items available in stock`);
           return prev;
         }
         updatedItems = prev.map((cartItem) =>
           cartItem.inventoryItem.id === item.id
-            ? { ...cartItem, quantity: newQuantity }
+            ? {
+                ...cartItem,
+                quantity: newQuantity,
+                baseQuantity: newBaseQuantity,
+              }
             : cartItem
         );
       } else {
+        const defaultUnit = getDefaultUnit(item);
+        const unitFactor = getUnitFactorForUnit(item, defaultUnit, 1);
+        const availableUnits = getAvailableUnitsFromInventory(item);
+        const baseQuantity = unitFactor;
         // Add new item to cart
         // Validate stock only if we have accurate inventory data
-        if (item.currentCount > 0 && item.currentCount < 1) {
+        if (item.currentCount > 0 && item.currentCount < baseQuantity) {
           notifyError('Product is out of stock');
           return prev;
         }
         updatedItems = [
           ...prev,
-          { inventoryItem: item, quantity: 1, price: finalPrice },
+          {
+            inventoryItem: item,
+            unit: defaultUnit,
+            baseQuantity,
+            unitFactor,
+            availableUnits,
+            quantity: 1,
+            price: finalPrice,
+          },
         ];
       }
 
@@ -896,16 +1046,25 @@ export default function ScanSellPage() {
     setError(null);
   };
 
-  const handleUpdateQuantity = async (id: string, delta: number) => {
+  const handleUpdateQuantity = async (
+    id: string,
+    delta: number,
+    isBaseUnitSelected = false
+  ) => {
     const originalItem = cartItems.find((item) => item.inventoryItem.id === id);
 
     if (!originalItem) return;
 
-    const newQuantity = originalItem.quantity + delta;
+    const baseDelta = isBaseUnitSelected
+      ? delta
+      : delta * Math.max(1, originalItem.unitFactor);
+    const newBaseQuantity = originalItem.baseQuantity + baseDelta;
+    const factor = Math.max(1, originalItem.unitFactor);
+    const newQuantity = Number((newBaseQuantity / factor).toFixed(3));
 
     if (
       originalItem.inventoryItem.currentCount < 999999 &&
-      newQuantity > originalItem.inventoryItem.currentCount
+      newBaseQuantity > originalItem.inventoryItem.currentCount
     ) {
       setError(
         `Only ${originalItem.inventoryItem.currentCount} items available in stock`
@@ -913,12 +1072,30 @@ export default function ScanSellPage() {
       throw new Error('Stock exceeded');
     }
 
-    await syncCartToAPI(cartItems, id, delta);
+    await syncCartToAPI(
+      cartItems,
+      id,
+      delta,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      isBaseUnitSelected
+    );
 
     setCartItems((prev) =>
-      prev.map((item) =>
-        item.inventoryItem.id === id ? { ...item, quantity: newQuantity } : item
-      )
+      prev
+        .map((item) =>
+          item.inventoryItem.id === id
+            ? {
+                ...item,
+                quantity: newQuantity,
+                baseQuantity: newBaseQuantity,
+              }
+            : item
+        )
+        .filter((item) => item.baseQuantity > 0)
     );
   };
 
@@ -1038,6 +1215,29 @@ export default function ScanSellPage() {
     );
   };
 
+  const handleUnitChange = (inventoryId: string, unit: string) => {
+    setCartItems((prev) => {
+      const updatedItems = prev.map((item) => {
+        if (item.inventoryItem.id !== inventoryId) return item;
+        const nextFactor = getUnitFactorForUnit(item.inventoryItem, unit, item.unitFactor);
+        const preservedBaseQty = Math.max(1, toNumber(item.baseQuantity, item.quantity));
+        const nextQty =
+          nextFactor > 0
+            ? Number((preservedBaseQty / nextFactor).toFixed(3))
+            : preservedBaseQty;
+        return {
+          ...item,
+          unit,
+          unitFactor: nextFactor,
+          baseQuantity: preservedBaseQty,
+          quantity: nextQty,
+        };
+      });
+      syncCartToAPI(updatedItems);
+      return updatedItems;
+    });
+  };
+
   const handleClearCart = async () => {
     // Get current cart items before clearing
     const currentItems = [...cartItems];
@@ -1053,7 +1253,9 @@ export default function ScanSellPage() {
       try {
         const itemsToSend = currentItems.map((item) => ({
           id: item.inventoryItem.id,
+          unit: item.unit,
           quantity: -item.quantity, // Negative quantity to remove all
+          baseQuantity: -item.baseQuantity,
           sellingPrice: item.price,
         }));
 
@@ -1341,6 +1543,18 @@ export default function ScanSellPage() {
                 <div className={styles.emptyCart}>Cart is empty</div>
               ) : (
                 cartItems.map((cartItem) => (
+                  (() => {
+                    const isBaseUnitSelected =
+                      (cartItem.inventoryItem.baseUnit != null &&
+                        cartItem.unit === cartItem.inventoryItem.baseUnit) ||
+                      cartItem.availableUnits.some(
+                        (unitOption) =>
+                          unitOption.baseUnit && unitOption.unit === cartItem.unit
+                      );
+                    const quantityInputValue = isBaseUnitSelected
+                      ? cartItem.baseQuantity
+                      : cartItem.quantity;
+                    return (
                   <div
                     key={cartItem.inventoryItem.id}
                     className={styles.cartItem}
@@ -1360,6 +1574,10 @@ export default function ScanSellPage() {
                             {cartItem.inventoryItem.companyName}
                           </span>
                         )}
+                        <span className={styles.itemUnitMeta}>
+                          {cartItem.baseQuantity} {cartItem.inventoryItem.baseUnit ?? 'base units'}
+                          {' '}({cartItem.quantity} {cartItem.unit})
+                        </span>
                         {cartItem.inventoryItem.maximumRetailPrice >
                           cartItem.price && (
                           <span className={styles.itemDiscount}>
@@ -1391,7 +1609,7 @@ export default function ScanSellPage() {
                                 }
                                 disabled={isUpdatingCart}
                               />
-                              <span className={styles.itemFieldUnit}>each</span>
+                              <span className={styles.itemFieldUnit}>/{cartItem.unit}</span>
                             </div>
                           </div>
                           <div className={styles.itemFieldGroup}>
@@ -1417,6 +1635,36 @@ export default function ScanSellPage() {
                               />
                               <span className={styles.itemFieldUnit}>%</span>
                             </div>
+                          </div>
+                          <div className={styles.itemFieldGroup}>
+                            <label
+                              className={styles.itemFieldLabel}
+                              htmlFor={`unit-${cartItem.inventoryItem.id}`}
+                            >
+                              Unit
+                            </label>
+                            <select
+                              id={`unit-${cartItem.inventoryItem.id}`}
+                              className={styles.itemUnitSelect}
+                              value={cartItem.unit}
+                              onChange={(e) =>
+                                handleUnitChange(
+                                  cartItem.inventoryItem.id,
+                                  e.currentTarget.value
+                                )
+                              }
+                              disabled={isUpdatingCart}
+                            >
+                              {(cartItem.availableUnits.length > 0
+                                ? cartItem.availableUnits
+                                : [{ unit: cartItem.unit, baseUnit: false }]
+                              ).map((unitOption) => (
+                                <option key={unitOption.unit} value={unitOption.unit}>
+                                  {unitOption.unit}
+                                  {unitOption.baseUnit ? ' (base)' : ''}
+                                </option>
+                              ))}
+                            </select>
                           </div>
                           <div className={styles.itemFieldGroup}>
                             <label className={styles.itemFieldLabel}>
@@ -1452,7 +1700,11 @@ export default function ScanSellPage() {
                         <button
                           className={styles.qtyBtn}
                           onClick={() =>
-                            handleUpdateQuantity(cartItem.inventoryItem.id, -1)
+                            handleUpdateQuantity(
+                              cartItem.inventoryItem.id,
+                              -1,
+                              isBaseUnitSelected
+                            )
                           }
                           disabled={isUpdatingCart}
                           aria-label="Decrease quantity"
@@ -1460,14 +1712,15 @@ export default function ScanSellPage() {
                           −
                         </button>
                         <CartQuantityInput
-                          value={cartItem.quantity}
+                          value={quantityInputValue}
                           disabled={isUpdatingCart}
                           onCommit={async (newQty) => {
-                            const delta = newQty - cartItem.quantity;
+                            const delta = newQty - quantityInputValue;
                             if (delta !== 0) {
                               await handleUpdateQuantity(
                                 cartItem.inventoryItem.id,
-                                delta
+                                delta,
+                                isBaseUnitSelected
                               );
                             }
                           }}
@@ -1475,7 +1728,11 @@ export default function ScanSellPage() {
                         <button
                           className={styles.qtyBtn}
                           onClick={() =>
-                            handleUpdateQuantity(cartItem.inventoryItem.id, 1)
+                            handleUpdateQuantity(
+                              cartItem.inventoryItem.id,
+                              1,
+                              isBaseUnitSelected
+                            )
                           }
                           disabled={isUpdatingCart}
                           aria-label="Increase quantity"
@@ -1497,6 +1754,8 @@ export default function ScanSellPage() {
                       </div>
                     </div>
                   </div>
+                    );
+                  })()
                 ))
               )}
             </div>

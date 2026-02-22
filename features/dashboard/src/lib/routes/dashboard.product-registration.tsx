@@ -42,6 +42,9 @@ interface ProductFormData
   sgst?: string;
   cgst?: string;
   additionalDiscount?: number | null;
+  conversionUnit?: string;
+  conversionFactor?: number;
+  enableAdditionalSaleUnit?: boolean;
 }
 
 export default function ProductRegistrationPage() {
@@ -126,6 +129,10 @@ export default function ProductRegistrationPage() {
     itemTypeDegree: undefined,
     discountApplicable: undefined,
     purchaseDate: new Date().toISOString().split('T')[0] + 'T00:00:00.000Z',
+    baseUnit: '',
+    conversionUnit: '',
+    conversionFactor: 0,
+    enableAdditionalSaleUnit: false,
   });
 
   const handleAddProduct = () => {
@@ -187,6 +194,12 @@ export default function ProductRegistrationPage() {
       itemTypeDegree: item.itemTypeDegree,
       discountApplicable: item.discountApplicable,
       purchaseDate: item.purchaseDate || undefined,
+      baseUnit: item.baseUnit || '',
+      conversionUnit: item.unitConversions?.unit || '',
+      conversionFactor: item.unitConversions?.factor || 0,
+      enableAdditionalSaleUnit:
+        Boolean(item.unitConversions?.unit) &&
+        Number(item.unitConversions?.factor) > 0,
     };
   };
 
@@ -553,6 +566,37 @@ export default function ProductRegistrationPage() {
           return;
         }
 
+        const normalizedBaseUnit = product.baseUnit?.trim().toUpperCase() || '';
+        const normalizedConversionUnit =
+          product.conversionUnit?.trim().toUpperCase() || '';
+        const normalizedConversionFactor = Number(product.conversionFactor) || 0;
+        const hasConversionInput =
+          normalizedConversionUnit !== '' || normalizedConversionFactor > 0;
+
+        if (hasConversionInput) {
+          if (!normalizedBaseUnit) {
+            notifyError(
+              `Product "${product.name || 'Unnamed'}": base unit is required when conversion is used`
+            );
+            setIsLoading(false);
+            return;
+          }
+          if (!normalizedConversionUnit || normalizedConversionFactor <= 0) {
+            notifyError(
+              `Product "${product.name || 'Unnamed'}": conversion unit and factor must be valid`
+            );
+            setIsLoading(false);
+            return;
+          }
+          if (normalizedBaseUnit === normalizedConversionUnit) {
+            notifyError(
+              `Product "${product.name || 'Unnamed'}": conversion unit must be different from base unit`
+            );
+            setIsLoading(false);
+            return;
+          }
+        }
+
         if (
           product.itemType === 'DEGREE' &&
           (product.itemTypeDegree == null ||
@@ -670,6 +714,19 @@ export default function ProductRegistrationPage() {
           businessType: product.businessType.toUpperCase(),
           location: product.location,
           count: product.count,
+          ...(product.baseUnit?.trim()
+            ? { baseUnit: product.baseUnit.trim().toUpperCase() }
+            : {}),
+          ...(product.baseUnit?.trim() &&
+          product.conversionUnit?.trim() &&
+          Number(product.conversionFactor) > 0
+            ? {
+                unitConversions: {
+                  unit: product.conversionUnit.trim().toUpperCase(),
+                  factor: Number(product.conversionFactor),
+                },
+              }
+            : {}),
           expiryDate: product.expiryDate,
           reminderAt: reminderAtISO,
           customReminders: customReminders,
@@ -1755,6 +1812,7 @@ function ProductAccordion({
   localDateTimeToIso,
 }: ProductAccordionProps) {
   const productTitle = product.name || `Product ${index + 1}`;
+  const hasAdditionalSaleUnit = Boolean(product.enableAdditionalSaleUnit);
 
   return (
     <div className={styles.productAccordion}>
@@ -1862,6 +1920,107 @@ function ProductAccordion({
               />
             </div>
           </div>
+
+          <div className={styles.formRow}>
+            <div className={styles.formGroup}>
+              <label htmlFor={`baseUnit-${product.id}`} className={styles.label}>
+                Base Unit
+              </label>
+              <input
+                type="text"
+                id={`baseUnit-${product.id}`}
+                className={styles.input}
+                placeholder="e.g. TAB, ML"
+                value={product.baseUnit || ''}
+                onChange={(e) =>
+                  onChange(product.id, 'baseUnit', e.target.value.toUpperCase())
+                }
+                disabled={isLoading}
+              />
+              <span className={styles.unitHint}>
+                Default sale unit. If no extra sale unit is added, sales happen in this
+                same unit.
+              </span>
+            </div>
+            <div className={styles.formGroup}>
+              <label className={styles.label}>Sale Unit Setup</label>
+              <label className={styles.unitToggle}>
+                <input
+                  type="checkbox"
+                  checked={hasAdditionalSaleUnit}
+                  onChange={(e) => {
+                    const enabled = e.target.checked;
+                    onChange(product.id, 'enableAdditionalSaleUnit', enabled);
+                    if (!enabled) {
+                      onChange(product.id, 'conversionUnit', '');
+                      onChange(product.id, 'conversionFactor', 0);
+                    }
+                  }}
+                  disabled={isLoading}
+                />
+                Add additional sale unit (optional)
+              </label>
+              <span className={styles.unitHint}>
+                Example: base unit TAB, extra sale unit STRIP.
+              </span>
+            </div>
+          </div>
+
+          {hasAdditionalSaleUnit && (
+            <div className={styles.formRow}>
+              <div className={styles.formGroup}>
+                <label
+                  htmlFor={`conversionUnit-${product.id}`}
+                  className={styles.label}
+                >
+                  Additional Sale Unit
+                </label>
+                <input
+                  type="text"
+                  id={`conversionUnit-${product.id}`}
+                  className={styles.input}
+                  placeholder="e.g. STRIP"
+                  value={product.conversionUnit || ''}
+                  onChange={(e) =>
+                    onChange(
+                      product.id,
+                      'conversionUnit',
+                      e.target.value.toUpperCase()
+                    )
+                  }
+                  disabled={isLoading}
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label
+                  htmlFor={`conversionFactor-${product.id}`}
+                  className={styles.label}
+                >
+                  Unit Factor
+                </label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  pattern="[0-9]*\.?[0-9]*"
+                  id={`conversionFactor-${product.id}`}
+                  className={styles.input}
+                  placeholder="e.g. 10"
+                  value={
+                    product.conversionFactor && product.conversionFactor > 0
+                      ? product.conversionFactor
+                      : ''
+                  }
+                  onChange={(e) =>
+                    onDecimalChange(product.id, 'conversionFactor', e.target.value)
+                  }
+                  disabled={isLoading}
+                />
+                <span className={styles.unitHint}>
+                  1 sale unit = factor x base unit
+                </span>
+              </div>
+            </div>
+          )}
 
           <div className={styles.formRow}>
             <div className={styles.formGroup}>
