@@ -495,6 +495,16 @@ export type DiscountApplicable =
 
 export type SchemeType = 'FIXED_UNITS' | 'PERCENTAGE';
 
+export interface UnitConversion {
+  unit: string;
+  factor: number;
+}
+
+export interface AvailableUnit {
+  unit: string;
+  baseUnit: boolean;
+}
+
 export interface CreateInventoryDto {
   barcode: string;
   name: string;
@@ -523,6 +533,8 @@ export interface CreateInventoryDto {
   itemTypeDegree?: number;
   discountApplicable?: DiscountApplicable;
   purchaseDate?: string;
+  baseUnit?: string;
+  unitConversions?: UnitConversion | null;
 }
 
 export interface InventoryResponse {
@@ -563,6 +575,8 @@ export interface BulkCreateInventoryItem {
   itemTypeDegree?: number;
   discountApplicable?: DiscountApplicable;
   purchaseDate?: string;
+  baseUnit?: string;
+  unitConversions?: UnitConversion | null;
 }
 
 export interface BulkCreateInventoryDto {
@@ -610,6 +624,8 @@ export interface ParseInvoiceItem {
   itemTypeDegree?: number;
   discountApplicable?: DiscountApplicable;
   purchaseDate?: string | null;
+  baseUnit?: string | null;
+  unitConversions?: UnitConversion | null;
 }
 
 export interface ParseInvoiceResponse {
@@ -649,6 +665,12 @@ export interface InventoryItem {
   itemTypeDegree?: number;
   discountApplicable?: DiscountApplicable;
   purchaseDate?: string;
+  baseUnit?: string | null;
+  unitConversions?: UnitConversion | null;
+  availableUnits?: AvailableUnit[] | null;
+  receivedBaseCount?: number | null;
+  soldBaseCount?: number | null;
+  currentBaseCount?: number | null;
 }
 
 export interface InventoryListResponse {
@@ -686,7 +708,9 @@ export interface LotsListResponse {
 // Checkout types
 export interface CheckoutItem {
   id: string;
+  unit?: string;
   quantity?: number;
+  baseQuantity?: number;
   sellingPrice?: number;
   additionalDiscount?: number | null;
   // Scheme can be represented either as fixed units or percentage
@@ -706,6 +730,10 @@ export interface CheckoutItemResponse {
   inventoryId: string;
   name: string;
   quantity: number;
+  saleUnit?: string | null;
+  baseQuantity?: number | null;
+  unitFactor?: number | null;
+  availableUnits?: AvailableUnit[] | null;
   maximumRetailPrice: number;
   sellingPrice: number;
   discount: number;
