@@ -17,6 +17,7 @@ export default [
     route('', './routes/dashboard.tsx'),
     route('product-registration', './routes/dashboard.product-registration.tsx'),
     route('product-search', './routes/dashboard.product-search.tsx'),
+    route('pricing', './routes/dashboard.pricing.tsx'),
     route('scan-sell', './routes/dashboard.scan-sell.tsx'),
     route('checkout', './routes/dashboard.checkout.tsx'),
     route('payment-billing', './routes/dashboard.payment-billing.tsx'),
@@ -29,5 +30,6 @@ export default [
     route('join-requests', './routes/dashboard.join-requests.tsx'),
     route('history', './routes/dashboard.history.tsx'),
     route('refund', './routes/dashboard.refund.tsx'),
+    route('price-edit/:pricingId', './routes/dashboard.price-edit.tsx'),
   ]),
 ] satisfies RouteConfig;

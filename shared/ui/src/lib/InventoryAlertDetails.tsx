@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router';
 import { vendorsApi } from '@inventory-platform/api';
 import type { VendorResponse } from '@inventory-platform/types';
 import styles from './InventoryAlertDetails.module.css';
@@ -353,6 +354,23 @@ export function InventoryAlertDetails({
                 </div>
               )}
             </div>
+            {item?.pricingId && (
+              <div className={styles.pricingActions}>
+                <Link
+                  to={`/dashboard/price-edit/${item.pricingId}`}
+                  state={{
+                    priceToRetail: item.priceToRetail,
+                    maximumRetailPrice: item.maximumRetailPrice,
+                    productName: item.name,
+                    rates: item.rates ?? undefined,
+                    defaultRate: item.defaultRate ?? undefined,
+                  }}
+                  className={styles.editPriceLink}
+                >
+                  Edit price
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Vendor Information Section */}

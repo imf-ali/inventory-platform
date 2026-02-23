@@ -136,6 +136,12 @@ export const API_ENDPOINTS = {
     PDF: (purchaseId: string) => `/invoices/${purchaseId}/pdf`,
   },
 
+  // Pricing endpoints
+  PRICING: {
+    BY_ID: (pricingId: string) => `/pricing/${pricingId}`,
+    BULK_UPDATE: '/pricing/bulk-update',
+  },
+
   // Upload endpoints (QR Code Upload Flow)
   UPLOAD: {
     CREATE_TOKEN: '/session/create-upload-token',

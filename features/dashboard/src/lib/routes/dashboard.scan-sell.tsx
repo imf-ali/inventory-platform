@@ -5,7 +5,7 @@ import {
   useCallback,
   ChangeEvent,
 } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, Link } from 'react-router';
 import { inventoryApi, cartApi, customersApi } from '@inventory-platform/api';
 import type {
   AvailableUnit,
@@ -2217,6 +2217,23 @@ export default function ScanSellPage() {
                       </div>
                     </div>
                   </div>
+                  {detailModalItem.inventoryItem.pricingId && (
+                    <div className={styles.detailModalPricingActions}>
+                      <Link
+                        to={`/dashboard/price-edit/${detailModalItem.inventoryItem.pricingId}`}
+                        state={{
+                          priceToRetail: detailModalItem.inventoryItem.priceToRetail,
+                          maximumRetailPrice: detailModalItem.inventoryItem.maximumRetailPrice,
+                          productName: detailModalItem.inventoryItem.name,
+                          rates: detailModalItem.inventoryItem.rates ?? undefined,
+                          defaultRate: detailModalItem.inventoryItem.defaultRate ?? undefined,
+                        }}
+                        className={styles.editPriceLink}
+                      >
+                        Edit price
+                      </Link>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

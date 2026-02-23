@@ -671,6 +671,10 @@ export interface InventoryItem {
   receivedBaseCount?: number | null;
   soldBaseCount?: number | null;
   currentBaseCount?: number | null;
+  /** Pricing document ID; null for legacy inventories without pricing */
+  pricingId?: string | null;
+  rates?: PricingRate[] | null;
+  defaultRate?: string | null;
 }
 
 export interface InventoryListResponse {
@@ -697,6 +701,8 @@ export interface Lot {
   createdAt: string;
   lastUpdated: string;
   firstProductName: string;
+  /** Pricing document ID; null for legacy lots without pricing */
+  pricingId?: string | null;
 }
 
 export interface LotsListResponse {
@@ -1236,6 +1242,8 @@ export interface InventoryItemAnalytics {
   receivedDate: string;
   expiryDate: string;
   lastSoldDate: string | null;
+  /** Pricing document ID; null for legacy inventories without pricing */
+  pricingId?: string | null;
 }
 
 export interface InventoryAnalytics {
@@ -1285,6 +1293,8 @@ export interface LowStockItem {
   threshold: number;
   lotId: string;
   barcode: string;
+  /** Pricing document ID; null for legacy inventories without pricing */
+  pricingId?: string | null;
 }
 
 export interface RevenueBreakdown {
@@ -1355,4 +1365,37 @@ export interface UploadStatusResponse {
 export interface ParsedItemsResponse {
   items: ParseInvoiceItem[];
   totalItems: number;
+}
+
+// Pricing API types
+export interface PricingRate {
+  name: string;
+  price: number;
+}
+
+export interface PatchPricingDto {
+  maximumRetailPrice?: number;
+  priceToRetail?: number;
+  rates?: PricingRate[];
+  defaultRate?: string;
+}
+
+export interface BulkPricingUpdateItem {
+  pricingId: string;
+  maximumRetailPrice?: number;
+  priceToRetail?: number;
+  rates?: PricingRate[];
+  defaultRate?: string;
+}
+
+export interface BulkPricingUpdateDto {
+  updates: BulkPricingUpdateItem[];
+}
+
+export interface PricingResponse {
+  id: string;
+  priceToRetail: number;
+  maximumRetailPrice?: number;
+  rates?: PricingRate[];
+  defaultRate?: string;
 }

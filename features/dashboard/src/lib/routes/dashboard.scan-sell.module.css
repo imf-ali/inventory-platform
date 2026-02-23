@@ -1531,3 +1531,18 @@
   font-weight: 700;
   font-size: 1.1rem;
 }
+
+.detailModalPricingActions {
+  margin-top: 1rem;
+}
+
+.editPriceLink {
+  color: var(--color-primary, #3b82f6);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.editPriceLink:hover {
+  text-decoration: underline;
+}
