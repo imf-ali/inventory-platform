@@ -451,14 +451,14 @@ export default function CheckoutPage() {
                 {checkoutData.items.map((item, index: number) => {
                   // Calculate discount amount: (MRP - Selling Price) * quantity
                   const discountAmount =
-                    (item.maximumRetailPrice - item.sellingPrice) *
+                    (item.maximumRetailPrice - item.priceToRetail) *
                     item.quantity;
                   return (
                     <tr key={index}>
                       <td>{item.name}</td>
                       <td>{item.quantity}</td>
                       <td>₹{item.maximumRetailPrice.toFixed(2)}</td>
-                      <td>₹{item.sellingPrice.toFixed(2)}</td>
+                      <td>₹{item.priceToRetail.toFixed(2)}</td>
                       <td>₹{discountAmount.toFixed(2)}</td>
                       <td>
                         {item.additionalDiscount !== null &&

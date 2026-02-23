@@ -16,7 +16,7 @@ interface CostPriceTrend {
   startTime: string;
   endTime: string;
   averageCostPrice: number;
-  averageSellingPrice: number;
+  averagePriceToRetail: number;
   averageMargin: number;
   averageMarginPercent: number;
   totalItemsSold: number;
@@ -34,7 +34,7 @@ export function CostPriceTrendsChart({ data }: CostPriceTrendsChartProps) {
   const chartData = data.map((item) => ({
     period: item.period,
     costPrice: item.averageCostPrice,
-    sellingPrice: item.averageSellingPrice,
+    priceToRetail: item.averagePriceToRetail,
     margin: item.averageMargin,
     marginPercent: item.averageMarginPercent,
     itemsSold: item.totalItemsSold,
@@ -92,7 +92,7 @@ export function CostPriceTrendsChart({ data }: CostPriceTrendsChartProps) {
             <Tooltip
               formatter={(value: number | undefined, name: string | undefined) => {
                 if (value === undefined) return '';
-                if (name === 'costPrice' || name === 'sellingPrice' || name === 'margin') {
+                if (name === 'costPrice' || name === 'priceToRetail' || name === 'margin') {
                   return formatCurrency(value);
                 }
                 if (name === 'marginPercent') {
@@ -124,7 +124,7 @@ export function CostPriceTrendsChart({ data }: CostPriceTrendsChartProps) {
               <Line
                 yAxisId="left"
                 type="monotone"
-                dataKey="sellingPrice"
+                dataKey="priceToRetail"
                 stroke="#8884d8"
                 strokeWidth={2}
                 name="Avg Selling Price"

@@ -280,7 +280,7 @@ export interface ProfitAnalytics {
     startTime: string;
     endTime: string;
     averageCostPrice: number;
-    averageSellingPrice: number;
+    averagePriceToRetail: number;
     averageMargin: number;
     averageMarginPercent: number;
     totalItemsSold: number;
@@ -363,7 +363,7 @@ export interface ReminderInventorySummary {
   batchNo: string | null;
   maximumRetailPrice: number;
   costPrice: number;
-  sellingPrice: number;
+  priceToRetail: number;
 }
 
 export interface ReminderDetail extends Reminder {
@@ -512,7 +512,7 @@ export interface CreateInventoryDto {
   price: number;
   maximumRetailPrice: number;
   costPrice: number;
-  sellingPrice: number;
+  priceToRetail: number;
   businessType: string;
   location: string;
   count: number;
@@ -551,7 +551,7 @@ export interface BulkCreateInventoryItem {
   companyName: string;
   maximumRetailPrice: number;
   costPrice: number;
-  sellingPrice: number;
+  priceToRetail: number;
   businessType: string;
   location: string;
   count: number;
@@ -603,7 +603,7 @@ export interface ParseInvoiceItem {
   companyName?: string | null;
   maximumRetailPrice: number;
   costPrice?: number | null;
-  sellingPrice: number;
+  priceToRetail: number;
   businessType: string;
   location?: string | null;
   count?: number | null;
@@ -642,7 +642,7 @@ export interface InventoryItem {
   companyName: string | null;
   maximumRetailPrice: number;
   costPrice: number;
-  sellingPrice: number;
+  priceToRetail: number;
   receivedCount: number;
   soldCount: number;
   thresholdCount?: number;
@@ -711,7 +711,7 @@ export interface CheckoutItem {
   unit?: string;
   quantity?: number;
   baseQuantity?: number;
-  sellingPrice?: number;
+  priceToRetail?: number;
   additionalDiscount?: number | null;
   // Scheme can be represented either as fixed units or percentage
   schemeType?: SchemeType | null;
@@ -735,7 +735,7 @@ export interface CheckoutItemResponse {
   unitFactor?: number | null;
   availableUnits?: AvailableUnit[] | null;
   maximumRetailPrice: number;
-  sellingPrice: number;
+  priceToRetail: number;
   discount: number;
   additionalDiscount?: number | null;
   totalAmount: number;
@@ -896,7 +896,7 @@ export interface RefundedItem {
   inventoryId: string;
   name: string;
   quantity: number;
-  sellingPrice: number;
+  priceToRetail: number;
   itemRefundAmount: number;
 }
 
@@ -1230,7 +1230,7 @@ export interface InventoryItemAnalytics {
   turnoverRatio: number;
   isDeadStock: boolean;
   costValue: number;
-  sellingValue: number;
+  retailValue: number;
   potentialProfit: number;
   marginPercent: number;
   receivedDate: string;
@@ -1246,7 +1246,7 @@ export interface InventoryAnalytics {
     expiringSoonProducts: number;
     deadStockProducts: number;
     totalCostValue: number;
-    totalSellingValue: number;
+    totalRetailValue: number;
     totalPotentialProfit: number;
     averageTurnoverRatio: number;
     averageStockPercentage: number;

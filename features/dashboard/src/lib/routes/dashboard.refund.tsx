@@ -261,7 +261,7 @@ export default function RefundPage() {
           (i) => i.inventoryId === inventoryId
         );
         if (purchaseItem) {
-          total += purchaseItem.sellingPrice * item.quantity;
+          total += purchaseItem.priceToRetail * item.quantity;
         }
       }
     });
@@ -468,7 +468,7 @@ export default function RefundPage() {
                                     <td>
                                       {formatCurrency(item.maximumRetailPrice)}
                                     </td>
-                                    <td>{formatCurrency(item.sellingPrice)}</td>
+                                    <td>{formatCurrency(item.priceToRetail)}</td>
                                     <td>{item.quantity}</td>
                                     <td>
                                       <input

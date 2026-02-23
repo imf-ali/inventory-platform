@@ -622,7 +622,7 @@ export default function ScanSellPage() {
               companyName: null,
               maximumRetailPrice: resItem.maximumRetailPrice,
               costPrice: 0,
-              sellingPrice: resItem.sellingPrice,
+              priceToRetail: resItem.priceToRetail,
               receivedCount: 0,
               soldCount: 0,
               currentCount: 999999,
@@ -644,7 +644,7 @@ export default function ScanSellPage() {
           unitFactor,
           availableUnits,
           quantity,
-          price: resItem.sellingPrice,
+          price: resItem.priceToRetail,
           schemeType: resItem.schemeType ?? null,
           schemePayFor: resItem.schemePayFor ?? null,
           schemeFree: resItem.schemeFree ?? null,
@@ -676,7 +676,7 @@ export default function ScanSellPage() {
       schemeFree?: number | null;
       schemePercentage?: number | null;
     },
-    sellingPriceUpdate?: { inventoryId: string; sellingPrice: number },
+    priceToRetailUpdate?: { inventoryId: string; priceToRetail: number },
     baseQuantityDeltaMode = false
   ) => {
     // Prevent duplicate calls
@@ -689,7 +689,7 @@ export default function ScanSellPage() {
       unit?: string;
       quantity?: number;
       baseQuantity?: number;
-      sellingPrice?: number;
+      priceToRetail?: number;
       additionalDiscount?: number | null;
       schemePayFor?: number | null;
       schemeFree?: number | null;
@@ -743,20 +743,20 @@ export default function ScanSellPage() {
       unit: string,
       quantity: number,
       baseQuantity: number,
-      sellingPrice: number,
+      priceToRetail: number,
       cartItem?: CartItem
     ) =>
-      withItemFields({ id, unit, quantity, baseQuantity, sellingPrice }, cartItem);
+      withItemFields({ id, unit, quantity, baseQuantity, priceToRetail }, cartItem);
 
     isUpdatingRef.current = true;
     setIsUpdatingCart(true);
     try {
       let itemsToSend: CartItemPayload[];
 
-      if (sellingPriceUpdate) {
-        // Only selling price changed: send id + sellingPrice
+      if (priceToRetailUpdate) {
+        // Only price to retail changed: send id + priceToRetail
         const item = items.find(
-          (i) => i.inventoryItem.id === sellingPriceUpdate.inventoryId
+          (i) => i.inventoryItem.id === priceToRetailUpdate.inventoryId
         );
         if (!item) {
           isUpdatingRef.current = false;
@@ -769,7 +769,7 @@ export default function ScanSellPage() {
             unit: item.unit,
             baseQuantity: item.baseQuantity,
             quantity: item.quantity,
-            sellingPrice: sellingPriceUpdate.sellingPrice,
+            priceToRetail: priceToRetailUpdate.priceToRetail,
           },
         ];
       } else if (schemeUpdate) {
@@ -796,6 +796,7 @@ export default function ScanSellPage() {
             unit: item.unit,
             baseQuantity: item.baseQuantity,
             quantity: item.quantity,
+            priceToRetail: item.price,
             ...(hasPercentage
               ? {
                   schemeType: 'PERCENTAGE' as const,
@@ -827,6 +828,7 @@ export default function ScanSellPage() {
             unit: item.unit,
             baseQuantity: item.baseQuantity,
             quantity: item.quantity,
+            priceToRetail: item.price,
             ...(addDisc !== null && addDisc !== undefined
               ? { additionalDiscount: addDisc }
               : {}),
@@ -874,7 +876,7 @@ export default function ScanSellPage() {
                       companyName: null,
                       maximumRetailPrice: cartItem.maximumRetailPrice,
                       costPrice: 0,
-                      sellingPrice: cartItem.sellingPrice,
+                      priceToRetail: cartItem.priceToRetail,
                       receivedCount: 0,
                       soldCount: 0,
                       currentCount: 0,
@@ -888,7 +890,7 @@ export default function ScanSellPage() {
                     baseQuantity: toNumber(cartItem.baseQuantity, 0),
                     unitFactor: Math.max(1, toNumber(cartItem.unitFactor, 1)),
                     availableUnits: cartItem.availableUnits ?? [],
-                    price: cartItem.sellingPrice,
+                    price: cartItem.priceToRetail,
                     schemePayFor: cartItem.schemePayFor ?? null,
                     schemeFree: cartItem.schemeFree ?? null,
                   }
@@ -975,8 +977,8 @@ export default function ScanSellPage() {
   };
 
   const handleAddToCart = async (item: InventoryItem, price?: number) => {
-    // Use sellingPrice as default, or override with provided price
-    const finalPrice = price !== undefined ? price : item.sellingPrice;
+    // Use priceToRetail as default, or override with provided price
+    const finalPrice = price !== undefined ? price : item.priceToRetail;
 
     if (finalPrice <= 0) {
       notifyError('Please enter a valid price');
@@ -1197,10 +1199,10 @@ export default function ScanSellPage() {
     );
   };
 
-  const handleSellingPriceChange = (inventoryId: string, sellingPrice: number) => {
+  const handleSellingPriceChange = (inventoryId: string, priceToRetail: number) => {
     setCartItems((prev) =>
       prev.map((item) =>
-        item.inventoryItem.id === inventoryId ? { ...item, price: sellingPrice } : item
+        item.inventoryItem.id === inventoryId ? { ...item, price: priceToRetail } : item
       )
     );
     syncCartToAPI(
@@ -1211,7 +1213,7 @@ export default function ScanSellPage() {
       undefined,
       undefined,
       undefined,
-      { inventoryId, sellingPrice }
+      { inventoryId, priceToRetail }
     );
   };
 
@@ -1256,7 +1258,7 @@ export default function ScanSellPage() {
           unit: item.unit,
           quantity: -item.quantity, // Negative quantity to remove all
           baseQuantity: -item.baseQuantity,
-          sellingPrice: item.price,
+          priceToRetail: item.price,
         }));
 
         const cartPayload = {
@@ -1527,7 +1529,11 @@ export default function ScanSellPage() {
                           key={item.id}
                           item={item}
                           onAddToCart={handleAddToCart}
-                          disabled={item.currentCount <= 0 || isUpdatingCart}
+                          disabled={
+                            item.currentCount <= 0 ||
+                            item.priceToRetail == null ||
+                            isUpdatingCart
+                          }
                         />
                       ))}
                     </ul>
@@ -2269,10 +2275,10 @@ function SearchDropdownItem({
           Current: {item.currentCount}
         </span>
         <span className={`${styles.dropdownItemMeta} ${styles.dropdownItemMetaBold}`}>
-          MRP: ₹{item.maximumRetailPrice.toFixed(2)}
+          MRP: ₹{item.maximumRetailPrice != null ? item.maximumRetailPrice.toFixed(2) : '—'}
         </span>
         <span className={`${styles.dropdownItemMeta} ${styles.dropdownItemMetaBold}`}>
-          PTR: ₹{item.sellingPrice.toFixed(2)}
+          PTR: ₹{item.priceToRetail != null ? item.priceToRetail.toFixed(2) : '—'}
         </span>
         {item.expiryDate && (
           <span className={`${styles.dropdownItemMeta} ${styles.dropdownItemMetaBold}`}>

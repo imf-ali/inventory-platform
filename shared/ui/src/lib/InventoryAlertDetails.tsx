@@ -295,7 +295,7 @@ export function InventoryAlertDetails({
                 <div className={styles.detailContent}>
                   <span className={styles.detailLabel}>Price to Retailer (PTR)</span>
                   <span className={`${styles.detailValue} ${styles.priceValue}`}>
-                    ₹{item?.sellingPrice?.toFixed(2) ?? '—'}
+                    ₹{item?.priceToRetail?.toFixed(2) ?? '—'}
                   </span>
                 </div>
               </div>
