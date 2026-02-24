@@ -977,8 +977,8 @@ export default function ScanSellPage() {
   };
 
   const handleAddToCart = async (item: InventoryItem, price?: number) => {
-    // Use priceToRetail as default, or override with provided price
-    const finalPrice = price !== undefined ? price : item.priceToRetail;
+    // Use sellingPrice (effective) as default, or override with provided price
+    const finalPrice = price !== undefined ? price : (item.sellingPrice ?? item.priceToRetail);
 
     if (finalPrice <= 0) {
       notifyError('Please enter a valid price');
@@ -1531,7 +1531,7 @@ export default function ScanSellPage() {
                           onAddToCart={handleAddToCart}
                           disabled={
                             item.currentCount <= 0 ||
-                            item.priceToRetail == null ||
+                            (item.sellingPrice ?? item.priceToRetail) == null ||
                             isUpdatingCart
                           }
                         />
@@ -2136,7 +2136,7 @@ export default function ScanSellPage() {
                     <div className={`${styles.detailModalDetailCard} ${styles.detailModalPricingCard}`}>
                       <div className={styles.detailModalDetailIcon}>💵</div>
                       <div className={styles.detailModalDetailContent}>
-                        <span className={styles.detailModalDetailLabel}>Price to Retailer (PTR)</span>
+                        <span className={styles.detailModalDetailLabel}>Selling Price</span>
                         <span className={`${styles.detailModalDetailValue} ${styles.detailModalPriceValue}`}>
                           ₹{price.toFixed(2)}
                         </span>
@@ -2295,7 +2295,7 @@ function SearchDropdownItem({
           MRP: ₹{item.maximumRetailPrice != null ? item.maximumRetailPrice.toFixed(2) : '—'}
         </span>
         <span className={`${styles.dropdownItemMeta} ${styles.dropdownItemMetaBold}`}>
-          PTR: ₹{item.priceToRetail != null ? item.priceToRetail.toFixed(2) : '—'}
+          Selling: ₹{(item.sellingPrice ?? item.priceToRetail) != null ? (item.sellingPrice ?? item.priceToRetail)!.toFixed(2) : '—'}
         </span>
         {item.expiryDate && (
           <span className={`${styles.dropdownItemMeta} ${styles.dropdownItemMetaBold}`}>

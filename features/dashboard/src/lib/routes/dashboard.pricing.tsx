@@ -79,7 +79,7 @@ export default function PricingPage() {
       <header className={styles.header}>
         <h1 className={styles.title}>Pricing</h1>
         <p className={styles.subtitle}>
-          Search inventory and update default price (PTR), MRP, or rates
+          Search inventory and update pricing (table shows effective selling price)
         </p>
       </header>
 
@@ -156,7 +156,7 @@ export default function PricingPage() {
                     <th>Product</th>
                     <th>Company</th>
                     <th>Barcode</th>
-                    <th className={styles.numCol}>PTR</th>
+                    <th className={styles.numCol}>Selling</th>
                     <th className={styles.numCol}>MRP</th>
                     <th>Location</th>
                     <th className={styles.actionsCol}>Actions</th>
@@ -173,8 +173,8 @@ export default function PricingPage() {
                       <td>{item.companyName || '—'}</td>
                       <td className={styles.mono}>{item.barcode || '—'}</td>
                       <td className={styles.numCol}>
-                        {item.priceToRetail != null
-                          ? `₹${item.priceToRetail.toFixed(2)}`
+                        {(item.sellingPrice ?? item.priceToRetail) != null
+                          ? `₹${(item.sellingPrice ?? item.priceToRetail)!.toFixed(2)}`
                           : '—'}
                       </td>
                       <td className={styles.numCol}>

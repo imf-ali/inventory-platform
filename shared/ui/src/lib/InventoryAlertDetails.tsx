@@ -294,9 +294,9 @@ export function InventoryAlertDetails({
               <div className={`${styles.detailCard} ${styles.pricingCard}`}>
                 <div className={styles.detailIcon}>💵</div>
                 <div className={styles.detailContent}>
-                  <span className={styles.detailLabel}>Price to Retailer (PTR)</span>
+                  <span className={styles.detailLabel}>Selling Price</span>
                   <span className={`${styles.detailValue} ${styles.priceValue}`}>
-                    ₹{item?.priceToRetail?.toFixed(2) ?? '—'}
+                    ₹{(item?.sellingPrice ?? item?.priceToRetail) != null ? (item?.sellingPrice ?? item?.priceToRetail)!.toFixed(2) : '—'}
                   </span>
                 </div>
               </div>

@@ -675,6 +675,8 @@ export interface InventoryItem {
   pricingId?: string | null;
   rates?: PricingRate[] | null;
   defaultRate?: string | null;
+  /** Effective selling price (based on defaultRate); use for display and cart. Falls back to priceToRetail. */
+  sellingPrice?: number | null;
 }
 
 export interface InventoryListResponse {
@@ -1394,8 +1396,16 @@ export interface BulkPricingUpdateDto {
 
 export interface PricingResponse {
   id: string;
+  shopId?: string;
   priceToRetail: number;
   maximumRetailPrice?: number;
+  costPrice?: number;
   rates?: PricingRate[];
   defaultRate?: string;
+  sellingPrice?: number;
+  additionalDiscount?: number;
+  sgst?: string | null;
+  cgst?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 }

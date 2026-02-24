@@ -12,6 +12,16 @@ export function meta() {
   ];
 }
 
+const PASCAL_TO_CAMEL: Record<string, string> = {
+  PriceToRetail: 'priceToRetail',
+  MaximumRetailPrice: 'maximumRetailPrice',
+  CostPrice: 'costPrice',
+};
+
+function normalizeDefaultRate(value: string): string {
+  return PASCAL_TO_CAMEL[value] ?? value;
+}
+
 interface LocationState {
   priceToRetail?: number | null;
   maximumRetailPrice?: number | null;
@@ -24,7 +34,7 @@ export default function PriceEditPage() {
   const { pricingId } = useParams<{ pricingId: string }>();
   const location = useLocation();
   const state = location.state as LocationState | null;
-  const { success: notifySuccess, error: notifyError } = useNotify();
+  const { success: notifySuccess, error: notifyError } = useNotify;
 
   const [priceToRetail, setPriceToRetail] = useState<string>('');
   const [maximumRetailPrice, setMaximumRetailPrice] = useState<string>('');
@@ -55,7 +65,7 @@ export default function PriceEditPage() {
           setMaximumRetailPrice(String(pricing.maximumRetailPrice));
         }
         setRates(pricing.rates ?? []);
-        setDefaultRate(pricing.defaultRate ?? '');
+        setDefaultRate(normalizeDefaultRate(pricing.defaultRate ?? ''));
       })
       .catch(() => {
         if (cancelled) return;
@@ -67,7 +77,7 @@ export default function PriceEditPage() {
           setMaximumRetailPrice(String(state.maximumRetailPrice));
         }
         setRates(state?.rates ?? []);
-        setDefaultRate(state?.defaultRate ?? '');
+        setDefaultRate(normalizeDefaultRate(state?.defaultRate ?? ''));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -108,8 +118,10 @@ export default function PriceEditPage() {
 
     const hasRates = rates.length > 0;
     const ratesValid = !hasRates || rates.every((r) => r.name.trim() && !isNaN(r.price) && r.price >= 0);
+    const systemRates = ['maximumRetailPrice', 'priceToRetail', 'costPrice'];
     const defaultRateValid =
       !defaultRate.trim() ||
+      systemRates.includes(defaultRate.trim()) ||
       rates.some((r) => r.name.trim() === defaultRate.trim());
 
     const sendingRates = hasRates || loadedFromApi;
@@ -135,7 +147,7 @@ export default function PriceEditPage() {
       return;
     }
     if (!defaultRateValid) {
-      setError('Default rate must be one of the rate names in the list');
+      setError('Default rate must be maximumRetailPrice, priceToRetail, costPrice, or a custom rate name');
       return;
     }
 
@@ -278,31 +290,32 @@ export default function PriceEditPage() {
           ))}
         </div>
 
-        {rates.length > 0 && (
-          <div className={styles.formGroup}>
-            <label htmlFor="defaultRate" className={styles.label}>
-              Default rate
-            </label>
-            <select
-              id="defaultRate"
-              value={defaultRate}
-              onChange={(e) => setDefaultRate(e.target.value)}
-              className={styles.input}
-            >
-              <option value="">— None —</option>
-              {rates
-                .filter((r) => r.name.trim())
-                .map((r) => (
-                  <option key={r.name} value={r.name}>
-                    {r.name}
-                  </option>
-                ))}
-            </select>
-            <span className={styles.hint}>
-              Must be one of the rate names above.
-            </span>
-          </div>
-        )}
+        <div className={styles.formGroup}>
+          <label htmlFor="defaultRate" className={styles.label}>
+            Default rate
+          </label>
+          <select
+            id="defaultRate"
+            value={defaultRate}
+            onChange={(e) => setDefaultRate(e.target.value)}
+            className={styles.input}
+          >
+            <option value="">— None —</option>
+            <option value="maximumRetailPrice">maximumRetailPrice (MRP)</option>
+            <option value="priceToRetail">priceToRetail (PTR)</option>
+            <option value="costPrice">costPrice</option>
+            {rates
+              .filter((r) => r.name.trim())
+              .map((r) => (
+                <option key={r.name} value={r.name}>
+                  {r.name}
+                </option>
+              ))}
+          </select>
+          <span className={styles.hint}>
+            System rates (PTR, MRP) or one of the custom rate names above.
+          </span>
+        </div>
 
         <p className={styles.hint}>
           At least one field is required. When changing rates, always send the full list.

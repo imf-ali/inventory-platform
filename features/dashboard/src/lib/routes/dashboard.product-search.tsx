@@ -136,7 +136,8 @@ export default function ProductSearchPage() {
       return;
     }
 
-    if (item.priceToRetail == null) {
+    const effectivePrice = item.sellingPrice ?? item.priceToRetail;
+    if (effectivePrice == null) {
       notifyError('Cannot add: product price is not set');
       return;
     }
@@ -152,7 +153,7 @@ export default function ProductSearchPage() {
           {
             id: item.id,
             quantity: 1,
-            priceToRetail: item.priceToRetail,
+            priceToRetail: effectivePrice,
           },
         ],
       };
@@ -281,8 +282,10 @@ export default function ProductSearchPage() {
                       </div>
                       <div className={styles.priceInfo}>
                         <span className={styles.productPrice}>
-                          Price to Retailer (PTR): ₹
-                          {item.priceToRetail != null ? item.priceToRetail.toFixed(2) : '—'}
+                          Selling Price: ₹
+                          {(item.sellingPrice ?? item.priceToRetail) != null
+                            ? (item.sellingPrice ?? item.priceToRetail)!.toFixed(2)
+                            : '—'}
                         </span>
                         <span className={styles.productPrice}>
                           MRP: ₹{item.maximumRetailPrice != null ? item.maximumRetailPrice.toFixed(2) : '—'}
@@ -373,14 +376,14 @@ export default function ProductSearchPage() {
                           isLoading ||
                           addingToCart === item.id ||
                           item.currentCount <= 0 ||
-                          item.priceToRetail == null
+                          (item.sellingPrice ?? item.priceToRetail) == null
                         }
                       >
                         {addingToCart === item.id
                           ? 'Adding...'
                           : item.currentCount <= 0
                           ? 'Out of Stock'
-                          : item.priceToRetail == null
+                          : (item.sellingPrice ?? item.priceToRetail) == null
                           ? 'Price not set'
                           : 'Add to Sell'}
                       </button>
