@@ -206,6 +206,46 @@
   line-height: 1.35;
 }
 
+.factorInputWrap {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-primary);
+  overflow: hidden;
+}
+
+.factorPrefix {
+  padding: 0.75rem 0 0.75rem 1rem;
+  font-size: 1rem;
+  color: var(--text-secondary);
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.factorInput {
+  flex: 1;
+  min-width: 0;
+  padding: 0.75rem 1rem;
+  border: none;
+  font-size: 1rem;
+  color: var(--text-primary);
+  background: transparent;
+}
+
+.factorInput::placeholder {
+  color: var(--text-tertiary);
+}
+
+.factorInput:focus {
+  outline: none;
+}
+
+.factorInputWrap:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
 .ratesSection {
   display: flex;
   flex-direction: column;
