@@ -10,6 +10,7 @@ import type {
   VendorBusinessType,
   BulkCreateInventoryDto,
   ParseInvoiceItem,
+  PricingRate,
   UploadStatus,
   ItemType,
   DiscountApplicable,
@@ -45,6 +46,8 @@ interface ProductFormData
   conversionUnit?: string;
   conversionFactor?: number;
   enableAdditionalSaleUnit?: boolean;
+  rates?: PricingRate[];
+  defaultRate?: string;
 }
 
 export default function ProductRegistrationPage() {
@@ -133,6 +136,8 @@ export default function ProductRegistrationPage() {
     conversionUnit: '',
     conversionFactor: 0,
     enableAdditionalSaleUnit: false,
+    rates: [],
+    defaultRate: '',
   });
 
   const handleAddProduct = () => {
@@ -200,6 +205,8 @@ export default function ProductRegistrationPage() {
       enableAdditionalSaleUnit:
         Boolean(item.unitConversions?.unit) &&
         Number(item.unitConversions?.factor) > 0,
+      rates: item.rates ?? [],
+      defaultRate: item.defaultRate ?? '',
     };
   };
 
@@ -666,6 +673,19 @@ export default function ProductRegistrationPage() {
 
       // Transform products to bulk API format
       const items = products.map((product) => {
+        const validRates = (product.rates ?? []).filter(
+          (r) => r.name.trim() && !isNaN(r.price) && r.price >= 0
+        );
+        const hasValidDefaultRate =
+          product.defaultRate &&
+          product.defaultRate.trim() &&
+          (['priceToRetail', 'maximumRetailPrice', 'costPrice'].includes(
+            product.defaultRate.trim()
+          ) ||
+            (product.rates ?? []).some(
+              (r) => r.name.trim() === product.defaultRate?.trim()
+            ));
+
         // Format reminderAt if provided
         let reminderAtISO: string | undefined;
         if (product.reminderAt) {
@@ -768,6 +788,17 @@ export default function ProductRegistrationPage() {
                     ? new Date(product.purchaseDate).toISOString()
                     : `${product.purchaseDate}T00:00:00Z`,
               }
+            : {}),
+          ...(validRates.length > 0
+            ? {
+                rates: validRates.map((r) => ({
+                  name: r.name.trim(),
+                  price: Number(r.price),
+                })),
+              }
+            : {}),
+          ...(hasValidDefaultRate && product.defaultRate
+            ? { defaultRate: product.defaultRate.trim() }
             : {}),
         };
       });
@@ -2553,6 +2584,9 @@ function ProductAccordion({
                 disabled={isLoading}
               />
             </div>
+          </div>
+
+          <div className={styles.formRow}>
             <div className={styles.formGroup}>
               <label htmlFor={`cgst-${product.id}`} className={styles.label}>
                 CGST (%)
@@ -2569,9 +2603,6 @@ function ProductAccordion({
                 disabled={isLoading}
               />
             </div>
-          </div>
-
-          <div className={styles.formRow}>
             <div className={styles.formGroup}>
               <label htmlFor={`sgst-${product.id}`} className={styles.label}>
                 SGST (%)
@@ -2588,6 +2619,106 @@ function ProductAccordion({
                 disabled={isLoading}
               />
             </div>
+          </div>
+
+          {/* Rates (optional) - custom pricing tiers */}
+          <div className={styles.ratesSection}>
+            <div className={styles.ratesHeader}>
+              <label className={styles.label}>Rates (optional)</label>
+              <button
+                type="button"
+                onClick={() =>
+                  onChange(product.id, 'rates', [
+                    ...(product.rates ?? []),
+                    { name: '', price: 0 },
+                  ])
+                }
+                className={styles.addRateBtn}
+                disabled={isLoading}
+              >
+                + Add rate
+              </button>
+            </div>
+            <span className={styles.unitHint}>
+              Custom rate tiers (e.g. Rate-A, Rate-B). Default rate selects which
+              price to use for sales.
+            </span>
+            {(product.rates ?? []).map((rate, i) => (
+              <div key={i} className={styles.rateRow}>
+                <input
+                  type="text"
+                  value={rate.name}
+                  onChange={(e) => {
+                    const next = [...(product.rates ?? [])];
+                    next[i] = { ...next[i], name: e.target.value };
+                    onChange(product.id, 'rates', next);
+                  }}
+                  className={styles.rateNameInput}
+                  placeholder="Rate name"
+                  disabled={isLoading}
+                />
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={rate.price || ''}
+                  onChange={(e) => {
+                    const next = [...(product.rates ?? [])];
+                    next[i] = {
+                      ...next[i],
+                      price: parseFloat(e.target.value) || 0,
+                    };
+                    onChange(product.id, 'rates', next);
+                  }}
+                  className={styles.ratePriceInput}
+                  placeholder="Price"
+                  disabled={isLoading}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = (product.rates ?? []).filter((_, j) => j !== i);
+                    onChange(product.id, 'rates', next);
+                  }}
+                  className={styles.removeRateBtn}
+                  aria-label="Remove rate"
+                  disabled={isLoading}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className={styles.formGroup}>
+            <label
+              htmlFor={`defaultRate-${product.id}`}
+              className={styles.label}
+            >
+              Default rate (optional)
+            </label>
+            <select
+              id={`defaultRate-${product.id}`}
+              value={product.defaultRate ?? ''}
+              onChange={(e) =>
+                onChange(product.id, 'defaultRate', e.target.value)
+              }
+              className={styles.input}
+              disabled={isLoading}
+            >
+              <option value="">— None —</option>
+              <option value="priceToRetail">priceToRetail (PTR)</option>
+              <option value="maximumRetailPrice">
+                maximumRetailPrice (MRP)
+              </option>
+              <option value="costPrice">costPrice (PTS)</option>
+              {(product.rates ?? [])
+                .filter((r) => r.name.trim())
+                .map((r) => (
+                  <option key={r.name} value={r.name}>
+                    {r.name}
+                  </option>
+                ))}
+            </select>
           </div>
 
           <div className={styles.formGroup}>
