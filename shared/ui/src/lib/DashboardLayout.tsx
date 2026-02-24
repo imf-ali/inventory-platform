@@ -7,34 +7,77 @@ import { ThemeToggle } from './ThemeToggle';
 import { useNotifications } from '@inventory-platform/store';
 import { ToastProvider } from './ToastProvider';
 
-const MENU_ITEMS = [
-  { path: '/dashboard', label: 'Dashboard', icon: '📊' },
+type MenuItem = { path: string; label: string; icon: string };
+
+type MenuGroup = {
+  id: string;
+  label: string;
+  icon: string;
+  items: MenuItem[];
+};
+
+const MENU_GROUPS: MenuGroup[] = [
   {
-    path: '/dashboard/product-registration',
-    label: 'Product Registration',
+    id: 'overview',
+    label: 'Overview',
+    icon: '📊',
+    items: [{ path: '/dashboard', label: 'Dashboard', icon: '📊' }],
+  },
+  {
+    id: 'products',
+    label: 'Products & Sales',
     icon: '📦',
+    items: [
+      {
+        path: '/dashboard/product-registration',
+        label: 'Product Registration',
+        icon: '📦',
+      },
+      { path: '/dashboard/product-search', label: 'Product Search', icon: '🔍' },
+      { path: '/dashboard/pricing', label: 'Pricing', icon: '💰' },
+      { path: '/dashboard/scan-sell', label: 'Scan and Sell', icon: '📱' },
+      { path: '/dashboard/refund', label: 'Refund', icon: '↩️' },
+    ],
   },
-  { path: '/dashboard/product-search', label: 'Product Search', icon: '🔍' },
-  { path: '/dashboard/pricing', label: 'Pricing', icon: '💰' },
-  { path: '/dashboard/scan-sell', label: 'Scan and Sell', icon: '📱' },
-  { path: '/dashboard/refund', label: 'Refund', icon: '↩️' },
-  // {
-  //   path: '/dashboard/payment-billing',
-  //   label: 'Payment & Billing',
-  //   icon: '💳',
-  // },
-  { path: '/dashboard/analytics', label: 'Analytics Dashboard', icon: '📈' },
   {
-    path: '/dashboard/inventory-alert',
-    label: 'Inventory Low Alert',
+    id: 'reminders-alerts',
+    label: 'Reminders & Alerts',
     icon: '🔔',
+    items: [
+      { path: '/dashboard/reminders', label: 'Reminder', icon: '📅' },
+      {
+        path: '/dashboard/inventory-alert',
+        label: 'Inventory Low Alert',
+        icon: '🔔',
+      },
+    ],
   },
-  { path: '/dashboard/reminders', label: 'Reminder', icon: '📅' },
-  { path: '/dashboard/invitations', label: 'Invitations', icon: '✉️' },
-  { path: '/dashboard/my-invitations', label: 'My Invitations', icon: '📬' },
-  { path: '/dashboard/join-requests', label: 'Join Requests', icon: '🤝' },
-  { path: '/dashboard/shop-users', label: 'Shop Users', icon: '👥' },
-  { path: '/dashboard/history', label: 'History', icon: '📜' },
+  {
+    id: 'analytics-history',
+    label: 'Analytics & History',
+    icon: '📈',
+    items: [
+      { path: '/dashboard/analytics', label: 'Analytics Dashboard', icon: '📈' },
+      { path: '/dashboard/history', label: 'History', icon: '📜' },
+    ],
+  },
+  {
+    id: 'team',
+    label: 'Team & Collaboration',
+    icon: '👥',
+    items: [
+      { path: '/dashboard/invitations', label: 'Invitations', icon: '✉️' },
+      { path: '/dashboard/my-invitations', label: 'My Invitations', icon: '📬' },
+      { path: '/dashboard/join-requests', label: 'Join Requests', icon: '🤝' },
+      { path: '/dashboard/shop-users', label: 'Shop Users', icon: '👥' },
+    ],
+  },
+];
+
+const CASHIER_HIDDEN_PATHS = [
+  '/dashboard/shop-users',
+  '/dashboard/invitations',
+  '/dashboard/join-requests',
 ];
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
@@ -45,6 +88,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [showNotificationMenu, setShowNotificationMenu] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
+    () => new Set(['overview', 'products'])
+  );
 
   const userMenuRef = useRef<HTMLDivElement>(null);
 
@@ -92,18 +138,51 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     [notifications, markAsRead, navigate]
   );
 
-  const filteredMenuItems = useMemo(() => {
-    if (user?.role !== 'CASHIER') return MENU_ITEMS;
+  const currentPath = location.pathname;
 
-    return MENU_ITEMS.filter(
-      (item) =>
-        item.path !== '/dashboard/shop-users' &&
-        item.path !== '/dashboard/invitations' &&
-        item.path !== '/dashboard/join-requests'
-    );
+  const filteredMenuGroups = useMemo(() => {
+    const isCashier = user?.role === 'CASHIER';
+    return MENU_GROUPS.map((group) => ({
+      ...group,
+      items: isCashier
+        ? group.items.filter((item) => !CASHIER_HIDDEN_PATHS.includes(item.path))
+        : group.items,
+    })).filter((group) => group.items.length > 0);
   }, [user?.role]);
 
-  const currentPath = location.pathname;
+  const allMenuItems = useMemo(
+    () => filteredMenuGroups.flatMap((g) => g.items),
+    [filteredMenuGroups]
+  );
+
+  const currentPageLabel =
+    allMenuItems.find((i) => i.path === currentPath)?.label ?? 'Dashboard';
+
+  const isPathInGroup = useCallback(
+    (groupId: string, path: string) => {
+      const group = filteredMenuGroups.find((g) => g.id === groupId);
+      return group?.items.some((i) => i.path === path) ?? false;
+    },
+    [filteredMenuGroups]
+  );
+
+  useEffect(() => {
+    const groupWithPath = filteredMenuGroups.find((g) =>
+      g.items.some((i) => i.path === currentPath)
+    );
+    if (groupWithPath) {
+      setExpandedGroups(new Set([groupWithPath.id]));
+    }
+  }, [currentPath, filteredMenuGroups]);
+
+  const toggleGroup = useCallback((groupId: string) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(groupId)) next.delete(groupId);
+      else next.add(groupId);
+      return next;
+    });
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -150,20 +229,64 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
 
         <nav className={styles.nav}>
-          {filteredMenuItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`${styles.navItem} ${
-                currentPath === item.path ? styles.active : ''
-              }`}
-            >
-              <span className={styles.navIcon}>{item.icon}</span>
-              {sidebarOpen && (
-                <span className={styles.navLabel}>{item.label}</span>
-              )}
-            </Link>
-          ))}
+          {sidebarOpen ? (
+            filteredMenuGroups.map((group) => {
+              const isExpanded =
+                expandedGroups.has(group.id) ||
+                isPathInGroup(group.id, currentPath);
+              return (
+                <div key={group.id} className={styles.navGroup}>
+                  <button
+                    type="button"
+                    className={styles.navGroupHeader}
+                    onClick={() => toggleGroup(group.id)}
+                    aria-expanded={isExpanded}
+                  >
+                    <span className={styles.navGroupIcon}>{group.icon}</span>
+                    <span className={styles.navGroupLabel}>{group.label}</span>
+                    <span
+                      className={`${styles.navGroupChevron} ${
+                        isExpanded ? styles.navGroupChevronOpen : ''
+                      }`}
+                    >
+                      ▾
+                    </span>
+                  </button>
+                  {isExpanded && (
+                    <div className={styles.navGroupItems}>
+                      {group.items.map((item) => (
+                        <Link
+                          key={item.path}
+                          to={item.path}
+                          className={`${styles.navItem} ${
+                            currentPath === item.path ? styles.active : ''
+                          }`}
+                        >
+                          <span className={styles.navIcon}>{item.icon}</span>
+                          <span className={styles.navLabel}>{item.label}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          ) : (
+            <div className={styles.navCollapsed}>
+              {allMenuItems.map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`${styles.navItem} ${styles.navItemCollapsed} ${
+                    currentPath === item.path ? styles.active : ''
+                  }`}
+                  title={item.label}
+                >
+                  <span className={styles.navIcon}>{item.icon}</span>
+                </Link>
+              ))}
+            </div>
+          )}
         </nav>
       </aside>
 
@@ -171,10 +294,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <div className={styles.mainContent}>
         <header className={styles.header}>
           <div className={styles.headerContent}>
-            <h1 className={styles.pageTitle}>
-              {filteredMenuItems.find((i) => i.path === currentPath)?.label ??
-                'Dashboard'}
-            </h1>
+            <h1 className={styles.pageTitle}>{currentPageLabel}</h1>
 
             <div className={styles.headerActions}>
               {/* Notifications */}
