@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router';
 import { vendorsApi } from '@inventory-platform/api';
 import type { VendorResponse } from '@inventory-platform/types';
 import styles from './InventoryAlertDetails.module.css';
@@ -293,9 +294,9 @@ export function InventoryAlertDetails({
               <div className={`${styles.detailCard} ${styles.pricingCard}`}>
                 <div className={styles.detailIcon}>💵</div>
                 <div className={styles.detailContent}>
-                  <span className={styles.detailLabel}>Price to Retailer (PTR)</span>
+                  <span className={styles.detailLabel}>Selling Price</span>
                   <span className={`${styles.detailValue} ${styles.priceValue}`}>
-                    ₹{item?.sellingPrice?.toFixed(2) ?? '—'}
+                    ₹{(item?.sellingPrice ?? item?.priceToRetail) != null ? (item?.sellingPrice ?? item?.priceToRetail)!.toFixed(2) : '—'}
                   </span>
                 </div>
               </div>
@@ -353,6 +354,23 @@ export function InventoryAlertDetails({
                 </div>
               )}
             </div>
+            {item?.pricingId && (
+              <div className={styles.pricingActions}>
+                <Link
+                  to={`/dashboard/price-edit/${item.pricingId}`}
+                  state={{
+                    priceToRetail: item.priceToRetail,
+                    maximumRetailPrice: item.maximumRetailPrice,
+                    productName: item.name,
+                    rates: item.rates ?? undefined,
+                    defaultRate: item.defaultRate ?? undefined,
+                  }}
+                  className={styles.editPriceLink}
+                >
+                  Edit price
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Vendor Information Section */}

@@ -20,3 +20,4 @@ export * from './lib/vendors';
 export * from './lib/customers';
 export * from './lib/dashboard';
 export * from './lib/upload';
+export * from './lib/pricing';

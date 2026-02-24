@@ -181,8 +181,8 @@ export function PurchaseCard({ purchase }: PurchaseCardProps) {
                   </div>
                   <div className={styles.itemPricing}>
                     <span className={styles.itemPrice}>
-                      ₹{item.sellingPrice.toFixed(2)} × {item.quantity} = ₹
-                      {(item.sellingPrice * item.quantity).toFixed(2)}
+                      ₹{item.priceToRetail.toFixed(2)} × {item.quantity} = ₹
+                      {(item.priceToRetail * item.quantity).toFixed(2)}
                     </span>
                     {item.discount > 0 && (
                       <span className={styles.itemDiscount}>

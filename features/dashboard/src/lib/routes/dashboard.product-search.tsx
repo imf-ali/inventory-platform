@@ -136,6 +136,12 @@ export default function ProductSearchPage() {
       return;
     }
 
+    const effectivePrice = item.sellingPrice ?? item.priceToRetail;
+    if (effectivePrice == null) {
+      notifyError('Cannot add: product price is not set');
+      return;
+    }
+
     setAddingToCart(item.id);
     setError(null);
     setSuccessMessage(null);
@@ -147,7 +153,7 @@ export default function ProductSearchPage() {
           {
             id: item.id,
             quantity: 1,
-            sellingPrice: item.sellingPrice,
+            priceToRetail: effectivePrice,
           },
         ],
       };
@@ -276,11 +282,13 @@ export default function ProductSearchPage() {
                       </div>
                       <div className={styles.priceInfo}>
                         <span className={styles.productPrice}>
-                          Price to Retailer (PTR): ₹
-                          {item.sellingPrice.toFixed(2)}
+                          Selling Price: ₹
+                          {(item.sellingPrice ?? item.priceToRetail) != null
+                            ? (item.sellingPrice ?? item.priceToRetail)!.toFixed(2)
+                            : '—'}
                         </span>
                         <span className={styles.productPrice}>
-                          MRP: ₹{item.maximumRetailPrice.toFixed(2)}
+                          MRP: ₹{item.maximumRetailPrice != null ? item.maximumRetailPrice.toFixed(2) : '—'}
                         </span>
                         {item.additionalDiscount !== null &&
                           item.additionalDiscount !== undefined && (
@@ -367,13 +375,16 @@ export default function ProductSearchPage() {
                         disabled={
                           isLoading ||
                           addingToCart === item.id ||
-                          item.currentCount <= 0
+                          item.currentCount <= 0 ||
+                          (item.sellingPrice ?? item.priceToRetail) == null
                         }
                       >
                         {addingToCart === item.id
                           ? 'Adding...'
                           : item.currentCount <= 0
                           ? 'Out of Stock'
+                          : (item.sellingPrice ?? item.priceToRetail) == null
+                          ? 'Price not set'
                           : 'Add to Sell'}
                       </button>
                     </div>

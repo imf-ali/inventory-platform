@@ -32,11 +32,11 @@ export function meta() {
 interface ProductFormData
   extends Omit<
     CreateInventoryDto,
-    'vendorId' | 'lotId' | 'sellingPrice' | 'costPrice' | 'maximumRetailPrice'
+    'vendorId' | 'lotId' | 'priceToRetail' | 'costPrice' | 'maximumRetailPrice'
   > {
   id: string; // Unique ID for each product form
   isExpanded: boolean;
-  sellingPrice: number | string;
+  priceToRetail: number | string;
   costPrice: number | string;
   maximumRetailPrice: number | string;
   sgst?: string;
@@ -109,7 +109,7 @@ export default function ProductRegistrationPage() {
     price: 0,
     maximumRetailPrice: 0,
     costPrice: 0,
-    sellingPrice: 0,
+    priceToRetail: 0,
     businessType: 'pharmacy',
     location: '',
     count: 0,
@@ -161,10 +161,10 @@ export default function ProductRegistrationPage() {
       barcode: item.barcode || '',
       name: item.name || '',
       companyName: item.companyName || '',
-      price: item.sellingPrice || 0,
+      price: item.priceToRetail || 0,
       maximumRetailPrice: item.maximumRetailPrice || 0,
       costPrice: item.costPrice || 0,
-      sellingPrice: item.sellingPrice || 0,
+      priceToRetail: item.priceToRetail || 0,
       businessType: item.businessType?.toLowerCase() || 'pharmacy',
       location: item.location || '',
       count: item.count || 0,
@@ -710,7 +710,7 @@ export default function ProductRegistrationPage() {
           companyName: product.companyName,
           maximumRetailPrice: Number(product.maximumRetailPrice) || 0,
           costPrice: Number(product.costPrice) || 0,
-          sellingPrice: Number(product.sellingPrice) || 0,
+          priceToRetail: Number(product.priceToRetail) || 0,
           businessType: product.businessType.toUpperCase(),
           location: product.location,
           count: product.count,
@@ -2478,7 +2478,7 @@ function ProductAccordion({
           <div className={styles.formRow}>
             <div className={styles.formGroup}>
               <label
-                htmlFor={`sellingPrice-${product.id}`}
+                htmlFor={`priceToRetail-${product.id}`}
                 className={styles.label}
               >
                 Price to Retailer (PTR) *
@@ -2487,12 +2487,12 @@ function ProductAccordion({
                 type="text"
                 inputMode="decimal"
                 pattern="[0-9]*\.?[0-9]*"
-                id={`sellingPrice-${product.id}`}
+                id={`priceToRetail-${product.id}`}
                 className={styles.input}
                 placeholder="0.00"
-                value={product.sellingPrice === 0 ? '' : product.sellingPrice}
+                value={product.priceToRetail === 0 ? '' : product.priceToRetail}
                 onChange={(e) =>
-                  onDecimalChange(product.id, 'sellingPrice', e.target.value)
+                  onDecimalChange(product.id, 'priceToRetail', e.target.value)
                 }
                 required
                 disabled={isLoading}

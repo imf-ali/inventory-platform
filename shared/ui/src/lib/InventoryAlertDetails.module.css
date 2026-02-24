@@ -217,6 +217,21 @@
   border-color: rgba(59, 130, 246, 0.4);
 }
 
+.pricingActions {
+  margin-top: 1rem;
+}
+
+.editPriceLink {
+  color: var(--color-primary, #3b82f6);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.editPriceLink:hover {
+  text-decoration: underline;
+}
+
 .priceValue {
   color: #10b981;
   font-weight: 700;

@@ -181,7 +181,7 @@ export function InventoryAnalytics() {
                   {showAllColumns && (
                     <>
                       <td>{formatCurrency(item.costValue)}</td>
-                      <td>{formatCurrency(item.sellingValue)}</td>
+                      <td>{formatCurrency(item.retailValue)}</td>
                       <td>{formatCurrency(item.potentialProfit)}</td>
                       <td>{formatPercentage(item.marginPercent)}</td>
                       <td>{item.turnoverRatio.toFixed(2)}</td>
@@ -349,7 +349,7 @@ export function InventoryAnalytics() {
               <div className={styles.summaryHeader}>
                 <span className={styles.summaryLabel}>Total Selling Value</span>
               </div>
-              <div className={styles.summaryValue}>{formatCurrency(inventoryData.summary.totalSellingValue)}</div>
+              <div className={styles.summaryValue}>{formatCurrency(inventoryData.summary.totalRetailValue)}</div>
               <div className={styles.summaryPeriod}>Potential Revenue</div>
             </div>
 
