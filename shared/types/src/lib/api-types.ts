@@ -577,6 +577,10 @@ export interface BulkCreateInventoryItem {
   purchaseDate?: string;
   baseUnit?: string;
   unitConversions?: UnitConversion | null;
+  /** Optional. Array of custom rates { name, price }. */
+  rates?: Array<{ name: string; price: number }> | null;
+  /** Optional. Must be empty/null or one of: rates[].name, "priceToRetail", "maximumRetailPrice", "costPrice". */
+  defaultRate?: string | null;
 }
 
 export interface BulkCreateInventoryDto {
@@ -626,6 +630,8 @@ export interface ParseInvoiceItem {
   purchaseDate?: string | null;
   baseUnit?: string | null;
   unitConversions?: UnitConversion | null;
+  rates?: Array<{ name: string; price: number }> | null;
+  defaultRate?: string | null;
 }
 
 export interface ParseInvoiceResponse {

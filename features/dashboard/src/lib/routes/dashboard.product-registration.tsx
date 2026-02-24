@@ -10,6 +10,7 @@ import type {
   VendorBusinessType,
   BulkCreateInventoryDto,
   ParseInvoiceItem,
+  PricingRate,
   UploadStatus,
   ItemType,
   DiscountApplicable,
@@ -45,6 +46,8 @@ interface ProductFormData
   conversionUnit?: string;
   conversionFactor?: number;
   enableAdditionalSaleUnit?: boolean;
+  rates?: PricingRate[];
+  defaultRate?: string;
 }
 
 export default function ProductRegistrationPage() {
@@ -133,6 +136,8 @@ export default function ProductRegistrationPage() {
     conversionUnit: '',
     conversionFactor: 0,
     enableAdditionalSaleUnit: false,
+    rates: [],
+    defaultRate: '',
   });
 
   const handleAddProduct = () => {
@@ -200,6 +205,8 @@ export default function ProductRegistrationPage() {
       enableAdditionalSaleUnit:
         Boolean(item.unitConversions?.unit) &&
         Number(item.unitConversions?.factor) > 0,
+      rates: item.rates ?? [],
+      defaultRate: item.defaultRate ?? '',
     };
   };
 
@@ -666,6 +673,19 @@ export default function ProductRegistrationPage() {
 
       // Transform products to bulk API format
       const items = products.map((product) => {
+        const validRates = (product.rates ?? []).filter(
+          (r) => r.name.trim() && !isNaN(r.price) && r.price >= 0
+        );
+        const hasValidDefaultRate =
+          product.defaultRate &&
+          product.defaultRate.trim() &&
+          (['priceToRetail', 'maximumRetailPrice', 'costPrice'].includes(
+            product.defaultRate.trim()
+          ) ||
+            (product.rates ?? []).some(
+              (r) => r.name.trim() === product.defaultRate?.trim()
+            ));
+
         // Format reminderAt if provided
         let reminderAtISO: string | undefined;
         if (product.reminderAt) {
@@ -768,6 +788,17 @@ export default function ProductRegistrationPage() {
                     ? new Date(product.purchaseDate).toISOString()
                     : `${product.purchaseDate}T00:00:00Z`,
               }
+            : {}),
+          ...(validRates.length > 0
+            ? {
+                rates: validRates.map((r) => ({
+                  name: r.name.trim(),
+                  price: Number(r.price),
+                })),
+              }
+            : {}),
+          ...(hasValidDefaultRate && product.defaultRate
+            ? { defaultRate: product.defaultRate.trim() }
             : {}),
         };
       });
@@ -1029,6 +1060,128 @@ export default function ProductRegistrationPage() {
         {success && <div className={styles.successMessage}>{success}</div>}
 
         <form className={styles.form} onSubmit={handleSubmit}>
+          {/* Invoice Upload Section - First for fastest path */}
+          <div className={styles.uploadSection}>
+            <div className={styles.uploadHeader}>
+              <h3 className={styles.sectionTitle}>
+                Upload Invoice Image (Optional)
+              </h3>
+              <ul className={styles.helperText}>
+                <li>Upload invoice image to auto-parse product details</li>
+                <li>Choose one of the options below to upload</li>
+              </ul>
+            </div>
+            <div className={styles.uploadOptionsHeader}>
+              <span className={styles.uploadOptionsLabel}>Choose upload method:</span>
+            </div>
+            <div className={styles.uploadOptionsGrid}>
+              <button
+                type="button"
+                className={styles.qrUploadBtn}
+                onClick={handleCreateQrCode}
+                disabled={isUploading || isLoading || isPolling}
+              >
+                <div className={styles.qrBtnIcon}>
+                  <span role="img" aria-label="QR Code icon">📱</span>
+                </div>
+                <div className={styles.qrBtnContent}>
+                  <span className={styles.qrBtnTitle}>Upload via QR Code</span>
+                  <span className={styles.qrBtnSubtitle}>Use mobile device to scan & upload</span>
+                </div>
+              </button>
+              <div className={styles.uploadOptionsOr}>
+                <div className={styles.uploadOptionsOrLine}></div>
+                <span className={styles.uploadOptionsOrText}>OR</span>
+                <div className={styles.uploadOptionsOrLine}></div>
+              </div>
+              <div className={styles.uploadContainer}>
+                <div className={styles.uploadOptionLabel}>
+                  <span className={styles.uploadOptionTitle}>Upload from this device</span>
+                  <span className={styles.uploadOptionSubtitle}>Choose file from computer</span>
+                </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className={styles.fileInput}
+                id="invoice-upload"
+                disabled={isUploading || isLoading}
+              />
+              <div className={styles.uploadControls}>
+                <label
+                  htmlFor="invoice-upload"
+                  className={styles.fileInputLabel}
+                >
+                  {selectedFile ? (
+                    <div className={styles.fileInfo}>
+                      <span
+                        className={styles.fileIcon}
+                        role="img"
+                        aria-label="File icon"
+                      >
+                        📄
+                      </span>
+                      <span className={styles.fileName}>
+                        {selectedFile.name}
+                      </span>
+                      <span className={styles.fileSize}>
+                        ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                      </span>
+                    </div>
+                  ) : (
+                    <div className={styles.uploadPlaceholder}>
+                      <span
+                        className={styles.uploadIcon}
+                        role="img"
+                        aria-label="Upload icon"
+                      >
+                        📤
+                      </span>
+                      <span>Click to browse files</span>
+                    </div>
+                  )}
+                </label>
+
+                {isUploading && (
+                  <div className={styles.uploadProgress}>
+                    <div className={styles.progressSpinner}></div>
+                    <div className={styles.progressText}>{uploadProgress}</div>
+                  </div>
+                )}
+
+                {selectedFile && !isUploading && (
+                  <div className={styles.uploadActions}>
+                    <button
+                      type="button"
+                      className={styles.uploadBtn}
+                      onClick={handleUploadInvoice}
+                      disabled={isLoading}
+                    >
+                      <span
+                        className={styles.btnIcon}
+                        role="img"
+                        aria-label="Rocket icon"
+                      >
+                        🚀
+                      </span>
+                      Parse Invoice
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.clearUploadBtn}
+                      onClick={handleClearUpload}
+                      disabled={isLoading}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                )}
+              </div>
+              </div>
+            </div>
+          </div>
+
           {/* Shared Vendor and Lot ID Section */}
           <div className={styles.sharedSection}>
             <h3 className={styles.sectionTitle}>Shared Information</h3>
@@ -1244,128 +1397,6 @@ export default function ProductRegistrationPage() {
                   </div>
                 </div>
               )}
-            </div>
-          </div>
-
-          {/* Invoice Upload Section */}
-          <div className={styles.uploadSection}>
-            <div className={styles.uploadHeader}>
-              <h3 className={styles.sectionTitle}>
-                Upload Invoice Image (Optional)
-              </h3>
-              <ul className={styles.helperText}>
-                <li>Upload invoice image to auto-parse product details</li>
-                <li>Choose one of the options below to upload</li>
-              </ul>
-            </div>
-            <div className={styles.uploadOptionsHeader}>
-              <span className={styles.uploadOptionsLabel}>Choose upload method:</span>
-            </div>
-            <div className={styles.uploadOptionsGrid}>
-              <button
-                type="button"
-                className={styles.qrUploadBtn}
-                onClick={handleCreateQrCode}
-                disabled={isUploading || isLoading || isPolling}
-              >
-                <div className={styles.qrBtnIcon}>
-                  <span role="img" aria-label="QR Code icon">📱</span>
-                </div>
-                <div className={styles.qrBtnContent}>
-                  <span className={styles.qrBtnTitle}>Upload via QR Code</span>
-                  <span className={styles.qrBtnSubtitle}>Use mobile device to scan & upload</span>
-                </div>
-              </button>
-              <div className={styles.uploadOptionsOr}>
-                <div className={styles.uploadOptionsOrLine}></div>
-                <span className={styles.uploadOptionsOrText}>OR</span>
-                <div className={styles.uploadOptionsOrLine}></div>
-              </div>
-              <div className={styles.uploadContainer}>
-                <div className={styles.uploadOptionLabel}>
-                  <span className={styles.uploadOptionTitle}>Upload from this device</span>
-                  <span className={styles.uploadOptionSubtitle}>Choose file from computer</span>
-                </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileSelect}
-                className={styles.fileInput}
-                id="invoice-upload"
-                disabled={isUploading || isLoading}
-              />
-              <div className={styles.uploadControls}>
-                <label
-                  htmlFor="invoice-upload"
-                  className={styles.fileInputLabel}
-                >
-                  {selectedFile ? (
-                    <div className={styles.fileInfo}>
-                      <span
-                        className={styles.fileIcon}
-                        role="img"
-                        aria-label="File icon"
-                      >
-                        📄
-                      </span>
-                      <span className={styles.fileName}>
-                        {selectedFile.name}
-                      </span>
-                      <span className={styles.fileSize}>
-                        ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
-                      </span>
-                    </div>
-                  ) : (
-                    <div className={styles.uploadPlaceholder}>
-                      <span
-                        className={styles.uploadIcon}
-                        role="img"
-                        aria-label="Upload icon"
-                      >
-                        📤
-                      </span>
-                      <span>Click to browse files</span>
-                    </div>
-                  )}
-                </label>
-
-                {isUploading && (
-                  <div className={styles.uploadProgress}>
-                    <div className={styles.progressSpinner}></div>
-                    <div className={styles.progressText}>{uploadProgress}</div>
-                  </div>
-                )}
-
-                {selectedFile && !isUploading && (
-                  <div className={styles.uploadActions}>
-                    <button
-                      type="button"
-                      className={styles.uploadBtn}
-                      onClick={handleUploadInvoice}
-                      disabled={isLoading}
-                    >
-                      <span
-                        className={styles.btnIcon}
-                        role="img"
-                        aria-label="Rocket icon"
-                      >
-                        🚀
-                      </span>
-                      Parse Invoice
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.clearUploadBtn}
-                      onClick={handleClearUpload}
-                      disabled={isLoading}
-                    >
-                      Clear
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
             </div>
           </div>
 
@@ -2553,6 +2584,9 @@ function ProductAccordion({
                 disabled={isLoading}
               />
             </div>
+          </div>
+
+          <div className={styles.formRow}>
             <div className={styles.formGroup}>
               <label htmlFor={`cgst-${product.id}`} className={styles.label}>
                 CGST (%)
@@ -2569,9 +2603,6 @@ function ProductAccordion({
                 disabled={isLoading}
               />
             </div>
-          </div>
-
-          <div className={styles.formRow}>
             <div className={styles.formGroup}>
               <label htmlFor={`sgst-${product.id}`} className={styles.label}>
                 SGST (%)
@@ -2588,6 +2619,106 @@ function ProductAccordion({
                 disabled={isLoading}
               />
             </div>
+          </div>
+
+          {/* Rates (optional) - custom pricing tiers */}
+          <div className={styles.ratesSection}>
+            <div className={styles.ratesHeader}>
+              <label className={styles.label}>Rates (optional)</label>
+              <button
+                type="button"
+                onClick={() =>
+                  onChange(product.id, 'rates', [
+                    ...(product.rates ?? []),
+                    { name: '', price: 0 },
+                  ])
+                }
+                className={styles.addRateBtn}
+                disabled={isLoading}
+              >
+                + Add rate
+              </button>
+            </div>
+            <span className={styles.unitHint}>
+              Custom rate tiers (e.g. Rate-A, Rate-B). Default rate selects which
+              price to use for sales.
+            </span>
+            {(product.rates ?? []).map((rate, i) => (
+              <div key={i} className={styles.rateRow}>
+                <input
+                  type="text"
+                  value={rate.name}
+                  onChange={(e) => {
+                    const next = [...(product.rates ?? [])];
+                    next[i] = { ...next[i], name: e.target.value };
+                    onChange(product.id, 'rates', next);
+                  }}
+                  className={styles.rateNameInput}
+                  placeholder="Rate name"
+                  disabled={isLoading}
+                />
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={rate.price || ''}
+                  onChange={(e) => {
+                    const next = [...(product.rates ?? [])];
+                    next[i] = {
+                      ...next[i],
+                      price: parseFloat(e.target.value) || 0,
+                    };
+                    onChange(product.id, 'rates', next);
+                  }}
+                  className={styles.ratePriceInput}
+                  placeholder="Price"
+                  disabled={isLoading}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = (product.rates ?? []).filter((_, j) => j !== i);
+                    onChange(product.id, 'rates', next);
+                  }}
+                  className={styles.removeRateBtn}
+                  aria-label="Remove rate"
+                  disabled={isLoading}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className={styles.formGroup}>
+            <label
+              htmlFor={`defaultRate-${product.id}`}
+              className={styles.label}
+            >
+              Default rate (optional)
+            </label>
+            <select
+              id={`defaultRate-${product.id}`}
+              value={product.defaultRate ?? ''}
+              onChange={(e) =>
+                onChange(product.id, 'defaultRate', e.target.value)
+              }
+              className={styles.input}
+              disabled={isLoading}
+            >
+              <option value="">— None —</option>
+              <option value="priceToRetail">priceToRetail (PTR)</option>
+              <option value="maximumRetailPrice">
+                maximumRetailPrice (MRP)
+              </option>
+              <option value="costPrice">costPrice (PTS)</option>
+              {(product.rates ?? [])
+                .filter((r) => r.name.trim())
+                .map((r) => (
+                  <option key={r.name} value={r.name}>
+                    {r.name}
+                  </option>
+                ))}
+            </select>
           </div>
 
           <div className={styles.formGroup}>
