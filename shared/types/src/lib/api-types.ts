@@ -1415,3 +1415,248 @@ export interface PricingResponse {
   createdAt?: string;
   updatedAt?: string;
 }
+
+// GSTR-1 Taxation types
+export interface B2bSezDeLine {
+  recipientGstin: string;
+  receiverName: string;
+  invoiceNo: string;
+  invoiceDate: string;
+  invoiceValue: number;
+  placeOfSupply: string;
+  reverseCharge: string;
+  applicableTaxPct: string;
+  invoiceType: string;
+  ecommerceGstin: string;
+  rate: number;
+  taxableValue: number;
+  cessAmount: number;
+}
+
+export interface Gstr1B2bSummary {
+  noOfRecipients: number;
+  noOfInvoices: number;
+  totalInvoiceValue: number;
+  taxableValue: number;
+  cessAmount: number;
+}
+
+export interface Gstr1B2bSezDeTab {
+  summary: Gstr1B2bSummary;
+  lines: B2bSezDeLine[];
+}
+
+export interface Gstr1InvoiceLine {
+  invoiceNo?: string;
+  invoiceDate?: string;
+  invoiceValue?: number;
+  placeOfSupply: string;
+  applicableTaxPct: string;
+  rate: number;
+  taxableValue: number;
+  cessAmount: number;
+  ecommerceGstin?: string;
+  [key: string]: unknown;
+}
+
+export interface Gstr1B2clSummary {
+  noOfInvoices: number;
+  totalInvoiceValue: number;
+  totalTaxableValue: number;
+  totalCess: number;
+}
+
+export interface Gstr1B2clTab {
+  summary: Gstr1B2clSummary;
+  lines: Gstr1InvoiceLine[];
+}
+
+export interface B2csLine {
+  type: string;
+  placeOfSupply: string;
+  applicableTaxPct: string;
+  rate: number;
+  taxableValue: number;
+  cessAmount: number;
+  ecommerceGstin: string;
+}
+
+export interface Gstr1B2csSummary {
+  totalTaxableValue: number;
+  totalCess: number;
+}
+
+export interface Gstr1B2csTab {
+  summary: Gstr1B2csSummary;
+  lines: B2csLine[];
+}
+
+export interface Gstr1RefundLine {
+  registered: boolean;
+  recipientGstin: string;
+  receiverName: string;
+  noteNumber: string;
+  noteDate: string;
+  noteType: string;
+  placeOfSupply: string;
+  reverseCharge: string;
+  noteSupplyType: string;
+  noteValue: number;
+  applicableTaxPct: string;
+  rate: number;
+  taxableValue: number;
+  cessAmount: number;
+  urType: string;
+}
+
+export interface Gstr1CdnrSummary {
+  noOfRecipients: number;
+  noOfNotes: number;
+  totalNoteValue: number;
+  totalTaxableValue: number;
+  totalCess: number;
+}
+
+export interface Gstr1CdnrTab {
+  summary: Gstr1CdnrSummary;
+  lines: Gstr1RefundLine[];
+}
+
+export interface Gstr1CdnurSummary {
+  noOfNotes: number;
+  totalNoteValue: number;
+  totalTaxableValue: number;
+  totalCess: number;
+}
+
+export interface Gstr1CdnurTab {
+  summary: Gstr1CdnurSummary;
+  lines: Gstr1RefundLine[];
+}
+
+export interface Gstr1ExpSummary {
+  noOfInvoices: number;
+  totalInvoiceValue: number;
+  noOfShippingBills: number;
+  totalTaxableValue: number;
+}
+
+export interface Gstr1ExpTab {
+  summary: Gstr1ExpSummary;
+  lines: Gstr1InvoiceLine[];
+}
+
+export interface Gstr1AdvanceLine {
+  placeOfSupply: string;
+  applicableTaxPct: string;
+  rate: number;
+  grossAdvanceReceivedOrAdjusted: number;
+  cessAmount: number;
+  adjusted: boolean;
+}
+
+export interface Gstr1AtSummary {
+  totalAdvanceReceived: number;
+  totalCess: number;
+}
+
+export interface Gstr1AtTab {
+  summary: Gstr1AtSummary;
+  lines: Gstr1AdvanceLine[];
+}
+
+export interface Gstr1AtadjSummary {
+  totalAdvanceAdjusted: number;
+  totalCess: number;
+}
+
+export interface Gstr1AtadjTab {
+  summary: Gstr1AtadjSummary;
+  lines: Gstr1AdvanceLine[];
+}
+
+export interface Gstr1ExemptLine {
+  description: string;
+  nilRatedSupplies: number;
+  exemptedOtherThanNilOrNonGst: number;
+  nonGstSupplies: number;
+}
+
+export interface Gstr1ExempSummary {
+  totalNilRatedSupplies: number;
+  totalExemptedSupplies: number;
+  totalNonGstSupplies: number;
+}
+
+export interface Gstr1ExempTab {
+  summary: Gstr1ExempSummary;
+  lines: Gstr1ExemptLine[];
+}
+
+export interface Gstr1HsnLine {
+  hsn: string;
+  description: string;
+  uqc: string;
+  totalQuantity: number;
+  totalValue: number;
+  rate: number;
+  taxableValue: number;
+  integratedTaxAmount: number;
+  centralTaxAmount: number;
+  stateUtTaxAmount: number;
+  cessAmount: number;
+  b2b: boolean;
+}
+
+export interface Gstr1HsnSummary {
+  noOfHsn: number;
+  totalValue: number;
+  totalTaxableValue: number;
+  totalIntegratedTax: number;
+  totalCentralTax: number;
+  totalStateUtTax: number;
+  totalCess: number;
+}
+
+export interface Gstr1HsnTab {
+  summary: Gstr1HsnSummary;
+  lines: Gstr1HsnLine[];
+}
+
+export interface Gstr1DocumentSummaryLine {
+  natureOfDocument: string;
+  srNoFrom: string;
+  srNoTo: string;
+  totalNumber: number;
+  cancelled: number;
+}
+
+export interface Gstr1DocsSummary {
+  totalNumber: number;
+  cancelled: number;
+}
+
+export interface Gstr1DocsTab {
+  summary: Gstr1DocsSummary;
+  lines: Gstr1DocumentSummaryLine[];
+}
+
+export interface Gstr1ReportResponse {
+  shopId: string;
+  shopGstin: string;
+  period: string;
+  year: number;
+  month: number;
+  'b2b,sez,de': Gstr1B2bSezDeTab;
+  b2cl: Gstr1B2clTab;
+  b2cs: Gstr1B2csTab;
+  cdnr: Gstr1CdnrTab;
+  cdnur: Gstr1CdnurTab;
+  exp: Gstr1ExpTab;
+  at: Gstr1AtTab;
+  atadj: Gstr1AtadjTab;
+  exemp: Gstr1ExempTab;
+  'hsn(b2b)': Gstr1HsnTab;
+  'hsn(b2c)': Gstr1HsnTab;
+  docs: Gstr1DocsTab;
+}

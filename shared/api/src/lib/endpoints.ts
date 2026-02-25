@@ -142,6 +142,12 @@ export const API_ENDPOINTS = {
     BULK_UPDATE: '/pricing/bulk-update',
   },
 
+  // Taxation endpoints (GSTR-1)
+  TAXATION: {
+    GSTR1: '/taxation/gstr1',
+    GSTR1_DOWNLOAD: '/taxation/gstr1/download',
+  },
+
   // Upload endpoints (QR Code Upload Flow)
   UPLOAD: {
     CREATE_TOKEN: '/session/create-upload-token',

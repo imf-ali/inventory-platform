@@ -31,5 +31,6 @@ export default [
     route('history', './routes/dashboard.history.tsx'),
     route('refund', './routes/dashboard.refund.tsx'),
     route('price-edit/:pricingId', './routes/dashboard.price-edit.tsx'),
+    route('taxes', './routes/dashboard.taxes.tsx'),
   ]),
 ] satisfies RouteConfig;

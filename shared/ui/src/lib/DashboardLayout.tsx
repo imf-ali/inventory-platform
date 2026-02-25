@@ -54,10 +54,11 @@ const MENU_GROUPS: MenuGroup[] = [
   },
   {
     id: 'analytics-history',
-    label: 'Analytics & History',
+    label: 'Reports & Analytics',
     icon: '📈',
     items: [
       { path: '/dashboard/analytics', label: 'Analytics Dashboard', icon: '📈' },
+      { path: '/dashboard/taxes', label: 'Taxes', icon: '📋' },
       { path: '/dashboard/history', label: 'History', icon: '📜' },
     ],
   },
