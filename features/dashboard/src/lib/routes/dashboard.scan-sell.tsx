@@ -754,7 +754,7 @@ export default function ScanSellPage() {
       let itemsToSend: CartItemPayload[];
 
       if (priceToRetailUpdate) {
-        // Only price to retail changed: send id + priceToRetail
+        // Only price to retail changed: send id + priceToRetail (no quantity/baseQuantity)
         const item = items.find(
           (i) => i.inventoryItem.id === priceToRetailUpdate.inventoryId
         );
@@ -767,13 +767,11 @@ export default function ScanSellPage() {
           {
             id: item.inventoryItem.id,
             unit: item.unit,
-            baseQuantity: item.baseQuantity,
-            quantity: item.quantity,
             priceToRetail: priceToRetailUpdate.priceToRetail,
           },
         ];
       } else if (schemeUpdate) {
-        // Only scheme changed: send id + scheme info
+        // Only scheme changed: send id + scheme info (no quantity/baseQuantity)
         const item = items.find(
           (i) => i.inventoryItem.id === schemeUpdate.inventoryId
         );
@@ -794,8 +792,6 @@ export default function ScanSellPage() {
           {
             id: item.inventoryItem.id,
             unit: item.unit,
-            baseQuantity: item.baseQuantity,
-            quantity: item.quantity,
             priceToRetail: item.price,
             ...(hasPercentage
               ? {
@@ -813,6 +809,7 @@ export default function ScanSellPage() {
           },
         ];
       } else if (additionalDiscountUpdate) {
+        // Only discount changed: send id + additionalDiscount (no quantity/baseQuantity)
         const item = items.find(
           (i) => i.inventoryItem.id === additionalDiscountUpdate.inventoryId
         );
@@ -826,8 +823,6 @@ export default function ScanSellPage() {
           {
             id: item.inventoryItem.id,
             unit: item.unit,
-            baseQuantity: item.baseQuantity,
-            quantity: item.quantity,
             priceToRetail: item.price,
             ...(addDisc !== null && addDisc !== undefined
               ? { additionalDiscount: addDisc }
