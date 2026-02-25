@@ -1,16 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { gstr1Api } from '@inventory-platform/api';
-import type {
-  Gstr1ReportResponse,
-  B2bSezDeLine,
-  B2csLine,
-  Gstr1RefundLine,
-  Gstr1AdvanceLine,
-  Gstr1ExemptLine,
-  Gstr1HsnLine,
-  Gstr1DocumentSummaryLine,
-  Gstr1InvoiceLine,
-} from '@inventory-platform/types';
+import type { Gstr1ReportResponse } from '@inventory-platform/types';
 import styles from './dashboard.gstr1.module.css';
 
 const TABS = [
@@ -242,7 +232,7 @@ export function Gstr1Tab() {
                             <td>{row.recipientGstin || '—'}</td>
                             <td>{row.receiverName || '—'}</td>
                             <td>{row.invoiceNo || '—'}</td>
-                            <td>{formatDate(row.invoiceDate)}</td>
+                            <td>{formatDate(row.invoiceDate ?? '')}</td>
                             <td className={styles.numCol}>{formatCurrency(row.invoiceValue)}</td>
                             <td>{row.placeOfSupply || '—'}</td>
                             <td>{row.reverseCharge || '—'}</td>
@@ -301,7 +291,7 @@ export function Gstr1Tab() {
                         {b2clData.map((row, i) => (
                           <tr key={i}>
                             <td>{row.invoiceNo || '—'}</td>
-                            <td>{formatDate(row.invoiceDate)}</td>
+                            <td>{formatDate(row.invoiceDate ?? '')}</td>
                             <td className={styles.numCol}>{formatCurrency(row.invoiceValue)}</td>
                             <td>{row.placeOfSupply || '—'}</td>
                             <td>{row.applicableTaxPct || '—'}%</td>
@@ -533,7 +523,7 @@ export function Gstr1Tab() {
                         {expData.map((row, i) => (
                           <tr key={i}>
                             <td>{row.invoiceNo || '—'}</td>
-                            <td>{formatDate(row.invoiceDate)}</td>
+                            <td>{formatDate(row.invoiceDate ?? '')}</td>
                             <td className={styles.numCol}>{formatCurrency(row.invoiceValue)}</td>
                             <td>{row.placeOfSupply || '—'}</td>
                             <td>{row.applicableTaxPct || '—'}%</td>
