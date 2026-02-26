@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuthStore } from '@inventory-platform/store';
 import { shopsApi } from '@inventory-platform/api';
-import type { UserRole } from '@inventory-platform/types';
+import type { UserRole, OwnerShopSummary } from '@inventory-platform/types';
 import styles from './request-join-shop.module.css';
 import { useNotify } from '@inventory-platform/store';
 
@@ -19,9 +19,12 @@ export default function RequestJoinShopPage() {
   const navigate = useNavigate();
   const { user, isAuthenticated, fetchCurrentUser, logout } = useAuthStore();
   const [ownerEmail, setOwnerEmail] = useState('');
+  const [ownerShops, setOwnerShops] = useState<OwnerShopSummary[]>([]);
+  const [selectedShopId, setSelectedShopId] = useState('');
   const [role, setRole] = useState<UserRole>('CASHIER');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isFindingShops, setIsFindingShops] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const { success: notifySuccess, error: notifyError } = useNotify;
@@ -67,6 +70,30 @@ export default function RequestJoinShopPage() {
     return null; // Will redirect via layout
   }
 
+  const handleFindShops = async () => {
+    if (!ownerEmail.trim() || !ownerEmail.includes('@')) {
+      notifyError('Please enter a valid shop owner email');
+      return;
+    }
+    setError(null);
+    setOwnerShops([]);
+    setSelectedShopId('');
+    setIsFindingShops(true);
+    try {
+      const shops = await shopsApi.getShopsByOwnerEmail(ownerEmail.trim());
+      setOwnerShops(shops);
+      if (shops.length === 0) {
+        notifyError('No shops found for this email address');
+      } else if (shops.length === 1) {
+        setSelectedShopId(shops[0].shopId);
+      }
+    } catch (err) {
+      notifyError(err instanceof Error ? err.message : 'Failed to find shops');
+    } finally {
+      setIsFindingShops(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -82,11 +109,17 @@ export default function RequestJoinShopPage() {
       return;
     }
 
+    if (!selectedShopId) {
+      notifyError('Please find and select a shop first');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       const response = await shopsApi.requestToJoin({
         ownerEmail: ownerEmail.trim(),
+        shopId: selectedShopId,
         role,
         message: message.trim() || undefined,
       });
@@ -97,6 +130,8 @@ export default function RequestJoinShopPage() {
 
       // Clear form
       setOwnerEmail('');
+      setOwnerShops([]);
+      setSelectedShopId('');
       setMessage('');
 
       // Refresh user data in case they get added immediately
@@ -114,8 +149,10 @@ export default function RequestJoinShopPage() {
     } catch (err: any) {
       const errorMessage =
         err?.response?.data?.message ||
+        err?.response?.data?.data?.message ||
         err?.message ||
         'Failed to send request. Please try again.';
+      setError(errorMessage);
       notifyError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -156,23 +193,64 @@ export default function RequestJoinShopPage() {
           <label htmlFor="ownerEmail" className={styles.label}>
             Shop Owner Email *
           </label>
-          <input
-            id="ownerEmail"
-            type="email"
-            className={styles.input}
-            placeholder="owner@example.com"
-            value={ownerEmail}
-            onChange={(e) => {
-              setOwnerEmail(e.target.value);
-              if (error) setError(null);
-            }}
-            disabled={isLoading}
-            required
-          />
+          <div className={styles.emailRow}>
+            <input
+              id="ownerEmail"
+              type="email"
+              className={styles.input}
+              placeholder="owner@example.com"
+              value={ownerEmail}
+              onChange={(e) => {
+                setOwnerEmail(e.target.value);
+                setOwnerShops([]);
+                setSelectedShopId('');
+                if (error) setError(null);
+              }}
+              disabled={isLoading}
+              required
+            />
+            <button
+              type="button"
+              className={styles.findShopsButton}
+              onClick={handleFindShops}
+              disabled={isLoading || isFindingShops || !ownerEmail.trim()}
+            >
+              {isFindingShops ? 'Finding...' : 'Find shops'}
+            </button>
+          </div>
           <p className={styles.helpText}>
-            Enter the email address of the shop owner you want to join.
+            Enter the email address of the shop owner and click Find shops.
           </p>
         </div>
+
+        {ownerShops.length > 0 && (
+          <div className={styles.formGroup}>
+            <label htmlFor="shopSelect" className={styles.label}>
+              Select Shop *
+            </label>
+            <select
+              id="shopSelect"
+              className={styles.select}
+              value={selectedShopId}
+              onChange={(e) => {
+                setSelectedShopId(e.target.value);
+                if (error) setError(null);
+              }}
+              disabled={isLoading}
+              required
+            >
+              <option value="">Choose a shop...</option>
+              {ownerShops.map((s) => (
+                <option key={s.shopId} value={s.shopId}>
+                  {s.shopName}
+                </option>
+              ))}
+            </select>
+            <p className={styles.helpText}>
+              Select the shop you want to join.
+            </p>
+          </div>
+        )}
 
         <div className={styles.formGroup}>
           <label htmlFor="role" className={styles.label}>
@@ -230,7 +308,12 @@ export default function RequestJoinShopPage() {
           <button
             type="submit"
             className={styles.submitButton}
-            disabled={isLoading || !ownerEmail.trim()}
+            disabled={
+              isLoading ||
+              !ownerEmail.trim() ||
+              !selectedShopId ||
+              ownerShops.length === 0
+            }
           >
             {isLoading ? 'Sending Request...' : 'Send Request'}
           </button>

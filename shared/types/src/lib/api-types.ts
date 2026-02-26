@@ -57,7 +57,15 @@ export interface UpdateProductDto
   sku?: string;
 }
 
-// Auth types
+// Auth types - Multi-shop support
+export interface ShopMembership {
+  shopId: string;
+  shopName: string;
+  role: string;
+  relationship: 'OWNER' | 'INVITED' | null;
+  joinedAt: string;
+}
+
 export interface User {
   userId: string;
   role: string;
@@ -66,6 +74,8 @@ export interface User {
   name?: string;
   active?: boolean;
   createdAt?: string;
+  /** All shops the user can access (multi-shop support) */
+  shops?: ShopMembership[];
 }
 
 export interface Shop {
@@ -115,6 +125,20 @@ export interface LogoutDto {
 
 export interface LogoutResponse {
   deviceId: string;
+}
+
+// Multi-shop API types
+export interface SetActiveShopRequest {
+  shopId: string;
+}
+
+export interface SetActiveShopResponse {
+  activeShopId: string;
+  message: string;
+}
+
+export interface UserShopsResponse {
+  data: ShopMembership[];
 }
 
 // Order types
@@ -436,8 +460,18 @@ export interface RegisterShopResponse {
 
 export interface RequestJoinShopDto {
   ownerEmail: string;
-  message?: string;
+  shopId: string;
   role: string;
+  message?: string;
+}
+
+export interface OwnerShopSummary {
+  shopId: string;
+  shopName: string;
+}
+
+export interface OwnerShopsResponse {
+  data: OwnerShopSummary[];
 }
 
 export interface RequestJoinShopResponse {

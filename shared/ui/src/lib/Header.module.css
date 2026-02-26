@@ -30,18 +30,12 @@
   cursor: pointer;
 }
 
-.logoIcon {
-  width: 34px;
-  height: 34px;
-  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 40%, #06b6d4 100%);
-  border-radius: 12px;
-}
-
-.logoText {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-primary); 
-  letter-spacing: 0.02em;
+.logoImg {
+  height: 44px;
+  width: auto;
+  max-width: 180px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .nav {

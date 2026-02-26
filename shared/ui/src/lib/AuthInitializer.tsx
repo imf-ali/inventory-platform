@@ -7,7 +7,7 @@ import { apiClient } from '@inventory-platform/api';
  * This ensures the API client is synced with persisted auth state
  */
 export function AuthInitializer({ children }: { children: React.ReactNode }) {
-  const { token, isAuthenticated } = useAuthStore();
+  const { token, isAuthenticated, user } = useAuthStore();
 
   useEffect(() => {
     // Sync API client token with store token
@@ -17,6 +17,15 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
       apiClient.setToken(null);
     }
   }, [token, isAuthenticated]);
+
+  useEffect(() => {
+    // Sync X-Shop-Id header for multi-shop support
+    if (isAuthenticated && user?.shopId) {
+      apiClient.setShopId(user.shopId);
+    } else if (!isAuthenticated) {
+      apiClient.setShopId(null);
+    }
+  }, [isAuthenticated, user?.shopId]);
 
   return children;
 }

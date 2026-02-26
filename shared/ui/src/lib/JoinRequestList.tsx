@@ -6,10 +6,11 @@ import styles from './JoinRequestList.module.css';
 import { useNotify } from '@inventory-platform/store';
 
 interface JoinRequestListProps {
+  shopId?: string;
   onRequestChange?: () => void;
 }
 
-export function JoinRequestList({ onRequestChange }: JoinRequestListProps) {
+export function JoinRequestList({ shopId, onRequestChange }: JoinRequestListProps) {
   const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -20,14 +21,14 @@ export function JoinRequestList({ onRequestChange }: JoinRequestListProps) {
     setError(null);
 
     try {
-      const data = await shopsApi.getJoinRequests();
+      const data = await shopsApi.getJoinRequests(shopId);
       setJoinRequests(data);
     } catch (err: any) {
       notifyError(err?.message || 'Failed to load join requests');
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [shopId]);
 
   useEffect(() => {
     fetchJoinRequests();

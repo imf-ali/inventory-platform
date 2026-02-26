@@ -11,8 +11,11 @@ export function Header() {
       <div className={styles.container}>
         {/* Left: logo */}
         <Link to="/" className={styles.logo}>
-          <div className={styles.logoIcon}></div>
-          <span className={styles.logoText}>StockKart</span>
+          <img
+            src="/assets/logo/STOCKKART-3x.png"
+            alt="StockKart"
+            className={styles.logoImg}
+          />
         </Link>
 
         {/* Center: nav links */}

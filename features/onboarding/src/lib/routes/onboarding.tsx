@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useLocation } from 'react-router';
 import { useAuthStore } from '@inventory-platform/store';
 import { shopsApi } from '@inventory-platform/api';
 import type { OnboardingStep } from '@inventory-platform/types';
@@ -35,6 +35,8 @@ export function meta() {
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const addShop = (location.state as { addShop?: boolean })?.addShop ?? false;
   const { user, isAuthenticated, fetchCurrentUser, logout } = useAuthStore();
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -69,8 +71,8 @@ export default function OnboardingPage() {
       return;
     }
 
-    // If user already has a shopId, redirect to dashboard
-    if (user?.shopId) {
+    // If user already has a shopId and is not adding another shop, redirect to dashboard
+    if (user?.shopId && !addShop) {
       navigate('/dashboard');
     }
 
@@ -266,8 +268,8 @@ export default function OnboardingPage() {
     );
   }
 
-  // Redirect if user already has shop
-  if (user?.shopId) {
+  // Redirect if user already has shop (unless adding another shop)
+  if (user?.shopId && !addShop) {
     return null;
   }
 

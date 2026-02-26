@@ -45,7 +45,7 @@ export default function JoinRequestsPage() {
       </div>
 
       <div className={styles.content}>
-        <JoinRequestList />
+        <JoinRequestList shopId={shopId} />
       </div>
     </div>
   );

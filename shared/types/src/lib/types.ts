@@ -23,6 +23,7 @@ export interface AuthState {
   signup: (data: SignupDto) => Promise<void>;
   logout: () => Promise<void>;
   fetchCurrentUser: () => Promise<void>;
+  switchActiveShop: (shopId: string) => Promise<void>;
   clearError: () => void;
 }
 

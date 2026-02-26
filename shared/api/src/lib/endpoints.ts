@@ -62,6 +62,7 @@ export const API_ENDPOINTS = {
   // Shop endpoints
   SHOPS: {
     REGISTER: '/shops/register',
+    BY_OWNER_EMAIL: '/shops/by-owner-email',
     JOIN_REQUEST: '/shops/join-request',
     JOIN_REQUESTS: '/shops/join-requests',
     PROCESS_JOIN_REQUEST: (requestId: string) =>
@@ -78,6 +79,8 @@ export const API_ENDPOINTS = {
   // User endpoints
   USERS: {
     INVITATIONS: '/users/invitations',
+    ME_SHOPS: '/users/me/shops',
+    ACTIVE_SHOP: '/users/me/active-shop',
   },
 
   // Inventory endpoints
