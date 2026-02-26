@@ -15,9 +15,9 @@ export function meta() {
 
 export default function ShopSelectionPage() {
   const navigate = useNavigate();
-  const { user, isAuthenticated, fetchCurrentUser } = useAuthStore();
+  const { user, isAuthenticated, fetchCurrentUser, logout } = useAuthStore();
   const [selectedOption, setSelectedOption] = useState<
-    'onboard' | 'request' | null
+    'onboard' | 'request' | 'view' | null
   >(null);
 
   // Periodically check if user has been added to a shop
@@ -61,8 +61,17 @@ export default function ShopSelectionPage() {
     return null; // Will redirect via layout
   }
 
-  const handleOptionSelect = (option: 'onboard' | 'request') => {
+  const handleOptionSelect = (option: 'onboard' | 'request' | 'view') => {
     setSelectedOption(option);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch {
+      navigate('/login');
+    }
   };
 
   const handleContinue = () => {
@@ -70,6 +79,8 @@ export default function ShopSelectionPage() {
       navigate('/onboarding');
     } else if (selectedOption === 'request') {
       navigate('/request-join-shop');
+    } else if (selectedOption === 'view') {
+      navigate('/my-requests-invitations');
     }
   };
 
@@ -89,7 +100,7 @@ export default function ShopSelectionPage() {
           }`}
           onClick={() => handleOptionSelect('onboard')}
         >
-          <div className={styles.optionIcon}>🏪</div>
+          <div className={styles.iconWrapper}>🏪</div>
           <h2 className={styles.optionTitle}>Onboard a New Shop</h2>
           <p className={styles.optionDescription}>
             Create and register your own shop. You'll be the owner and can
@@ -103,11 +114,25 @@ export default function ShopSelectionPage() {
           }`}
           onClick={() => handleOptionSelect('request')}
         >
-          <div className={styles.optionIcon}>👥</div>
+          <div className={styles.iconWrapper}>👥</div>
           <h2 className={styles.optionTitle}>Request to Join a Shop</h2>
           <p className={styles.optionDescription}>
             Request to join an existing shop. The shop owner will review and
             approve your request.
+          </p>
+        </div>
+
+        <div
+          className={`${styles.optionCard} ${
+            selectedOption === 'view' ? styles.selected : ''
+          }`}
+          onClick={() => handleOptionSelect('view')}
+        >
+          <div className={styles.iconWrapper}>📬</div>
+          <h2 className={styles.optionTitle}>My requests & invitations</h2>
+          <p className={styles.optionDescription}>
+            View invitations you've received to join shops and the status of
+            join requests you've sent.
           </p>
         </div>
       </div>
@@ -119,6 +144,12 @@ export default function ShopSelectionPage() {
           </button>
         </div>
       )}
+
+      <div className={styles.footer}>
+        <button type="button" className={styles.logoutButton} onClick={handleLogout}>
+          Logout
+        </button>
+      </div>
     </div>
   );
 }

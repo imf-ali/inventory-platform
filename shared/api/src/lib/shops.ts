@@ -8,6 +8,7 @@ import type {
   RequestJoinShopResponse,
   JoinRequest,
   JoinRequestsResponse,
+  OwnerShopSummary,
   ProcessJoinRequestDto,
   ProcessJoinRequestResponse,
 } from '@inventory-platform/types';
@@ -25,6 +26,14 @@ export const shopsApi = {
     return response.data;
   },
 
+  getShopsByOwnerEmail: async (email: string): Promise<OwnerShopSummary[]> => {
+    const response = await apiClient.get<ApiResponse<{ data: OwnerShopSummary[] }>>(
+      API_ENDPOINTS.SHOPS.BY_OWNER_EMAIL,
+      { email }
+    );
+    return response.data.data;
+  },
+
   requestToJoin: async (data: RequestJoinShopDto): Promise<RequestJoinShopResponse> => {
     const response = await apiClient.post<ApiResponse<RequestJoinShopResponse>>(
       API_ENDPOINTS.SHOPS.JOIN_REQUEST,
@@ -36,9 +45,11 @@ export const shopsApi = {
     return response.data;
   },
 
-  getJoinRequests: async (): Promise<JoinRequest[]> => {
+  getJoinRequests: async (shopId?: string): Promise<JoinRequest[]> => {
+    const params = shopId ? { shopId } : undefined;
     const response = await apiClient.get<ApiResponse<JoinRequestsResponse>>(
-      API_ENDPOINTS.SHOPS.JOIN_REQUESTS
+      API_ENDPOINTS.SHOPS.JOIN_REQUESTS,
+      params as Record<string, string>
     );
     // API returns: { success: true, data: { data: [...] } }
     // apiClient.get already unwraps axios response.data

@@ -9,9 +9,12 @@ if (import.meta.env.DEV) {
   console.log('API Base URL:', API_BASE_URL);
 }
 
+const X_SHOP_ID_KEY = 'x_shop_id';
+
 class ApiClient {
   private axiosInstance: AxiosInstance;
   private token: string | null = null;
+  private shopId: string | null = null;
   private baseURL: string;
 
   constructor(baseURL: string) {
@@ -41,6 +44,14 @@ class ApiClient {
         if (currentToken) {
           this.token = currentToken;
           config.headers.Authorization = `Bearer ${currentToken}`;
+        }
+
+        const currentShopId =
+          typeof window !== 'undefined'
+            ? localStorage.getItem(X_SHOP_ID_KEY)
+            : this.shopId;
+        if (currentShopId) {
+          config.headers['X-Shop-Id'] = currentShopId;
         }
 
         return config;
@@ -92,6 +103,10 @@ class ApiClient {
 
   /* Token Management */
   setToken(token: string | null) {
+    // Clear shop ID when token is cleared (logout)
+    if (!token) {
+      this.setShopId(null);
+    }
     this.token = token;
 
     if (token && typeof window !== 'undefined') {
@@ -102,6 +117,18 @@ class ApiClient {
         localStorage.removeItem('auth_token');
       }
       delete this.axiosInstance.defaults.headers.common.Authorization;
+    }
+  }
+
+  /** Set the active shop ID for X-Shop-Id header (multi-shop support) */
+  setShopId(shopId: string | null) {
+    this.shopId = shopId;
+    if (typeof window !== 'undefined') {
+      if (shopId) {
+        localStorage.setItem(X_SHOP_ID_KEY, shopId);
+      } else {
+        localStorage.removeItem(X_SHOP_ID_KEY);
+      }
     }
   }
 

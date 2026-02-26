@@ -11,6 +11,7 @@ export * from './lib/reminders';
 export * from './lib/events';
 export * from './lib/shops';
 export * from './lib/invitations';
+export * from './lib/users';
 export * from './lib/inventory';
 export * from './lib/checkout';
 export * from './lib/cart';

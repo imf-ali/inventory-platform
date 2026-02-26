@@ -10,6 +10,7 @@ export * from './lib/Footer';
 export * from './lib/LoginForm';
 export * from './lib/SignupForm';
 export * from './lib/DashboardLayout';
+export * from './lib/ShopSwitcher';
 export * from './lib/AuthInitializer';
 export * from './lib/InviteForm';
 export * from './lib/InvitationList';

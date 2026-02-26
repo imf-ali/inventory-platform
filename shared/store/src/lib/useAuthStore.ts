@@ -1,8 +1,14 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { authApi, apiClient } from '@inventory-platform/api';
+import { authApi, apiClient, usersApi } from '@inventory-platform/api';
 import type { LoginDto, SignupDto } from '@inventory-platform/types';
 import type { AuthState } from '@inventory-platform/types';
+
+function deriveShopFromUser(user: { shopId: string | null; shops?: Array<{ shopId: string; shopName: string }> } | null): { name?: string } | null {
+  if (!user?.shopId || !user.shops?.length) return null;
+  const active = user.shops.find((s) => s.shopId === user.shopId);
+  return active ? { name: active.shopName } : null;
+}
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -18,10 +24,14 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true, error: null });
         try {
           const response = await authApi.login(credentials);
-          // Token is already set by authApi.login via apiClient.setToken
+          const user = response.user;
+          const shop = deriveShopFromUser(user) ?? response.shop;
+          if (user?.shopId) {
+            apiClient.setShopId(user.shopId);
+          }
           set({
-            user: response.user,
-            shop: response.shop,
+            user,
+            shop,
             token: response.accessToken,
             isAuthenticated: true,
             isLoading: false,
@@ -93,8 +103,13 @@ export const useAuthStore = create<AuthState>()(
           if (state.token) {
             apiClient.setToken(state.token);
           }
+          const shop = deriveShopFromUser(user) ?? state.shop;
+          if (user?.shopId) {
+            apiClient.setShopId(user.shopId);
+          }
           set({
             user,
+            shop,
             isAuthenticated: true,
             isLoading: false,
             error: null,
@@ -109,6 +124,27 @@ export const useAuthStore = create<AuthState>()(
             token: null,
           });
           apiClient.setToken(null);
+          apiClient.setShopId(null);
+        }
+      },
+
+      switchActiveShop: async (shopId: string) => {
+        set({ isLoading: true });
+        try {
+          await usersApi.setActiveShop(shopId);
+          const user = await authApi.getCurrentUser();
+          const shop = deriveShopFromUser(user) ?? null;
+          apiClient.setShopId(shopId);
+          set({
+            user,
+            shop,
+            isLoading: false,
+            error: null,
+          });
+        } catch (error: any) {
+          const errorMessage = error?.message || 'Failed to switch shop';
+          set({ isLoading: false, error: errorMessage });
+          throw error;
         }
       },
 
@@ -122,9 +158,12 @@ export const useAuthStore = create<AuthState>()(
         isAuthenticated: state.isAuthenticated,
       }),
       onRehydrateStorage: () => (state) => {
-        // Sync API client token when store is rehydrated from localStorage
+        // Sync API client token and shop ID when store is rehydrated from localStorage
         if (state?.token) {
           apiClient.setToken(state.token);
+        }
+        if (state?.user?.shopId) {
+          apiClient.setShopId(state.user.shopId);
         }
       },
     }

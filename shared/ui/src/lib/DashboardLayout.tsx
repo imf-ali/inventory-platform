@@ -21,7 +21,10 @@ const MENU_GROUPS: MenuGroup[] = [
     id: 'overview',
     label: 'Overview',
     icon: '📊',
-    items: [{ path: '/dashboard', label: 'Dashboard', icon: '📊' }],
+    items: [
+      { path: '/dashboard', label: 'Dashboard', icon: '📊' },
+      { path: '/dashboard/shops', label: 'Shops', icon: '🏪' },
+    ],
   },
   {
     id: 'products',
