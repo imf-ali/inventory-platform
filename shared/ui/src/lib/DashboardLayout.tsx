@@ -207,8 +207,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       >
         <div className={styles.sidebarHeader}>
           <Link to="/dashboard" className={styles.logo}>
-            <div className={styles.logoIcon} />
-            <span className={styles.logoText}>StockKart</span>
+            <img
+              src="/assets/logo/STOCKKART-3x.png"
+              alt="StockKart"
+              className={styles.logoImg}
+            />
           </Link>
 
           <button

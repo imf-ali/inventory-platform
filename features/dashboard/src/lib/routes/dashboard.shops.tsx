@@ -14,7 +14,7 @@ export function meta() {
 
 export default function ShopsPage() {
   const navigate = useNavigate();
-  const { user, switchActiveShop, fetchCurrentUser } = useAuthStore();
+  const { user, switchActiveShop } = useAuthStore();
   const [shops, setShops] = useState<ShopMembership[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

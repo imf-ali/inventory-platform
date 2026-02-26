@@ -4,7 +4,6 @@ import type {
   ApiResponse,
   ShopMembership,
   SetActiveShopResponse,
-  UserShopsResponse,
 } from '@inventory-platform/types';
 
 export const usersApi = {
