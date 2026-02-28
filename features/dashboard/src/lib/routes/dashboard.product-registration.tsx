@@ -15,6 +15,7 @@ import type {
   ItemType,
   DiscountApplicable,
   SchemeType,
+  BillingMode,
 } from '@inventory-platform/types';
 import { CustomRemindersSection } from '@inventory-platform/ui';
 import { useNotify } from '@inventory-platform/store';
@@ -75,6 +76,7 @@ export default function ProductRegistrationPage() {
   const [showVendorDropdown, setShowVendorDropdown] = useState(false);
   const [showVendorModal, setShowVendorModal] = useState(false);
   const [isCreatingVendor, setIsCreatingVendor] = useState(false);
+  const [billingMode, setBillingMode] = useState<BillingMode>('REGULAR');
   const [vendorFormData, setVendorFormData] = useState<CreateVendorDto>({
     name: '',
     contactEmail: '',
@@ -128,6 +130,7 @@ export default function ProductRegistrationPage() {
     sgst: '',
     cgst: '',
     additionalDiscount: null,
+    billingMode,
     itemType: 'NORMAL',
     itemTypeDegree: undefined,
     discountApplicable: undefined,
@@ -143,6 +146,17 @@ export default function ProductRegistrationPage() {
   const handleAddProduct = () => {
     setProducts([...products, createEmptyProduct()]);
     setError(null);
+  };
+
+  const handleBillingModeChange = (mode: BillingMode) => {
+    setBillingMode(mode);
+    setProducts((prev) =>
+      prev.map((product) => ({
+        ...product,
+        billingMode: mode,
+        ...(mode === 'BASIC' ? { sgst: '', cgst: '' } : {}),
+      }))
+    );
   };
 
   const transformParsedItemToProduct = (
@@ -192,9 +206,10 @@ export default function ProductRegistrationPage() {
               ? item.schemePercentage
               : parseFloat(String(item.schemePercentage))) || null
           : null,
-      sgst: item.sgst || '',
-      cgst: item.cgst || '',
+      sgst: billingMode === 'BASIC' ? '' : item.sgst || '',
+      cgst: billingMode === 'BASIC' ? '' : item.cgst || '',
       additionalDiscount: item.additionalDiscount ?? null,
+      billingMode,
       itemType: item.itemType ?? 'NORMAL',
       itemTypeDegree: item.itemTypeDegree,
       discountApplicable: item.discountApplicable,
@@ -600,6 +615,18 @@ export default function ProductRegistrationPage() {
           return;
         }
 
+        if (
+          billingMode === 'BASIC' &&
+          ((product.sgst && product.sgst.trim()) ||
+            (product.cgst && product.cgst.trim()))
+        ) {
+          notifyError(
+            `Product "${product.name || 'Unnamed'}": SGST/CGST must not be provided when billingMode is BASIC`
+          );
+          setIsLoading(false);
+          return;
+        }
+
         if (product.purchaseDate) {
           const purchase = new Date(product.purchaseDate);
           const now = new Date();
@@ -734,10 +761,15 @@ export default function ProductRegistrationPage() {
                 schemeType: (product.schemeType ?? 'FIXED_UNITS') as 'FIXED_UNITS',
                 scheme: product.scheme ?? null,
               }),
-          ...(product.sgst && product.sgst.trim()
+          billingMode: billingMode as BillingMode,
+          ...(billingMode !== 'BASIC' &&
+          product.sgst &&
+          product.sgst.trim()
             ? { sgst: product.sgst.trim() }
             : {}),
-          ...(product.cgst && product.cgst.trim()
+          ...(billingMode !== 'BASIC' &&
+          product.cgst &&
+          product.cgst.trim()
             ? { cgst: product.cgst.trim() }
             : {}),
           ...(product.additionalDiscount !== null &&
@@ -1158,76 +1190,97 @@ export default function ProductRegistrationPage() {
           {/* Shared Vendor and Lot ID Section */}
           <div className={styles.sharedSection}>
             <h3 className={styles.sectionTitle}>Shared Information</h3>
-
-            {/* Lot ID */}
-            <div className={styles.formGroup}>
-              <label htmlFor="lotId" className={styles.label}>
-                Lot ID (Optional)
-              </label>
-              <div style={{ position: 'relative' }}>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <input
-                    type="text"
-                    id="lotId"
-                    className={styles.input}
-                    placeholder="Enter or search lot ID"
-                    value={lotIdSearchQuery}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      setLotIdSearchQuery(e.target.value);
-                      setLotId(e.target.value);
-                      setShowLotIdDropdown(false);
-                    }}
-                    disabled={isLoading || isSearchingLots}
-                    style={{ flex: 1 }}
-                  />
-                  <button
-                    type="button"
-                    className={styles.searchBtn}
-                    onClick={handleLotIdSearch}
-                    disabled={
-                      isLoading || isSearchingLots || !lotIdSearchQuery.trim()
-                    }
-                  >
-                    {isSearchingLots ? 'Searching...' : 'Search'}
-                  </button>
-                </div>
-                {showLotIdDropdown && lotIdSearchResults.length > 0 && (
-                  <div className={styles.dropdown}>
-                    {lotIdSearchResults.map((lot) => {
-                      const formatDate = (dateString: string) => {
-                        try {
-                          const date = new Date(dateString);
-                          return date.toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          });
-                        } catch {
-                          return dateString;
-                        }
-                      };
-                      return (
-                        <div
-                          key={lot.lotId}
-                          className={styles.dropdownItem}
-                          onClick={() => handleSelectLotId(lot.lotId)}
-                        >
-                          <div style={{ fontWeight: 500 }}>{lot.lotId}</div>
-                          <div
-                            style={{
-                              fontSize: '0.85rem',
-                              color: 'var(--text-secondary)',
-                            }}
-                          >
-                            {formatDate(lot.createdAt)}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+            <div className={styles.sharedInfoGrid}>
+              <div className={styles.formGroup}>
+                <label htmlFor="sharedBillingMode" className={styles.label}>
+                  Billing Mode *
+                </label>
+                <select
+                  id="sharedBillingMode"
+                  className={styles.input}
+                  value={billingMode}
+                  onChange={(e) =>
+                    handleBillingModeChange(e.target.value as BillingMode)
+                  }
+                  disabled={isLoading}
+                >
+                  <option value="REGULAR">REGULAR</option>
+                  <option value="BASIC">BASIC</option>
+                </select>
+                <span className={styles.sharedHint}>
+                  Applies to all products in this registration.
+                </span>
+                {billingMode === 'BASIC' && (
+                  <span className={styles.unitHint}>
+                    BASIC mode excludes GST for all products.
+                  </span>
                 )}
+              </div>
+
+              {/* Lot ID */}
+              <div className={styles.formGroup}>
+                <label htmlFor="lotId" className={styles.label}>
+                  Lot ID (Optional)
+                </label>
+                <div className={styles.sharedFieldWrap}>
+                  <div className={styles.sharedInputRow}>
+                    <input
+                      type="text"
+                      id="lotId"
+                      className={`${styles.input} ${styles.sharedInputGrow}`}
+                      placeholder="Enter or search lot ID"
+                      value={lotIdSearchQuery}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        setLotIdSearchQuery(e.target.value);
+                        setLotId(e.target.value);
+                        setShowLotIdDropdown(false);
+                      }}
+                      disabled={isLoading || isSearchingLots}
+                    />
+                    <button
+                      type="button"
+                      className={styles.searchBtn}
+                      onClick={handleLotIdSearch}
+                      disabled={
+                        isLoading || isSearchingLots || !lotIdSearchQuery.trim()
+                      }
+                    >
+                      {isSearchingLots ? 'Searching...' : 'Search'}
+                    </button>
+                  </div>
+                  {showLotIdDropdown && lotIdSearchResults.length > 0 && (
+                    <div className={styles.dropdown}>
+                      {lotIdSearchResults.map((lot) => {
+                        const formatDate = (dateString: string) => {
+                          try {
+                            const date = new Date(dateString);
+                            return date.toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            });
+                          } catch {
+                            return dateString;
+                          }
+                        };
+                        return (
+                          <div
+                            key={lot.lotId}
+                            className={styles.dropdownItem}
+                            onClick={() => handleSelectLotId(lot.lotId)}
+                          >
+                            <div className={styles.dropdownItemTitle}>{lot.lotId}</div>
+                            <div className={styles.dropdownItemSub}>
+                              {formatDate(lot.createdAt)}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -1426,6 +1479,7 @@ export default function ProductRegistrationPage() {
                   <ProductAccordion
                     key={product.id}
                     product={product}
+                    billingMode={billingMode}
                     index={index}
                     onToggle={() => handleToggleProduct(product.id)}
                     onRemove={() => handleRemoveProduct(product.id)}
@@ -1786,6 +1840,7 @@ export default function ProductRegistrationPage() {
 // Product Accordion Component
 interface ProductAccordionProps {
   product: ProductFormData;
+  billingMode: BillingMode;
   index: number;
   onToggle: () => void;
   onRemove: () => void;
@@ -1804,6 +1859,7 @@ interface ProductAccordionProps {
 
 function ProductAccordion({
   product,
+  billingMode,
   index,
   onToggle,
   onRemove,
@@ -2493,40 +2549,42 @@ function ProductAccordion({
             </div>
           </div>
 
-          <div className={styles.formRow}>
-            <div className={styles.formGroup}>
-              <label htmlFor={`cgst-${product.id}`} className={styles.label}>
-                CGST (%)
-              </label>
-              <input
-                type="text"
-                inputMode="decimal"
-                pattern="[0-9]*\.?[0-9]*"
-                id={`cgst-${product.id}`}
-                className={styles.input}
-                placeholder="Leave empty for shop default"
-                value={product.cgst || ''}
-                onChange={(e) => onChange(product.id, 'cgst', e.target.value)}
-                disabled={isLoading}
-              />
+          {billingMode === 'REGULAR' && (
+            <div className={styles.formRow}>
+              <div className={styles.formGroup}>
+                <label htmlFor={`cgst-${product.id}`} className={styles.label}>
+                  CGST (%)
+                </label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  pattern="[0-9]*\.?[0-9]*"
+                  id={`cgst-${product.id}`}
+                  className={styles.input}
+                  placeholder="Leave empty for shop default"
+                  value={product.cgst || ''}
+                  onChange={(e) => onChange(product.id, 'cgst', e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label htmlFor={`sgst-${product.id}`} className={styles.label}>
+                  SGST (%)
+                </label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  pattern="[0-9]*\.?[0-9]*"
+                  id={`sgst-${product.id}`}
+                  className={styles.input}
+                  placeholder="Leave empty for shop default"
+                  value={product.sgst || ''}
+                  onChange={(e) => onChange(product.id, 'sgst', e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
             </div>
-            <div className={styles.formGroup}>
-              <label htmlFor={`sgst-${product.id}`} className={styles.label}>
-                SGST (%)
-              </label>
-              <input
-                type="text"
-                inputMode="decimal"
-                pattern="[0-9]*\.?[0-9]*"
-                id={`sgst-${product.id}`}
-                className={styles.input}
-                placeholder="Leave empty for shop default"
-                value={product.sgst || ''}
-                onChange={(e) => onChange(product.id, 'sgst', e.target.value)}
-                disabled={isLoading}
-              />
-            </div>
-          </div>
+          )}
 
           {/* Rates (optional) - custom pricing tiers */}
           <div className={styles.ratesSection}>

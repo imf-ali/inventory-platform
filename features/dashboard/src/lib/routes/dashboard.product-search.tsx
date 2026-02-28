@@ -1,6 +1,6 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { inventoryApi, cartApi } from '@inventory-platform/api';
-import type { InventoryItem } from '@inventory-platform/types';
+import type { BillingMode, InventoryItem } from '@inventory-platform/types';
 import { InventoryAlertDetails } from '@inventory-platform/ui';
 import styles from './dashboard.product-search.module.css';
 import { useNotify } from '@inventory-platform/store';
@@ -27,6 +27,9 @@ export default function ProductSearchPage() {
   const [searchTotalPages, setSearchTotalPages] = useState(0);
   const [searchTotalItems, setSearchTotalItems] = useState(0);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+  const [billingModeFilter, setBillingModeFilter] = useState<
+    'ALL' | BillingMode
+  >('ALL');
   const { success: notifySuccess, error: notifyError } = useNotify;
 
   // Fetch all inventory on mount
@@ -168,11 +171,30 @@ export default function ProductSearchPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to add item to cart';
-      notifyError(errorMessage);
+      if (
+        errorMessage.includes(
+          'Cannot mix REGULAR and BASIC inventory items in a single cart'
+        )
+      ) {
+        notifyError(
+          'Cannot add this item because the cart already contains a different billing mode (REGULAR/BASIC). Clear cart or use matching mode items only.'
+        );
+      } else {
+        notifyError(errorMessage);
+      }
     } finally {
       setAddingToCart(null);
     }
   };
+
+  const normalizedMode = (item: InventoryItem): BillingMode =>
+    item.billingMode === 'BASIC' ? 'BASIC' : 'REGULAR';
+
+  const filteredInventory = inventory.filter((item) =>
+    billingModeFilter === 'ALL'
+      ? true
+      : normalizedMode(item) === billingModeFilter
+  );
 
   return (
     <div className={styles.page}>
@@ -212,6 +234,18 @@ export default function ProductSearchPage() {
               Clear
             </button>
           )}
+          <select
+            className={styles.modeFilter}
+            value={billingModeFilter}
+            onChange={(e) =>
+              setBillingModeFilter(e.target.value as 'ALL' | BillingMode)
+            }
+            disabled={isLoading}
+          >
+            <option value="ALL">All Modes</option>
+            <option value="REGULAR">REGULAR</option>
+            <option value="BASIC">BASIC</option>
+          </select>
         </form>
       </div>
       {error && <div className={styles.errorMessage}>{error}</div>}
@@ -223,14 +257,14 @@ export default function ProductSearchPage() {
           <span className={styles.resultsCount}>
             {isLoading
               ? 'Loading...'
-              : `Showing ${inventory.length} ${
-                  inventory.length === 1 ? 'result' : 'results'
+              : `Showing ${filteredInventory.length} ${
+                  filteredInventory.length === 1 ? 'result' : 'results'
                 }`}
           </span>
         </div>
-        {isLoading && inventory.length === 0 ? (
+        {isLoading && filteredInventory.length === 0 ? (
           <div className={styles.loading}>Loading inventory...</div>
-        ) : inventory.length === 0 ? (
+        ) : filteredInventory.length === 0 ? (
           <div className={styles.emptyState}>
             <p>No inventory items found.</p>
             {searchQuery && (
@@ -242,7 +276,7 @@ export default function ProductSearchPage() {
         ) : (
           <>
             <div className={styles.productsGrid}>
-              {inventory.map((item) => (
+              {filteredInventory.map((item) => (
                 <div key={item.id || item.lotId} className={styles.productCard}>
                   <div
                     className={styles.productImage}
@@ -255,6 +289,9 @@ export default function ProductSearchPage() {
                     <h3 className={styles.productName}>
                       {item.name || 'Unnamed Product'}
                     </h3>
+                    <span className={styles.modeBadge}>
+                      {normalizedMode(item)}
+                    </span>
                     {item.companyName && (
                       <p className={styles.productCompany}>
                         Company: {item.companyName}

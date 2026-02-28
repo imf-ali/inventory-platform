@@ -9,6 +9,7 @@ import { useNavigate, Link } from 'react-router';
 import { inventoryApi, cartApi, customersApi } from '@inventory-platform/api';
 import type {
   AvailableUnit,
+  BillingMode,
   InventoryItem,
   CartResponse,
   CheckoutItemResponse,
@@ -358,6 +359,12 @@ export default function ScanSellPage() {
   const searchWrapperRef = useRef<HTMLDivElement>(null);
   const { error: notifyError } = useNotify;
 
+  const normalizeBillingMode = useCallback(
+    (mode?: BillingMode | null): BillingMode =>
+      mode === 'BASIC' ? 'BASIC' : 'REGULAR',
+    []
+  );
+
   const toNumber = useCallback((value: unknown, fallback: number) => {
     const num = typeof value === 'number' ? value : Number(value);
     return Number.isFinite(num) ? num : fallback;
@@ -606,6 +613,9 @@ export default function ScanSellPage() {
               additionalDiscount:
                 resItem.additionalDiscount ??
                 existing.inventoryItem.additionalDiscount,
+              billingMode: normalizeBillingMode(
+                resItem.billingMode ?? existing.inventoryItem.billingMode
+              ),
               baseUnit: inferredBaseUnit,
               availableUnits,
               unitConversions:
@@ -630,6 +640,9 @@ export default function ScanSellPage() {
               expiryDate: '',
               shopId: cart.shopId,
               additionalDiscount: resItem.additionalDiscount ?? null,
+              billingMode: normalizeBillingMode(
+                resItem.billingMode ?? cart.billingMode
+              ),
               baseUnit: inferredBaseUnit,
               unitConversions:
                 saleUnit !== inferredBaseUnit && unitFactor > 1
@@ -652,7 +665,7 @@ export default function ScanSellPage() {
         };
       });
     },
-    [toNumber]
+    [normalizeBillingMode, toNumber]
   );
 
   const getEffectiveAdditionalDiscount = useCallback(
@@ -955,7 +968,18 @@ export default function ScanSellPage() {
       // Handle API errors - might include stock validation errors
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to update cart';
-      notifyError(errorMessage);
+      if (
+        errorMessage.includes(
+          'Cannot mix REGULAR and BASIC inventory items in a single cart'
+        )
+      ) {
+        const mixedModeMessage =
+          'Cannot mix REGULAR and BASIC inventory items in a single cart';
+        setError(mixedModeMessage);
+        notifyError(mixedModeMessage);
+      } else {
+        notifyError(errorMessage);
+      }
       // Revert to previous cart state on error by reloading cart
       try {
         const currentCart = await cartApi.get();
@@ -974,6 +998,10 @@ export default function ScanSellPage() {
   const handleAddToCart = async (item: InventoryItem, price?: number) => {
     // Use sellingPrice (effective) as default, or override with provided price
     const finalPrice = price !== undefined ? price : (item.sellingPrice ?? item.priceToRetail);
+    const incomingMode = normalizeBillingMode(item.billingMode);
+    const activeMode = normalizeBillingMode(
+      cartData?.billingMode ?? cartItems[0]?.inventoryItem.billingMode
+    );
 
     if (finalPrice <= 0) {
       notifyError('Please enter a valid price');
@@ -982,6 +1010,13 @@ export default function ScanSellPage() {
 
     if (item.currentCount <= 0) {
       notifyError('Product is out of stock');
+      return;
+    }
+
+    if (cartItems.length > 0 && activeMode !== incomingMode) {
+      notifyError(
+        'Cannot mix REGULAR and BASIC inventory items in a single cart'
+      );
       return;
     }
 
@@ -1025,7 +1060,7 @@ export default function ScanSellPage() {
         updatedItems = [
           ...prev,
           {
-            inventoryItem: item,
+            inventoryItem: { ...item, billingMode: incomingMode },
             unit: defaultUnit,
             baseQuantity,
             unitFactor,
@@ -1296,7 +1331,14 @@ export default function ScanSellPage() {
     );
   };
 
+  const cartBillingMode = normalizeBillingMode(
+    cartData?.billingMode ?? cartItems[0]?.inventoryItem.billingMode
+  );
+
   const calculateSGST = () => {
+    if (cartBillingMode === 'BASIC') {
+      return 0;
+    }
     if (cartData?.sgstAmount !== undefined && cartData?.sgstAmount !== null) {
       return cartData.sgstAmount;
     }
@@ -1305,6 +1347,9 @@ export default function ScanSellPage() {
   };
 
   const calculateCGST = () => {
+    if (cartBillingMode === 'BASIC') {
+      return 0;
+    }
     if (cartData?.cgstAmount !== undefined && cartData?.cgstAmount !== null) {
       return cartData.cgstAmount;
     }
@@ -1313,6 +1358,9 @@ export default function ScanSellPage() {
   };
 
   const calculateTax = () => {
+    if (cartBillingMode === 'BASIC') {
+      return 0;
+    }
     if (cartData?.taxTotal !== undefined && cartData?.taxTotal !== null) {
       return cartData.taxTotal;
     }
@@ -1570,6 +1618,9 @@ export default function ScanSellPage() {
                         >
                           {cartItem.inventoryItem.name || 'Unnamed Product'}
                         </button>
+                        <span className={styles.modeBadge}>
+                          {normalizeBillingMode(cartItem.inventoryItem.billingMode)}
+                        </span>
                         {cartItem.inventoryItem.companyName && (
                           <span className={styles.itemCompany}>
                             {cartItem.inventoryItem.companyName}
@@ -1937,6 +1988,10 @@ export default function ScanSellPage() {
             ) : (
               <>
                 <div className={styles.summaryRow}>
+                  <span>Billing Mode</span>
+                  <span>{cartBillingMode}</span>
+                </div>
+                <div className={styles.summaryRow}>
                   <span>Subtotal</span>
                   <span>₹{calculateSubtotal().toFixed(2)}</span>
                 </div>
@@ -1951,14 +2006,18 @@ export default function ScanSellPage() {
                       </span>
                     </div>
                   )}
-                <div className={styles.summaryRow}>
-                  <span>SGST ({getSGSTPercentage()}%)</span>
-                  <span>₹{calculateSGST().toFixed(2)}</span>
-                </div>
-                <div className={styles.summaryRow}>
-                  <span>CGST ({getCGSTPercentage()}%)</span>
-                  <span>₹{calculateCGST().toFixed(2)}</span>
-                </div>
+                {cartBillingMode === 'REGULAR' && (
+                  <div className={styles.summaryRow}>
+                    <span>SGST ({getSGSTPercentage()}%)</span>
+                    <span>₹{calculateSGST().toFixed(2)}</span>
+                  </div>
+                )}
+                {cartBillingMode === 'REGULAR' && (
+                  <div className={styles.summaryRow}>
+                    <span>CGST ({getCGSTPercentage()}%)</span>
+                    <span>₹{calculateCGST().toFixed(2)}</span>
+                  </div>
+                )}
                 <div className={styles.summaryRow}>
                   <span>Total Tax</span>
                   <span>₹{calculateTax().toFixed(2)}</span>
@@ -2120,6 +2179,17 @@ export default function ScanSellPage() {
                         <span className={styles.detailModalDetailValue}>{qty}</span>
                       </div>
                     </div>
+                    <div className={styles.detailModalDetailCard}>
+                      <div className={styles.detailModalDetailIcon}>🧾</div>
+                      <div className={styles.detailModalDetailContent}>
+                        <span className={styles.detailModalDetailLabel}>Billing mode</span>
+                        <span className={styles.detailModalDetailValue}>
+                          {normalizeBillingMode(
+                            detailModalItem.inventoryItem.billingMode
+                          )}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div className={styles.detailModalSection}>
@@ -2173,7 +2243,9 @@ export default function ScanSellPage() {
                         <span className={styles.detailModalDetailValue}>{schemeLabel}</span>
                       </div>
                     </div>
-                    {apiItem?.sgst != null && (
+                    {normalizeBillingMode(detailModalItem.inventoryItem.billingMode) ===
+                      'REGULAR' &&
+                      apiItem?.sgst != null && (
                       <div className={`${styles.detailModalDetailCard} ${styles.detailModalPricingCard}`}>
                         <div className={styles.detailModalDetailIcon}>📊</div>
                         <div className={styles.detailModalDetailContent}>
@@ -2182,7 +2254,9 @@ export default function ScanSellPage() {
                         </div>
                       </div>
                     )}
-                    {apiItem?.cgst != null && (
+                    {normalizeBillingMode(detailModalItem.inventoryItem.billingMode) ===
+                      'REGULAR' &&
+                      apiItem?.cgst != null && (
                       <div className={`${styles.detailModalDetailCard} ${styles.detailModalPricingCard}`}>
                         <div className={styles.detailModalDetailIcon}>📊</div>
                         <div className={styles.detailModalDetailContent}>
@@ -2272,6 +2346,9 @@ function SearchDropdownItem({
       <div className={styles.dropdownItemInfo}>
         <span className={styles.dropdownItemName}>
           {item.name || 'Unnamed Product'}
+        </span>
+        <span className={styles.dropdownModeBadge}>
+          {item.billingMode === 'BASIC' ? 'BASIC' : 'REGULAR'}
         </span>
         {item.companyName && (
           <span className={styles.dropdownItemCompany}>

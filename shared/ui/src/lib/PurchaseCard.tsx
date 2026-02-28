@@ -100,6 +100,9 @@ export function PurchaseCard({ purchase }: PurchaseCardProps) {
           <div className={styles.invoiceInfo}>
             <h3 className={styles.invoiceNo}>{purchase.invoiceNo}</h3>
             <span className={styles.invoiceId}>ID: {purchase.invoiceId}</span>
+            <span className={styles.invoiceId}>
+              Billing Mode: {purchase.billingMode === 'BASIC' ? 'BASIC' : 'REGULAR'}
+            </span>
           </div>
           <div className={styles.headerActions}>
             {purchase.status === 'COMPLETED' && (
@@ -177,6 +180,9 @@ export function PurchaseCard({ purchase }: PurchaseCardProps) {
                     <span className={styles.itemName}>{item.name}</span>
                     <span className={styles.itemQuantity}>
                       Qty: {item.quantity}
+                    </span>
+                    <span className={styles.itemQuantity}>
+                      Mode: {item.billingMode === 'BASIC' ? 'BASIC' : 'REGULAR'}
                     </span>
                   </div>
                   <div className={styles.itemPricing}>

@@ -653,6 +653,15 @@
   background: var(--hover-bg);
 }
 
+.dropdownItemTitle {
+  font-weight: 600;
+}
+
+.dropdownItemSub {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
 .searchBtn {
   padding: 0.75rem 1rem;
   border: none;
@@ -699,6 +708,15 @@
   .modalFooter {
     padding: 1rem;
   }
+
+  .sharedInfoGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .sharedInputRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 [data-theme='dark'] .input[type='date'] {
@@ -713,6 +731,10 @@
 .sharedSection {
   margin-bottom: 0;
   padding-bottom: 0;
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--bg-primary);
 }
 
 .subsectionTitle {
@@ -731,6 +753,32 @@
 
 .sharedSection .formGroup {
   margin-bottom: 0;
+}
+
+.sharedInfoGrid {
+  display: grid;
+  grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.sharedFieldWrap {
+  position: relative;
+}
+
+.sharedInputRow {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.sharedInputGrow {
+  flex: 1;
+}
+
+.sharedHint {
+  font-size: 0.78rem;
+  color: var(--text-tertiary);
 }
 
 /* Products Section */

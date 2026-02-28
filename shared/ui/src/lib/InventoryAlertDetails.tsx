@@ -107,6 +107,15 @@ export function InventoryAlertDetails({
                   </span>
                 </div>
               </div>
+              <div className={styles.detailCard}>
+                <div className={styles.detailIcon}>🧾</div>
+                <div className={styles.detailContent}>
+                  <span className={styles.detailLabel}>Billing Mode</span>
+                  <span className={styles.detailValue}>
+                    {item?.billingMode === 'BASIC' ? 'BASIC' : 'REGULAR'}
+                  </span>
+                </div>
+              </div>
               {item?.companyName && (
                 <div className={styles.detailCard}>
                   <div className={styles.detailIcon}>🏢</div>

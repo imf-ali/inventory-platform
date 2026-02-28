@@ -528,6 +528,7 @@ export type DiscountApplicable =
   | 'DISCOUNT_AND_SCHEME';
 
 export type SchemeType = 'FIXED_UNITS' | 'PERCENTAGE';
+export type BillingMode = 'REGULAR' | 'BASIC';
 
 export interface UnitConversion {
   unit: string;
@@ -566,6 +567,7 @@ export interface CreateInventoryDto {
   itemType?: ItemType;
   itemTypeDegree?: number;
   discountApplicable?: DiscountApplicable;
+  billingMode?: BillingMode;
   purchaseDate?: string;
   baseUnit?: string;
   unitConversions?: UnitConversion | null;
@@ -576,6 +578,7 @@ export interface InventoryResponse {
   lotId: string | null;
   barcode: string;
   reminderCreated: boolean;
+  billingMode?: BillingMode;
 }
 
 export interface BulkCreateInventoryItem {
@@ -608,6 +611,7 @@ export interface BulkCreateInventoryItem {
   itemType?: ItemType;
   itemTypeDegree?: number;
   discountApplicable?: DiscountApplicable;
+  billingMode?: BillingMode;
   purchaseDate?: string;
   baseUnit?: string;
   unitConversions?: UnitConversion | null;
@@ -661,6 +665,7 @@ export interface ParseInvoiceItem {
   itemType?: ItemType;
   itemTypeDegree?: number;
   discountApplicable?: DiscountApplicable;
+  billingMode?: BillingMode;
   purchaseDate?: string | null;
   baseUnit?: string | null;
   unitConversions?: UnitConversion | null;
@@ -704,6 +709,7 @@ export interface InventoryItem {
   itemType?: ItemType;
   itemTypeDegree?: number;
   discountApplicable?: DiscountApplicable;
+  billingMode?: BillingMode;
   purchaseDate?: string;
   baseUnit?: string | null;
   unitConversions?: UnitConversion | null;
@@ -797,6 +803,7 @@ export interface CheckoutItemResponse {
   costTotal?: number | null;
   profit?: number | null;
   marginPercent?: number | null;
+  billingMode?: BillingMode;
 }
 
 export interface CheckoutResponse {
@@ -817,6 +824,7 @@ export interface CheckoutResponse {
   revenueAfterTax?: number | null;
   totalProfit?: number | null;
   marginPercent?: number | null;
+  billingMode?: BillingMode;
 }
 
 // Cart types
@@ -849,6 +857,7 @@ export interface CartResponse {
   revenueAfterTax?: number | null;
   totalProfit?: number | null;
   marginPercent?: number | null;
+  billingMode?: BillingMode;
 }
 
 export interface AddToCartDto {
@@ -895,6 +904,7 @@ export interface Purchase {
   revenueAfterTax?: number | null;
   totalProfit?: number | null;
   marginPercent?: number | null;
+  billingMode?: BillingMode;
 }
 
 export interface PurchaseHistoryResponse {
