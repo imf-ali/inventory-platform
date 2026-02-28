@@ -236,6 +236,7 @@ export default function CheckoutPage() {
   };
 
   // Get SGST and CGST percentages from items if available, otherwise calculate from amounts
+  const billingMode = checkoutData.billingMode === 'BASIC' ? 'BASIC' : 'REGULAR';
   const firstItem = checkoutData.items[0];
   const sgstPercentage = firstItem?.sgst
     ? parseFloat(firstItem.sgst).toFixed(1)
@@ -368,6 +369,10 @@ export default function CheckoutPage() {
           </div>
 
           <div className={styles.infoGrid}>
+            <div className={styles.infoItem}>
+              <span className={styles.infoLabel}>Billing Mode:</span>
+              <span className={styles.infoValue}>{billingMode}</span>
+            </div>
             {checkoutData.customerName && (
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>Customer Name:</span>
@@ -442,8 +447,8 @@ export default function CheckoutPage() {
                   <th>Discount</th>
                   <th>Additional Discount</th>
                   <th>Scheme</th>
-                  <th>CGST%</th>
-                  <th>SGST%</th>
+                  {billingMode === 'REGULAR' && <th>CGST%</th>}
+                  {billingMode === 'REGULAR' && <th>SGST%</th>}
                   <th>Total</th>
                 </tr>
               </thead>
@@ -471,16 +476,20 @@ export default function CheckoutPage() {
                           ? `${item.schemePayFor ?? '—'} + ${item.schemeFree ?? '—'}`
                           : '—'}
                       </td>
-                      <td>
-                        {item.cgst !== null && item.cgst !== undefined
-                          ? `${item.cgst}%`
-                          : '—'}
-                      </td>
-                      <td>
-                        {item.sgst !== null && item.sgst !== undefined
-                          ? `${item.sgst}%`
-                          : '—'}
-                      </td>
+                      {billingMode === 'REGULAR' && (
+                        <td>
+                          {item.cgst !== null && item.cgst !== undefined
+                            ? `${item.cgst}%`
+                            : '—'}
+                        </td>
+                      )}
+                      {billingMode === 'REGULAR' && (
+                        <td>
+                          {item.sgst !== null && item.sgst !== undefined
+                            ? `${item.sgst}%`
+                            : '—'}
+                        </td>
+                      )}
                       <td>₹{item.totalAmount.toFixed(2)}</td>
                     </tr>
                   );

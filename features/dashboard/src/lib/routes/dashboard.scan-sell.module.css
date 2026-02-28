@@ -170,6 +170,19 @@
   white-space: nowrap;
 }
 
+.dropdownModeBadge {
+  display: inline-block;
+  width: fit-content;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid #93c5fd;
+  background: #dbeafe;
+  color: #1e3a8a;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
 .dropdownItemCompany {
   font-size: 0.8rem;
   color: var(--text-secondary);
@@ -900,6 +913,20 @@
 .itemUnitMeta {
   font-size: 0.78rem;
   color: var(--text-tertiary);
+}
+
+.modeBadge {
+  display: inline-block;
+  width: fit-content;
+  margin-top: 0.25rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid #93c5fd;
+  background: #dbeafe;
+  color: #1e3a8a;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
 }
 
 

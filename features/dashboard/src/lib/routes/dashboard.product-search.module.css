@@ -75,6 +75,15 @@
   cursor: not-allowed;
 }
 
+.modeFilter {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+}
+
 .clearBtn {
   padding: 0.75rem 1.5rem;
   border: 1px solid var(--border-color);
@@ -153,6 +162,19 @@
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--text-primary);
+}
+
+.modeBadge {
+  display: inline-block;
+  width: fit-content;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #1e3a8a;
+  background: #dbeafe;
+  border: 1px solid #93c5fd;
 }
 
 .productSku {

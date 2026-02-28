@@ -68,6 +68,8 @@ class ApiClient {
             error?: string;
             data?: { message?: string };
             errors?: Record<string, string[]>;
+            code?: string;
+            details?: unknown;
           };
 
           const message =
@@ -79,10 +81,14 @@ class ApiClient {
           const apiError = new Error(message) as Error & {
             status?: number;
             errors?: Record<string, string[]>;
+            code?: string;
+            details?: unknown;
           };
 
           apiError.status = error.response.status;
           apiError.errors = errorData?.errors;
+          apiError.code = errorData?.code;
+          apiError.details = errorData?.details;
 
           throw apiError;
         }
