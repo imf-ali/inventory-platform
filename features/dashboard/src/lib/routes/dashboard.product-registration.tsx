@@ -1190,33 +1190,22 @@ export default function ProductRegistrationPage() {
           {/* Shared Vendor and Lot ID Section */}
           <div className={styles.sharedSection}>
             <h3 className={styles.sectionTitle}>Shared Information</h3>
+            <div className={styles.sharedTopRow}>
+              <span className={styles.sharedHint}>Applies to all products.</span>
+              <select
+                className={`${styles.input} ${styles.sharedModeSelect}`}
+                value={billingMode}
+                onChange={(e) =>
+                  handleBillingModeChange(e.target.value as BillingMode)
+                }
+                disabled={isLoading}
+                aria-label="Billing mode"
+              >
+                <option value="REGULAR">REGULAR</option>
+                <option value="BASIC">BASIC</option>
+              </select>
+            </div>
             <div className={styles.sharedInfoGrid}>
-              <div className={styles.formGroup}>
-                <label htmlFor="sharedBillingMode" className={styles.label}>
-                  Billing Mode *
-                </label>
-                <select
-                  id="sharedBillingMode"
-                  className={styles.input}
-                  value={billingMode}
-                  onChange={(e) =>
-                    handleBillingModeChange(e.target.value as BillingMode)
-                  }
-                  disabled={isLoading}
-                >
-                  <option value="REGULAR">REGULAR</option>
-                  <option value="BASIC">BASIC</option>
-                </select>
-                <span className={styles.sharedHint}>
-                  Applies to all products in this registration.
-                </span>
-                {billingMode === 'BASIC' && (
-                  <span className={styles.unitHint}>
-                    BASIC mode excludes GST for all products.
-                  </span>
-                )}
-              </div>
-
               {/* Lot ID */}
               <div className={styles.formGroup}>
                 <label htmlFor="lotId" className={styles.label}>
@@ -2069,38 +2058,40 @@ function ProductAccordion({
           </div>
 
           {/* Additional Product Information */}
-          <div className={styles.formRow}>
-            <div className={styles.formGroup}>
-              <label htmlFor={`hsn-${product.id}`} className={styles.label}>
-                HSN Code
-              </label>
-              <input
-                type="text"
-                id={`hsn-${product.id}`}
-                className={styles.input}
-                placeholder="Enter the HSN code"
-                value={product.hsn || ''}
-                onChange={(e) => onChange(product.id, 'hsn', e.target.value)}
-                disabled={isLoading}
-              />
+          {billingMode !== 'BASIC' && (
+            <div className={styles.formRow}>
+              <div className={styles.formGroup}>
+                <label htmlFor={`hsn-${product.id}`} className={styles.label}>
+                  HSN Code
+                </label>
+                <input
+                  type="text"
+                  id={`hsn-${product.id}`}
+                  className={styles.input}
+                  placeholder="Enter the HSN code"
+                  value={product.hsn || ''}
+                  onChange={(e) => onChange(product.id, 'hsn', e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label htmlFor={`batchNo-${product.id}`} className={styles.label}>
+                  Batch Number
+                </label>
+                <input
+                  type="text"
+                  id={`batchNo-${product.id}`}
+                  className={styles.input}
+                  placeholder="Enter the batch number"
+                  value={product.batchNo || ''}
+                  onChange={(e) =>
+                    onChange(product.id, 'batchNo', e.target.value)
+                  }
+                  disabled={isLoading}
+                />
+              </div>
             </div>
-            <div className={styles.formGroup}>
-              <label htmlFor={`batchNo-${product.id}`} className={styles.label}>
-                Batch Number
-              </label>
-              <input
-                type="text"
-                id={`batchNo-${product.id}`}
-                className={styles.input}
-                placeholder="Enter the batch number"
-                value={product.batchNo || ''}
-                onChange={(e) =>
-                  onChange(product.id, 'batchNo', e.target.value)
-                }
-                disabled={isLoading}
-              />
-            </div>
-          </div>
+          )}
 
           <div className={styles.formRow}>
             <div className={styles.formGroup}>
