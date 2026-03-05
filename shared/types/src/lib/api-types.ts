@@ -728,6 +728,39 @@ export interface InventoryItem {
   sellingPrice?: number | null;
 }
 
+/** Partial update - only non-null fields are updated. Omitted fields keep current values. */
+export interface UpdateInventoryRequest {
+  barcode?: string | null;
+  name?: string | null;
+  description?: string | null;
+  companyName?: string | null;
+  businessType?: string | null;
+  location?: string | null;
+  maximumRetailPrice?: number | null;
+  costPrice?: number | null;
+  priceToRetail?: number | null;
+  rates?: PricingRate[] | null;
+  defaultRate?: string | null;
+  additionalDiscount?: number | null;
+  sgst?: string | null;
+  cgst?: string | null;
+  expiryDate?: string | null;
+  hsn?: string | null;
+  batchNo?: string | null;
+  vendorId?: string | null;
+  thresholdCount?: number | null;
+  billingMode?: BillingMode | null;
+  itemType?: ItemType | null;
+  itemTypeDegree?: number | null;
+  discountApplicable?: DiscountApplicable | null;
+  purchaseDate?: string | null;
+  schemeType?: SchemeType | null;
+  scheme?: number | null;
+  schemePercentage?: number | null;
+  baseUnit?: string | null;
+  unitConversions?: UnitConversion | null;
+}
+
 export interface InventoryListResponse {
   data: InventoryItem[];
   meta: unknown | null;

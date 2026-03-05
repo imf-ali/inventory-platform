@@ -747,7 +747,11 @@ export default function ProductRegistrationPage() {
             unit: 'SALE UNIT',
             factor: Number(product.conversionFactor) || 1,
           },
-          expiryDate: product.expiryDate,
+          expiryDate: product.expiryDate
+            ? product.expiryDate.includes('T') && product.expiryDate.includes('Z')
+              ? product.expiryDate
+              : `${String(product.expiryDate).trim().slice(0, 10)}T00:00:00Z`
+            : '',
           reminderAt: reminderAtISO,
           customReminders: customReminders,
           hsn: product.hsn || null,
@@ -788,10 +792,10 @@ export default function ProductRegistrationPage() {
           ...(product.purchaseDate
             ? {
                 purchaseDate:
-                  product.purchaseDate.includes('T') ||
+                  product.purchaseDate.includes('T') &&
                   product.purchaseDate.includes('Z')
-                    ? new Date(product.purchaseDate).toISOString()
-                    : `${product.purchaseDate}T00:00:00Z`,
+                    ? product.purchaseDate
+                    : `${String(product.purchaseDate).trim().slice(0, 10)}T00:00:00Z`,
               }
             : {}),
           ...(validRates.length > 0
