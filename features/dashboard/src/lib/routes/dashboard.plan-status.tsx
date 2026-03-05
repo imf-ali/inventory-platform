@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router';
 import { plansApi } from '@inventory-platform/api';
-import { useAuthStore } from '@inventory-platform/store';
 import { PlanGrid } from '@inventory-platform/ui';
 import type {
   ShopPlanStatusResponse,
@@ -32,7 +31,9 @@ export default function PlanStatusPage() {
       setStatus(data);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load plan status');
+      setError(
+        err instanceof Error ? err.message : 'Failed to load plan status'
+      );
     } finally {
       setLoading(false);
     }
@@ -52,9 +53,12 @@ export default function PlanStatusPage() {
     fetchPlans();
   }, [fetchStatus, fetchPlans]);
 
-  const handleSelectPlan = useCallback((plan: PlanResponse) => {
-    navigate(`/dashboard/plan-payment?planId=${plan.id}`);
-  }, [navigate]);
+  const handleSelectPlan = useCallback(
+    (plan: PlanResponse) => {
+      navigate(`/dashboard/plan-payment?planId=${plan.id}`);
+    },
+    [navigate]
+  );
 
   if (loading) {
     return (
@@ -131,7 +135,9 @@ export default function PlanStatusPage() {
                   s.billingLimitReached ? styles.usageLimitReached : undefined
                 }
               >
-                ₹{s.currentUsage?.billingAmountUsed?.toLocaleString('en-IN') ?? 0}
+                ₹
+                {s.currentUsage?.billingAmountUsed?.toLocaleString('en-IN') ??
+                  0}
               </span>
             </div>
             <div className={styles.usageItem}>

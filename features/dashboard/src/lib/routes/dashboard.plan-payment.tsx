@@ -2,13 +2,19 @@ import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router';
 import { plansApi } from '@inventory-platform/api';
 import { useAuthStore } from '@inventory-platform/store';
-import type { PlanResponse, PlanTransactionResponse } from '@inventory-platform/types';
+import type {
+  PlanResponse,
+  PlanTransactionResponse,
+} from '@inventory-platform/types';
 import styles from './dashboard.plan-payment.module.css';
 
 export function meta() {
   return [
     { title: 'Payment - StockKart' },
-    { name: 'description', content: 'Manage plan payments and view transaction history' },
+    {
+      name: 'description',
+      content: 'Manage plan payments and view transaction history',
+    },
   ];
 }
 
@@ -25,7 +31,9 @@ export default function PlanPaymentPage() {
   const planIdFromUrl = searchParams.get('planId');
 
   const [plans, setPlans] = useState<PlanResponse[]>([]);
-  const [transactions, setTransactions] = useState<PlanTransactionResponse[]>([]);
+  const [transactions, setTransactions] = useState<PlanTransactionResponse[]>(
+    []
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [assigning, setAssigning] = useState(false);
@@ -36,7 +44,12 @@ export default function PlanPaymentPage() {
 
   useEffect(() => {
     if (planIdFromUrl && !plans.find((p) => p.id === planIdFromUrl)) {
-      plansApi.getById(planIdFromUrl).then(setPlanById).catch(() => {});
+      plansApi
+        .getById(planIdFromUrl)
+        .then(setPlanById)
+        .catch(() => {
+          /* empty */
+        });
     } else {
       setPlanById(null);
     }
@@ -56,7 +69,9 @@ export default function PlanPaymentPage() {
       const data = await plansApi.listTransactions();
       setTransactions(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load transactions');
+      setError(
+        err instanceof Error ? err.message : 'Failed to load transactions'
+      );
     } finally {
       setLoading(false);
     }
@@ -84,7 +99,9 @@ export default function PlanPaymentPage() {
       await fetchTransactions();
       navigate('/dashboard/plan-payment', { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to process payment');
+      setError(
+        err instanceof Error ? err.message : 'Failed to process payment'
+      );
     } finally {
       setAssigning(false);
     }
@@ -128,13 +145,19 @@ export default function PlanPaymentPage() {
               <div className={styles.planSummaryContent}>
                 <h4>{selectedPlan.planName}</h4>
                 <p className={styles.planPrice}>
-                  ₹{selectedPlan.arcPrice?.toLocaleString('en-IN')} / {selectedPlan.planName === 'Extra User Plan' ? 'user/year' : 'year'}
+                  ₹{selectedPlan.arcPrice?.toLocaleString('en-IN')} /{' '}
+                  {selectedPlan.planName === 'Extra User Plan'
+                    ? 'user/year'
+                    : 'year'}
                 </p>
-                {selectedPlan.planName !== 'Extra User Plan' && selectedPlan.price != null && selectedPlan.price > 0 && (
-                  <p className={styles.oneTimePrice}>
-                    One-time ₹{selectedPlan.price?.toLocaleString('en-IN')} if taking support
-                  </p>
-                )}
+                {selectedPlan.planName !== 'Extra User Plan' &&
+                  selectedPlan.price != null &&
+                  selectedPlan.price > 0 && (
+                    <p className={styles.oneTimePrice}>
+                      One-time ₹{selectedPlan.price?.toLocaleString('en-IN')} if
+                      taking support
+                    </p>
+                  )}
                 {selectedPlan.bestFor && (
                   <p className={styles.planBestFor}>{selectedPlan.bestFor}</p>
                 )}
@@ -153,7 +176,11 @@ export default function PlanPaymentPage() {
                         onChange={() => setPaymentMethod(m.value)}
                       />
                       <div className={styles.paymentCard}>
-                        <span className={styles.cardIcon} role="img" aria-label={m.label}>
+                        <span
+                          className={styles.cardIcon}
+                          role="img"
+                          aria-label={m.label}
+                        >
                           {m.icon}
                         </span>
                         <span>{m.label}</span>
@@ -169,7 +196,11 @@ export default function PlanPaymentPage() {
                 >
                   {assigning
                     ? 'Processing...'
-                    : `Pay ₹${selectedPlan.arcPrice?.toLocaleString('en-IN')}${selectedPlan.planName === 'Extra User Plan' ? ' per user/year' : '/year'} & Activate`}
+                    : `Pay ₹${selectedPlan.arcPrice?.toLocaleString('en-IN')}${
+                        selectedPlan.planName === 'Extra User Plan'
+                          ? ' per user/year'
+                          : '/year'
+                      } & Activate`}
                 </button>
               </div>
             </div>
@@ -199,7 +230,9 @@ export default function PlanPaymentPage() {
               {transactions.map((tx) => (
                 <div key={tx.id} className={styles.transactionItem}>
                   <div className={styles.transactionMain}>
-                    <span className={styles.transactionPlan}>{tx.planName}</span>
+                    <span className={styles.transactionPlan}>
+                      {tx.planName}
+                    </span>
                     <span className={styles.transactionAmount}>
                       ₹{tx.amount?.toLocaleString('en-IN')}
                     </span>
