@@ -2006,22 +2006,29 @@ export default function ScanSellPage() {
                       </span>
                     </div>
                   )}
-                {cartBillingMode === 'REGULAR' && (
+                {cartBillingMode === 'REGULAR' &&
+                  ((cartData?.taxTotal ?? 0) !== 0 ||
+                    (cartData?.sgstAmount ?? 0) !== 0 ||
+                    (cartData?.cgstAmount ?? 0) !== 0) && (
+                  <>
+                    <div className={styles.summaryRow}>
+                      <span>SGST ({getSGSTPercentage()}%)</span>
+                      <span>₹{calculateSGST().toFixed(2)}</span>
+                    </div>
+                    <div className={styles.summaryRow}>
+                      <span>CGST ({getCGSTPercentage()}%)</span>
+                      <span>₹{calculateCGST().toFixed(2)}</span>
+                    </div>
+                  </>
+                )}
+                {((cartData?.taxTotal ?? 0) !== 0 ||
+                  (cartData?.sgstAmount ?? 0) !== 0 ||
+                  (cartData?.cgstAmount ?? 0) !== 0) && (
                   <div className={styles.summaryRow}>
-                    <span>SGST ({getSGSTPercentage()}%)</span>
-                    <span>₹{calculateSGST().toFixed(2)}</span>
+                    <span>Total Tax</span>
+                    <span>₹{calculateTax().toFixed(2)}</span>
                   </div>
                 )}
-                {cartBillingMode === 'REGULAR' && (
-                  <div className={styles.summaryRow}>
-                    <span>CGST ({getCGSTPercentage()}%)</span>
-                    <span>₹{calculateCGST().toFixed(2)}</span>
-                  </div>
-                )}
-                <div className={styles.summaryRow}>
-                  <span>Total Tax</span>
-                  <span>₹{calculateTax().toFixed(2)}</span>
-                </div>
                 <div className={styles.summaryRowTotal}>
                   <span>Total</span>
                   <span>₹{calculateTotal().toFixed(2)}</span>
@@ -2031,7 +2038,6 @@ export default function ScanSellPage() {
           </div>
           {cartData &&
             (cartData.totalCost != null ||
-              cartData.revenueBeforeTax != null ||
               cartData.revenueAfterTax != null ||
               cartData.totalProfit != null ||
               cartData.marginPercent != null) && (
@@ -2042,12 +2048,6 @@ export default function ScanSellPage() {
                     ₹{(cartData.totalCost ?? 0).toFixed(2)}
                   </span>
                 </div>
-                {cartData.revenueBeforeTax != null && (
-                  <div className={styles.summaryRow}>
-                    <span>Revenue (before tax)</span>
-                    <span>₹{cartData.revenueBeforeTax.toFixed(2)}</span>
-                  </div>
-                )}
                 {cartData.revenueAfterTax != null && (
                   <div className={styles.summaryRow}>
                     <span>Revenue (after tax)</span>

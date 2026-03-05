@@ -438,12 +438,15 @@ export interface Location {
   country: string;
 }
 
+export type ShopType = 'RETAILER' | 'DISTRIBUTOR' | 'WHOLESALER';
+
 export interface RegisterShopDto {
   name: string;
   businessId: string;
   location: Location;
   contactEmail: string;
   contactPhone: string;
+  shopType?: ShopType;
   gstinNo?: string;
   fssai?: string;
   dlNo?: string;
