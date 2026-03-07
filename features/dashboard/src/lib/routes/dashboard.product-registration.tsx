@@ -1,10 +1,11 @@
 import { useState, FormEvent, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { QRCodeSVG } from 'qrcode.react';
-import { inventoryApi, vendorsApi, uploadApi } from '@inventory-platform/api';
+import { inventoryApi, vendorsApi, uploadApi, usersApi } from '@inventory-platform/api';
 import type {
   CreateInventoryDto,
   CustomReminderInput,
+  LinkableUser,
   Vendor,
   CreateVendorDto,
   VendorBusinessType,
@@ -87,6 +88,10 @@ export default function ProductRegistrationPage() {
   });
   const [customBusinessType, setCustomBusinessType] = useState('');
   const [showCustomBusinessType, setShowCustomBusinessType] = useState(false);
+  // Link vendor to registered user
+  const [linkedUser, setLinkedUser] = useState<LinkableUser | null>(null);
+  const [isSearchingUser, setIsSearchingUser] = useState(false);
+  const [userSearchMessage, setUserSearchMessage] = useState<string | null>(null);
 
   const [lotId, setLotId] = useState('');
   const [lotIdSearchQuery, setLotIdSearchQuery] = useState('');
@@ -940,6 +945,8 @@ export default function ProductRegistrationPage() {
     setShowVendorModal(false);
     setShowCustomBusinessType(false);
     setCustomBusinessType('');
+    setLinkedUser(null);
+    setUserSearchMessage(null);
     setVendorFormData({
       name: '',
       contactEmail: '',
@@ -948,6 +955,36 @@ export default function ProductRegistrationPage() {
       businessType: 'WHOLESALE',
       gstinUin: '',
     });
+  };
+
+  const handleSearchUserForLink = async () => {
+    const email = vendorFormData.contactEmail?.trim();
+    if (!email) {
+      notifyError('Enter vendor email first to check for registered user');
+      return;
+    }
+    setIsSearchingUser(true);
+    setUserSearchMessage(null);
+    setLinkedUser(null);
+    try {
+      const user = await usersApi.searchByEmail(email);
+      if (user) {
+        setLinkedUser(user);
+        setUserSearchMessage(`Found: ${user.name} (${user.email})`);
+        setVendorFormData((prev) => ({ ...prev, name: user.name }));
+      } else {
+        setUserSearchMessage('No registered user found with this email');
+      }
+    } catch {
+      setUserSearchMessage('Failed to search. Please try again.');
+    } finally {
+      setIsSearchingUser(false);
+    }
+  };
+
+  const handleUnlinkUser = () => {
+    setLinkedUser(null);
+    setUserSearchMessage(null);
   };
 
   const handleCreateVendor = async () => {
@@ -981,6 +1018,7 @@ export default function ProductRegistrationPage() {
         ...(vendorFormData.gstinUin?.trim() && {
           gstinUin: vendorFormData.gstinUin.trim(),
         }),
+        ...(linkedUser && { userId: linkedUser.userId }),
       };
       const vendor = await vendorsApi.create(vendorPayload);
       setSelectedVendor(vendor);
@@ -1390,6 +1428,11 @@ export default function ProductRegistrationPage() {
               {selectedVendor && (
                 <div className={styles.vendorInfo}>
                   <div className={styles.vendorCard}>
+                    {selectedVendor.userId && (
+                      <span className={styles.stockkartUserBadge}>
+                        StockKart user
+                      </span>
+                    )}
                     <h4>{selectedVendor.name}</h4>
                     <p>
                       <strong>Phone:</strong> {selectedVendor.contactPhone}
@@ -1599,6 +1642,53 @@ export default function ProductRegistrationPage() {
                   }
                   disabled={isCreatingVendor}
                 />
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>
+                  Link to registered user
+                </label>
+                <p
+                  className={styles.helperText}
+                  style={{ marginBottom: 8, fontSize: 13, color: '#666' }}
+                >
+                  If this vendor is a registered user, search by their email to
+                  link. Enables credit sync across shops.
+                </p>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    className={styles.cancelBtn}
+                    onClick={handleSearchUserForLink}
+                    disabled={
+                      isCreatingVendor ||
+                      isSearchingUser ||
+                      !vendorFormData.contactEmail?.trim()
+                    }
+                  >
+                    {isSearchingUser ? 'Checking...' : 'Check'}
+                  </button>
+                  {linkedUser && (
+                    <button
+                      type="button"
+                      className={styles.clearBtn}
+                      onClick={handleUnlinkUser}
+                      disabled={isCreatingVendor}
+                    >
+                      Unlink
+                    </button>
+                  )}
+                </div>
+                {userSearchMessage && (
+                  <p
+                    style={{
+                      marginTop: 8,
+                      fontSize: 13,
+                      color: linkedUser ? '#16a34a' : '#666',
+                    }}
+                  >
+                    {userSearchMessage}
+                  </p>
+                )}
               </div>
               <div className={styles.formGroup}>
                 <label htmlFor="vendorAddress" className={styles.label}>

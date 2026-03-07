@@ -1104,6 +1104,13 @@ export interface ShopUsersResponse {
 // User Role type
 export type UserRole = 'ADMIN' | 'MANAGER' | 'CASHIER';
 
+/** Minimal user info when searching to link vendor/customer to a registered user */
+export interface LinkableUser {
+  userId: string;
+  email: string;
+  name: string;
+}
+
 // Vendor types
 export type VendorBusinessType =
   | 'WHOLESALE'
@@ -1120,6 +1127,8 @@ export interface Vendor {
   companyName: string;
   businessType: VendorBusinessType;
   gstinUin?: string | null;
+  /** Optional. Set when vendor is linked to a registered user. */
+  userId?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -1131,6 +1140,8 @@ export interface CreateVendorDto {
   address?: string;
   businessType: VendorBusinessType;
   gstinUin?: string;
+  /** Optional. Links vendor to a registered user (enables credit sync across shops). */
+  userId?: string | null;
 }
 
 export interface VendorResponse {
@@ -1142,6 +1153,8 @@ export interface VendorResponse {
   companyName: string;
   businessType: VendorBusinessType;
   gstinUin?: string | null;
+  /** Optional. Set when vendor is linked to a registered user. */
+  userId?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -1156,6 +1169,8 @@ export interface Customer {
   gstin?: string | null;
   dlNo?: string | null;
   pan?: string | null;
+  /** Optional. Set when customer is linked to a registered user. */
+  userId?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -1169,6 +1184,8 @@ export interface CustomerResponse {
   gstin?: string | null;
   dlNo?: string | null;
   pan?: string | null;
+  /** Optional. Set when customer is linked to a registered user. */
+  userId?: string | null;
   createdAt: string;
   updatedAt: string;
 }

@@ -81,6 +81,8 @@ export const API_ENDPOINTS = {
     INVITATIONS: '/users/invitations',
     ME_SHOPS: '/users/me/shops',
     ACTIVE_SHOP: '/users/me/active-shop',
+    /** Search user by email for linking to vendor/customer */
+    SEARCH: '/users/search',
   },
 
   // Inventory endpoints
