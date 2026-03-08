@@ -4,7 +4,6 @@ import { ledgerApi, vendorsApi, customersApi } from '@inventory-platform/api';
 import type {
   LedgerEntry,
   LedgerPartyType,
-  LedgerEntriesResponse,
   VendorResponse,
   CustomerResponse,
   ReceivableItem,
@@ -281,6 +280,10 @@ export default function CreditLedgerPage() {
       customerId: r.customerId,
       name: r.customerName,
       phone: r.customerPhone || '',
+      address: null,
+      email: null,
+      createdAt: '',
+      updatedAt: '',
     });
     setSelectedVendor(null);
     setPaymentPartyType('CUSTOMER');
@@ -342,7 +345,11 @@ export default function CreditLedgerPage() {
         </span>
       );
     }
-    if (entry.roleInEntry === 'VENDOR' || entry.roleInEntry === 'SELLER') {
+    if (
+      entry.roleInEntry !== undefined &&
+      entry.roleInEntry !== null &&
+      (entry.roleInEntry === 'VENDOR' || entry.roleInEntry === 'SELLER')
+    ) {
       return isPayment ? (
         <span
           style={{

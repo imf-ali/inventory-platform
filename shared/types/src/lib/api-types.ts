@@ -1147,8 +1147,8 @@ export interface LedgerEntry {
   counterpartyShopName?: string | null;
   /** Display name for Party column: vendor/customer when we're buyer, buyer shop when we're vendor */
   displayPartyName?: string | null;
-  /** Our role: BUYER (we owe) or VENDOR (they owe us) */
-  roleInEntry?: 'BUYER' | 'VENDOR' | null;
+  /** Our role: BUYER (we owe), VENDOR (they owe us as vendor), or SELLER (customer owes us) */
+  roleInEntry?: 'BUYER' | 'VENDOR' | 'SELLER' | null;
   counterpartyShopId?: string | null;
   amount: number;
   type: LedgerEntryType;
