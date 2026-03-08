@@ -17,6 +17,7 @@ export { default as ShopUsersPage } from './lib/routes/dashboard.shop-users';
 export { default as JoinRequestsPage } from './lib/routes/dashboard.join-requests';
 export { default as HistoryPage } from './lib/routes/dashboard.history';
 export { default as RefundPage } from './lib/routes/dashboard.refund';
+export { default as CreditLedgerPage } from './lib/routes/dashboard.credit-ledger';
 export { default as PriceEditPage } from './lib/routes/dashboard.price-edit';
 export { default as TaxesPage } from './lib/routes/dashboard.taxes';
 
@@ -36,5 +37,6 @@ export { meta as shopUsersMeta } from './lib/routes/dashboard.shop-users';
 export { meta as joinRequestsMeta } from './lib/routes/dashboard.join-requests';
 export { meta as historyMeta } from './lib/routes/dashboard.history';
 export { meta as refundMeta } from './lib/routes/dashboard.refund';
+export { meta as creditLedgerMeta } from './lib/routes/dashboard.credit-ledger';
 export { meta as priceEditMeta } from './lib/routes/dashboard.price-edit';
 export { meta as taxesMeta } from './lib/routes/dashboard.taxes';

@@ -32,6 +32,7 @@ export default [
     route('join-requests', './routes/dashboard.join-requests.tsx'),
     route('history', './routes/dashboard.history.tsx'),
     route('refund', './routes/dashboard.refund.tsx'),
+    route('credit-ledger', './routes/dashboard.credit-ledger.tsx'),
     route('price-edit/:pricingId', './routes/dashboard.price-edit.tsx'),
     route('taxes', './routes/dashboard.taxes.tsx'),
   ]),

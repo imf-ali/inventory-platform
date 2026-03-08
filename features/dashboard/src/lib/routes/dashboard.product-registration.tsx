@@ -17,6 +17,7 @@ import type {
   DiscountApplicable,
   SchemeType,
   BillingMode,
+  ShopMembership,
 } from '@inventory-platform/types';
 import { CustomRemindersSection } from '@inventory-platform/ui';
 import { useNotify } from '@inventory-platform/store';
@@ -100,6 +101,13 @@ export default function ProductRegistrationPage() {
   >([]);
   const [isSearchingLots, setIsSearchingLots] = useState(false);
   const [showLotIdDropdown, setShowLotIdDropdown] = useState(false);
+
+  // Take on credit (buyer owes vendor) - when true, ledger entry is created
+  const [onCredit, setOnCredit] = useState<boolean>(true);
+  // When vendor is StockKart user: assign credit to their shop so they can see it
+  const [vendorShops, setVendorShops] = useState<ShopMembership[]>([]);
+  const [selectedVendorShopId, setSelectedVendorShopId] = useState<string>('');
+  const [isLoadingVendorShops, setIsLoadingVendorShops] = useState(false);
 
   // Multiple products state
   const [products, setProducts] = useState<ProductFormData[]>([]);
@@ -820,7 +828,11 @@ export default function ProductRegistrationPage() {
       // Create bulk request
       const bulkData: BulkCreateInventoryDto = {
         vendorId: selectedVendor.vendorId,
+        onCredit,
         ...(lotId && { lotId }),
+        ...(onCredit &&
+          selectedVendor.userId &&
+          selectedVendorShopId && { vendorShopId: selectedVendorShopId }),
         items,
       };
 
@@ -939,6 +951,19 @@ export default function ProductRegistrationPage() {
     setVendorSearchQuery(vendor.name);
     setShowVendorDropdown(false);
     setVendorSearchResults([]);
+    setSelectedVendorShopId('');
+    setVendorShops([]);
+    if (vendor.userId) {
+      setIsLoadingVendorShops(true);
+      vendorsApi
+        .getVendorShops(vendor.vendorId)
+        .then((shops) => {
+          setVendorShops(shops ?? []);
+          if (shops?.length === 1) setSelectedVendorShopId(shops[0].shopId);
+        })
+        .catch(() => setVendorShops([]))
+        .finally(() => setIsLoadingVendorShops(false));
+    }
   };
 
   const handleCloseVendorModal = () => {
@@ -1038,6 +1063,9 @@ export default function ProductRegistrationPage() {
     setVendorSearchQuery('');
     setVendorSearchResults([]);
     setShowVendorDropdown(false);
+    setVendorShops([]);
+    setSelectedVendorShopId('');
+    setOnCredit(true);
     setVendorFormData({
       name: '',
       contactEmail: '',
@@ -1434,6 +1462,55 @@ export default function ProductRegistrationPage() {
                       </span>
                     )}
                     <h4>{selectedVendor.name}</h4>
+                    <div className={styles.formGroup} style={{ marginTop: 12 }}>
+                      <label
+                        className={styles.label}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={onCredit}
+                          onChange={(e) => {
+                            setOnCredit(e.target.checked);
+                            if (!e.target.checked) setSelectedVendorShopId('');
+                          }}
+                          disabled={isLoading}
+                        />
+                        Take this purchase on credit (amount owed to vendor)
+                      </label>
+                    </div>
+                    {onCredit && selectedVendor.userId && (
+                      <div className={styles.formGroup} style={{ marginTop: 12 }}>
+                        <label className={styles.label}>
+                          Assign credit to vendor&apos;s shop
+                        </label>
+                        <select
+                          className={styles.input}
+                          value={selectedVendorShopId}
+                          onChange={(e) =>
+                            setSelectedVendorShopId(e.target.value)
+                          }
+                          disabled={isLoadingVendorShops || isLoading}
+                        >
+                          <option value="">
+                            — Not assigned (vendor won&apos;t see in their shop) —
+                          </option>
+                          {vendorShops.map((s) => (
+                            <option key={s.shopId} value={s.shopId}>
+                              {s.shopName}
+                            </option>
+                          ))}
+                        </select>
+                        <small style={{ color: 'var(--text-secondary)', marginTop: 4, display: 'block' }}>
+                          When assigned, the vendor can see this pending amount when they log into that shop.
+                        </small>
+                      </div>
+                    )}
                     <p>
                       <strong>Phone:</strong> {selectedVendor.contactPhone}
                     </p>

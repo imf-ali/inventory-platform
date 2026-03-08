@@ -124,11 +124,21 @@ export const API_ENDPOINTS = {
     BASE: '/vendors',
     SEARCH: '/vendors/search',
     BY_ID: (id: string) => `/vendors/${id}`,
+    SHOPS: (vendorId: string) => `/vendors/${vendorId}/shops`,
   },
 
   // Customer endpoints
   CUSTOMERS: {
     SEARCH: '/customers/search',
+  },
+
+  // Credit Ledger endpoints
+  LEDGER: {
+    BASE: '/ledger',
+    BALANCE: '/ledger/balance',
+    ENTRIES: '/ledger/entries',
+    RECEIVABLES: '/ledger/receivables',
+    PAYABLES: '/ledger/payables',
   },
 
   // Dashboard endpoints
