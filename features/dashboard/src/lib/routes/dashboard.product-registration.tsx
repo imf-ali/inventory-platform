@@ -103,7 +103,7 @@ export default function ProductRegistrationPage() {
   const [showLotIdDropdown, setShowLotIdDropdown] = useState(false);
 
   // Take on credit (buyer owes vendor) - when true, ledger entry is created
-  const [onCredit, setOnCredit] = useState<boolean>(true);
+  const [onCredit, setOnCredit] = useState<boolean>(false);
   // When vendor is StockKart user: assign credit to their shop so they can see it
   const [vendorShops, setVendorShops] = useState<ShopMembership[]>([]);
   const [selectedVendorShopId, setSelectedVendorShopId] = useState<string>('');
@@ -1065,7 +1065,7 @@ export default function ProductRegistrationPage() {
     setShowVendorDropdown(false);
     setVendorShops([]);
     setSelectedVendorShopId('');
-    setOnCredit(true);
+    setOnCredit(false);
     setVendorFormData({
       name: '',
       contactEmail: '',
