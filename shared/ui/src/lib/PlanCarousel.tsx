@@ -3,7 +3,7 @@ import type { PlanResponse } from '@inventory-platform/types';
 import { buildPlanFeatures } from './PlanGrid';
 import styles from './PlanCarousel.module.css';
 
-const EXTRA_USER_PLAN = 'Extra User Plan';
+const EXTRA_PLANS = ['Extra User Plan', 'Extra Shop Plan'];
 const CARD_WIDTH = 300;
 const CARD_GAP = 24;
 
@@ -45,8 +45,12 @@ export function PlanCarousel({
   }, []);
 
   const sortedPlans = [...plans].sort((a, b) => {
-    if (a.planName === EXTRA_USER_PLAN) return 1;
-    if (b.planName === EXTRA_USER_PLAN) return -1;
+    const aExtra = EXTRA_PLANS.includes(a.planName);
+    const bExtra = EXTRA_PLANS.includes(b.planName);
+
+    if (aExtra && !bExtra) return 1;
+    if (!aExtra && bExtra) return -1;
+
     return 0;
   });
 
@@ -121,7 +125,7 @@ export function PlanCarousel({
               const isRight = diff === 1;
               const allFeatures = buildPlanFeatures(plan);
               const features =
-                plan.bestFor && plan.planName !== EXTRA_USER_PLAN
+                plan.bestFor && !EXTRA_PLANS.includes(plan.planName)
                   ? allFeatures.filter((f) => f !== plan.bestFor)
                   : allFeatures;
               const highlight =
@@ -145,13 +149,14 @@ ${isRight ? styles.slideRight : ''}
                       <div className={styles.badge}>Most Popular</div>
                     )}
                     <div className={styles.cardInner}>
-                      {showTrialBadge && plan.planName !== EXTRA_USER_PLAN && (
-                        <div className={styles.trialBadge}>
-                          Free 30-day trial
-                        </div>
-                      )}
+                      {showTrialBadge &&
+                        !EXTRA_PLANS.includes(plan.planName) && (
+                          <div className={styles.trialBadge}>
+                            Free 30-day trial
+                          </div>
+                        )}
                       <h3 className={styles.planName}>{plan.planName}</h3>
-                      {plan.planName !== EXTRA_USER_PLAN && plan.bestFor && (
+                      {!EXTRA_PLANS.includes(plan.planName) && plan.bestFor && (
                         <p className={styles.planDescription}>{plan.bestFor}</p>
                       )}
                       <div className={styles.priceRow}>
@@ -162,12 +167,12 @@ ${isRight ? styles.slideRight : ''}
                           ) ?? 0}
                         </span>
                         <span className={styles.priceSuffix}>
-                          {plan.planName === EXTRA_USER_PLAN
+                          {EXTRA_PLANS.includes(plan.planName)
                             ? '/user/year'
                             : '/year'}
                         </span>
                       </div>
-                      {plan.planName !== EXTRA_USER_PLAN &&
+                      {!EXTRA_PLANS.includes(plan.planName) &&
                         plan.price != null &&
                         plan.price > 0 && (
                           <p className={styles.oneTimePrice}>

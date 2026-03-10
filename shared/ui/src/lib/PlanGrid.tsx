@@ -4,10 +4,19 @@ import styles from './PlanGrid.module.css';
 const DEFAULT_BILLING_LIMIT = 150000;
 const DEFAULT_BILL_COUNT = 450;
 const EXTRA_USER_PLAN = 'Extra User Plan';
+const EXTRA_SHOP_PLAN = 'Extra Shop Plan';
+
+const EXTRA_PLANS = [EXTRA_USER_PLAN, EXTRA_SHOP_PLAN];
 
 export function buildPlanFeatures(plan: PlanResponse): string[] {
-  if (plan.planName === EXTRA_USER_PLAN) {
-    return ['₹1500 per user per year'];
+  if (EXTRA_PLANS.includes(plan.planName)) {
+    if (plan.bestFor) {
+      return [plan.bestFor];
+    }
+
+    const price = (plan.arcPrice ?? plan.price)?.toLocaleString('en-IN') ?? '0';
+
+    return [`₹${price} per year`];
   }
   const features: string[] = [];
   if (plan.unlimited) {
@@ -50,8 +59,12 @@ export function PlanGrid({
   showTrialBadge = true,
 }: PlanGridProps) {
   const sortedPlans = [...plans].sort((a, b) => {
-    if (a.planName === EXTRA_USER_PLAN) return 1;
-    if (b.planName === EXTRA_USER_PLAN) return -1;
+    const aExtra = EXTRA_PLANS.includes(a.planName);
+    const bExtra = EXTRA_PLANS.includes(b.planName);
+
+    if (aExtra && !bExtra) return 1;
+    if (!aExtra && bExtra) return -1;
+
     return 0;
   });
 
@@ -77,11 +90,11 @@ export function PlanGrid({
             {isCurrent && <div className={styles.currentBadge}>Current</div>}
 
             <div className={styles.cardHeader}>
-              {showTrialBadge && plan.planName !== EXTRA_USER_PLAN && (
+              {showTrialBadge && !EXTRA_PLANS.includes(plan.planName) && (
                 <div className={styles.trialBadge}>Free 30-day trial</div>
               )}
               <h3 className={styles.planName}>{plan.planName}</h3>
-              {plan.planName !== EXTRA_USER_PLAN && (
+              {!EXTRA_PLANS.includes(plan.planName) && (
                 <p className={styles.planDescription}>
                   {plan.bestFor || 'For your business'}
                 </p>
@@ -95,7 +108,7 @@ export function PlanGrid({
                   {plan.planName === EXTRA_USER_PLAN ? '/user/year' : '/year'}
                 </span>
               </div>
-              {plan.planName !== EXTRA_USER_PLAN &&
+              {!EXTRA_PLANS.includes(plan.planName) &&
                 plan.price != null &&
                 plan.price > 0 && (
                   <p className={styles.oneTimePrice}>
