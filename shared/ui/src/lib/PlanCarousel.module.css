@@ -1,4 +1,12 @@
+:root {
+  --card-width: 300px;
+  --card-gap: 24px;
+}
+
 .carouselWrapper {
+  --card-width: 300px;
+  --card-gap: 24px;
+
   padding: 1rem 0 2rem;
 }
 
@@ -9,6 +17,7 @@
   gap: 0.75rem;
   position: relative;
   min-height: 460px;
+  width: 100%;
 }
 
 .navButton {
@@ -37,7 +46,8 @@
 
 .trackWrapper {
   flex: 1;
-  max-width: calc(300px * 3 + 24px * 2);
+  min-width: 0;
+  max-width: calc(var(--card-width) * 3 + var(--card-gap) * 2);
   overflow: hidden;
   padding-top: 10px;
 }
@@ -46,14 +56,14 @@
   display: flex;
   align-items: stretch; /* important */
   justify-content: flex-start;
-  gap: 24px;
+  gap: var(--card-gap);
   padding: 1rem 0;
   transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .slide {
   flex-shrink: 0;
-  width: 300px;
+  width: var(--card-width);
   display: flex;
   justify-content: center;
   transition: all 0.5s ease;
@@ -249,25 +259,43 @@
 }
 
 @media (max-width: 768px) {
-  .track {
-    gap: 16px;
+  .carouselWrapper {
+    --card-width: 260px;
+    --card-gap: 16px;
   }
 
-  .slide {
-    width: 260px;
+  .trackWrapper {
+    max-width: 100%;
   }
 
-  .card {
-    min-height: 380px;
-  }
-
-  .cardInner {
-    padding: 1.5rem 1.25rem;
+  .carouselContainer {
+    gap: 0.25rem;
   }
 
   .navButton {
-    width: 40px;
-    height: 40px;
-    font-size: 1.5rem;
+    width: 36px;
+    height: 36px;
+    font-size: 1.2rem;
+  }
+}
+@media (max-width: 1100px) {
+  .carouselWrapper {
+    --card-width: 280px;
+    --card-gap: 20px;
+  }
+
+  .trackWrapper {
+    max-width: calc(var(--card-width) * 2 + var(--card-gap));
+  }
+}
+
+@media (max-width: 768px) {
+  .carouselWrapper {
+    --card-width: 260px;
+    --card-gap: 16px;
+  }
+
+  .trackWrapper {
+    max-width: var(--card-width);
   }
 }
