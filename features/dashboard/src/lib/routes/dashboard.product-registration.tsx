@@ -578,7 +578,6 @@ export default function ProductRegistrationPage() {
       // Validate all products
       for (const product of products) {
         if (
-          !product.barcode ||
           !product.name ||
           !product.companyName ||
           !product.location ||
@@ -745,7 +744,7 @@ export default function ProductRegistrationPage() {
             : null;
 
         return {
-          barcode: product.barcode,
+          ...(product.barcode?.trim() ? { barcode: product.barcode.trim() } : {}),
           name: product.name,
           description: product.description || undefined,
           companyName: product.companyName,
@@ -2066,18 +2065,17 @@ function ProductAccordion({
           <div className={styles.formRow}>
             <div className={styles.formGroup}>
               <label htmlFor={`barcode-${product.id}`} className={styles.label}>
-                Barcode *
+                Barcode
               </label>
               <input
                 type="text"
                 id={`barcode-${product.id}`}
                 className={styles.input}
-                placeholder="Enter barcode"
+                placeholder="Enter barcode (optional)"
                 value={product.barcode}
                 onChange={(e) =>
                   onChange(product.id, 'barcode', e.target.value)
                 }
-                required
                 disabled={isLoading}
               />
             </div>
