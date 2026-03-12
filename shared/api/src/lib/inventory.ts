@@ -94,6 +94,13 @@ export const inventoryApi = {
     return response.data;
   },
 
+  getById: async (inventoryId: string): Promise<InventoryItem> => {
+    const response = await apiClient.get<ApiResponse<InventoryItem>>(
+      API_ENDPOINTS.INVENTORY.BY_ID(inventoryId)
+    );
+    return response.data;
+  },
+
   updateThreshold: async (
     inventoryId: string,
     thresholdCount: number

@@ -826,6 +826,8 @@ export interface CreateCheckoutDto {
 
 export interface CheckoutItemResponse {
   inventoryId: string;
+  /** Present when cart/checkout returns it; used to fetch full pricing/rates. */
+  pricingId?: string | null;
   name: string;
   quantity: number;
   saleUnit?: string | null;
