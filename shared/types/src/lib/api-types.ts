@@ -544,7 +544,7 @@ export interface AvailableUnit {
 }
 
 export interface CreateInventoryDto {
-  barcode: string;
+  barcode?: string;
   name: string;
   companyName: string;
   price: number;
@@ -589,7 +589,7 @@ export interface InventoryResponse {
 }
 
 export interface BulkCreateInventoryItem {
-  barcode: string;
+  barcode?: string;
   name: string;
   description?: string;
   companyName: string;
@@ -826,6 +826,8 @@ export interface CreateCheckoutDto {
 
 export interface CheckoutItemResponse {
   inventoryId: string;
+  /** Present when cart/checkout returns it; used to fetch full pricing/rates. */
+  pricingId?: string | null;
   name: string;
   quantity: number;
   saleUnit?: string | null;

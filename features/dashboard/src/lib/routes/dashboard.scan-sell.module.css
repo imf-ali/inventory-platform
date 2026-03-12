@@ -1011,13 +1011,13 @@
   font-weight: 500;
 }
 
-/* Edit fields container - subtle panel for editable values */
+/* Edit fields: row1 Price (full width), row2 Add.Discount + Scheme + Unit */
 .itemEditFields {
   display: grid;
-  grid-template-columns: repeat(3, minmax(120px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: end;
-  gap: 0.75rem;
-  padding: 0.6rem 0.85rem;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
   background: var(--bg-secondary, #f8fafc);
   border: 1px solid var(--border-color);
   border-radius: 8px;
@@ -1025,11 +1025,8 @@
   width: 100%;
 }
 
-.itemEditFields .itemFieldGroup:nth-child(4) {
+.itemEditFields .itemFieldGroup:first-child {
   grid-column: 1 / -1;
-  width: 240px;
-  max-width: 100%;
-  justify-self: start;
 }
 
 .itemFieldGroup {
@@ -1064,7 +1061,6 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  width: 100%;
 }
 
 .itemSchemeSeparator {
@@ -1090,16 +1086,38 @@
 }
 
 .itemSellingPriceInput {
-  width: 76px;
+  width: 90px;
 }
 
 .itemAdditionalInput {
-  width: 44px;
+  width: 90px;
 }
 
 .itemSchemeInputs .itemAdditionalInput {
-  width: 120px;
-  max-width: 100%;
+  width: 90px;
+}
+
+.itemRateSelect {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  width: 75px;
+  min-width: 75px;
+  cursor: pointer;
+}
+
+.itemRateSelect:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.itemRateSelect:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .itemUnitSelect {
@@ -1109,18 +1127,12 @@
   font-size: 0.82rem;
   color: var(--text-primary);
   background: var(--bg-primary);
-  min-width: 95px;
-  width: 100%;
+  width: 90px;
 }
 
 @media (max-width: 1200px) {
   .itemEditFields {
-    grid-template-columns: repeat(2, minmax(130px, 1fr));
-  }
-
-  .itemEditFields .itemFieldGroup:nth-child(4) {
-    width: 240px;
-    max-width: 100%;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 

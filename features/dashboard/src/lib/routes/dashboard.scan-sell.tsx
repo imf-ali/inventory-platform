@@ -6,13 +6,20 @@ import {
   ChangeEvent,
 } from 'react';
 import { useNavigate, Link } from 'react-router';
-import { inventoryApi, cartApi, customersApi, usersApi } from '@inventory-platform/api';
+import {
+  inventoryApi,
+  cartApi,
+  customersApi,
+  usersApi,
+  pricingApi,
+} from '@inventory-platform/api';
 import type {
   AvailableUnit,
   BillingMode,
   InventoryItem,
   CartResponse,
   CheckoutItemResponse,
+  PricingResponse,
 } from '@inventory-platform/types';
 import styles from './dashboard.scan-sell.module.css';
 import { useNotify } from '@inventory-platform/store';
@@ -25,6 +32,33 @@ export function meta() {
 }
 
 type SchemeTypeCart = 'FIXED_UNITS' | 'PERCENTAGE';
+
+/** Rate option for the price selector: label + price */
+interface RateOption {
+  label: string;
+  price: number;
+}
+
+/** Build available rate options from inventory item and/or pricing API response */
+function getRateOptions(
+  item: InventoryItem,
+  pricing?: PricingResponse | null
+): RateOption[] {
+  const opts: RateOption[] = [];
+  const mrp = pricing?.maximumRetailPrice ?? item.maximumRetailPrice;
+  const ptr = pricing?.priceToRetail ?? item.priceToRetail;
+  const cost = pricing?.costPrice ?? item.costPrice;
+  const rates = pricing?.rates ?? item.rates ?? [];
+  if (mrp != null) opts.push({ label: 'MRP', price: mrp });
+  if (ptr != null) opts.push({ label: 'PTR', price: ptr });
+  if (cost != null && cost > 0) opts.push({ label: 'Cost', price: cost });
+  rates.forEach((r) => {
+    if (r?.name?.trim() && r?.price != null) {
+      opts.push({ label: r.name.trim(), price: r.price });
+    }
+  });
+  return opts;
+}
 
 interface CartItem {
   inventoryItem: InventoryItem;
@@ -359,8 +393,76 @@ export default function ScanSellPage() {
     Record<string, number | null>
   >({});
   const [detailModalItem, setDetailModalItem] = useState<CartItem | null>(null);
+  const [pricingCache, setPricingCache] = useState<
+    Record<string, PricingResponse>
+  >({});
+  const [pricingLoading, setPricingLoading] = useState<
+    Record<string, boolean>
+  >({});
   const searchWrapperRef = useRef<HTMLDivElement>(null);
   const { error: notifyError } = useNotify;
+
+  const [inventoryToPricingId, setInventoryToPricingId] = useState<
+    Record<string, string>
+  >({});
+
+  const loadPricingOnDropdownClick = useCallback(
+    async (pricingId: string | undefined, inventoryId: string) => {
+      let idToFetch = pricingId ?? inventoryToPricingId[inventoryId];
+      const loadingKey = idToFetch ?? `inv:${inventoryId}`;
+
+      if (!idToFetch) {
+        if (pricingLoading[loadingKey]) return;
+        setPricingLoading((prev) => ({ ...prev, [loadingKey]: true }));
+        try {
+          const inv = await inventoryApi.getById(inventoryId);
+          const resolvedId = inv.pricingId ?? undefined;
+          if (!resolvedId) return;
+          idToFetch = resolvedId;
+          setInventoryToPricingId((prev) => ({ ...prev, [inventoryId]: resolvedId }));
+        } catch (err) {
+          notifyError(
+            err instanceof Error ? err.message : 'Failed to load inventory'
+          );
+          return;
+        } finally {
+          setPricingLoading((prev) => ({ ...prev, [loadingKey]: false }));
+        }
+      }
+      if (!idToFetch) return;
+      if (pricingCache[idToFetch] || pricingLoading[idToFetch]) return;
+
+      const finalPricingId = idToFetch;
+      setPricingLoading((prev) => ({ ...prev, [finalPricingId]: true }));
+      try {
+        const pricing = await pricingApi.getById(finalPricingId);
+        setPricingCache((prev) => ({ ...prev, [finalPricingId]: pricing }));
+      } catch (err) {
+        notifyError(
+          err instanceof Error ? err.message : 'Failed to load pricing'
+        );
+      } finally {
+        setPricingLoading((prev) => ({ ...prev, [finalPricingId]: false }));
+      }
+    },
+    [
+      pricingCache,
+      pricingLoading,
+      inventoryToPricingId,
+      notifyError,
+    ]
+  );
+
+  // Preload rates when cart items are displayed (before dropdown interaction)
+  const cartItemIds = cartItems.map((c) => c.inventoryItem.id).join(',');
+  useEffect(() => {
+    if (!cartItems.length) return;
+    cartItems.forEach((item) => {
+      const invId = item.inventoryItem.id;
+      const pricingId = item.inventoryItem.pricingId ?? inventoryToPricingId[invId];
+      loadPricingOnDropdownClick(pricingId ?? undefined, invId);
+    });
+  }, [cartItemIds, cartItems, loadPricingOnDropdownClick]);
 
   const normalizeBillingMode = useCallback(
     (mode?: BillingMode | null): BillingMode =>
@@ -634,7 +736,7 @@ export default function ScanSellPage() {
               description: null,
               companyName: null,
               maximumRetailPrice: resItem.maximumRetailPrice,
-              costPrice: 0,
+              costPrice: resItem.costPrice ?? 0,
               priceToRetail: resItem.priceToRetail,
               receivedCount: 0,
               soldCount: 0,
@@ -652,6 +754,7 @@ export default function ScanSellPage() {
                   ? { unit: saleUnit, factor: unitFactor }
                   : null,
               availableUnits,
+              pricingId: resItem.pricingId ?? undefined,
             };
         return {
           inventoryItem,
@@ -1758,6 +1861,87 @@ export default function ScanSellPage() {
                                 }
                                 disabled={isUpdatingCart}
                               />
+                              {(() => {
+                                const pricingId =
+                                  cartItem.inventoryItem.pricingId ??
+                                  inventoryToPricingId[cartItem.inventoryItem.id];
+                                const pricing = pricingId
+                                  ? pricingCache[pricingId]
+                                  : undefined;
+                                const invId = cartItem.inventoryItem.id;
+                                const isLoading =
+                                  pricingLoading[pricingId ?? ''] ||
+                                  pricingLoading[`inv:${invId}`];
+                                const rateOpts = getRateOptions(
+                                  cartItem.inventoryItem,
+                                  pricing
+                                );
+                                const formatPrice = (n: number) =>
+                                  new Intl.NumberFormat('en-IN', {
+                                    style: 'currency',
+                                    currency: 'INR',
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  }).format(n);
+                                const showDropdown =
+                                  pricingId ||
+                                  invId ||
+                                  rateOpts.length > 1;
+                                if (!showDropdown) return null;
+                                const matched = rateOpts.find(
+                                  (o) => Math.abs(o.price - cartItem.price) < 0.01
+                                );
+                                const selectValue = matched
+                                  ? matched.label
+                                  : '__custom__';
+                                return (
+                                  <select
+                                    className={styles.itemRateSelect}
+                                    value={isLoading ? '__loading__' : selectValue}
+                                    onChange={(e) => {
+                                      const sel = e.target.value;
+                                      if (sel === '__custom__' || sel === '__loading__')
+                                        return;
+                                      const opt = rateOpts.find(
+                                        (o) => o.label === sel
+                                      );
+                                      if (opt) {
+                                        handleSellingPriceChange(
+                                          cartItem.inventoryItem.id,
+                                          opt.price
+                                        );
+                                      }
+                                    }}
+                                    onMouseDown={() => {
+                                      loadPricingOnDropdownClick(
+                                        cartItem.inventoryItem.pricingId ?? undefined,
+                                        invId
+                                      );
+                                    }}
+                                    disabled={isUpdatingCart || isLoading}
+                                    title="Select rate"
+                                  >
+                                    {isLoading ? (
+                                      <option value="__loading__">
+                                        Loading rates…
+                                      </option>
+                                    ) : (
+                                      <>
+                                        <option value="__custom__">Custom</option>
+                                        {rateOpts.map((opt) => (
+                                          <option
+                                            key={opt.label}
+                                            value={opt.label}
+                                          >
+                                            {opt.label} (
+                                            {formatPrice(opt.price)})
+                                          </option>
+                                        ))}
+                                      </>
+                                    )}
+                                  </select>
+                                );
+                              })()}
                               <span className={styles.itemFieldUnit}>/{cartItem.unit}</span>
                             </div>
                           </div>
@@ -1783,6 +1967,34 @@ export default function ScanSellPage() {
                                 disabled={isUpdatingCart}
                               />
                               <span className={styles.itemFieldUnit}>%</span>
+                            </div>
+                          </div>
+                          <div className={styles.itemFieldGroup}>
+                            <label className={styles.itemFieldLabel}>
+                              Scheme
+                            </label>
+                            <div className={styles.itemSchemeInputs}>
+                              <CartSchemeInput
+                                id={`scheme-${cartItem.inventoryItem.id}`}
+                                schemeType={cartItem.schemeType ?? null}
+                                payFor={cartItem.schemePayFor ?? null}
+                                free={cartItem.schemeFree ?? null}
+                                percentage={cartItem.schemePercentage ?? null}
+                                onCommitUnits={(payFor, free) =>
+                                  handleSchemeChange(
+                                    cartItem.inventoryItem.id,
+                                    payFor,
+                                    free
+                                  )
+                                }
+                                onCommitPercentage={(perc) =>
+                                  handleSchemePercentageChange(
+                                    cartItem.inventoryItem.id,
+                                    perc
+                                  )
+                                }
+                                disabled={isUpdatingCart}
+                              />
                             </div>
                           </div>
                           <div className={styles.itemFieldGroup}>
@@ -1814,34 +2026,6 @@ export default function ScanSellPage() {
                                 </option>
                               ))}
                             </select>
-                          </div>
-                          <div className={styles.itemFieldGroup}>
-                            <label className={styles.itemFieldLabel}>
-                              Scheme
-                            </label>
-                            <div className={styles.itemSchemeInputs}>
-                              <CartSchemeInput
-                                id={`scheme-${cartItem.inventoryItem.id}`}
-                                schemeType={cartItem.schemeType ?? null}
-                                payFor={cartItem.schemePayFor ?? null}
-                                free={cartItem.schemeFree ?? null}
-                                percentage={cartItem.schemePercentage ?? null}
-                                onCommitUnits={(payFor, free) =>
-                                  handleSchemeChange(
-                                    cartItem.inventoryItem.id,
-                                    payFor,
-                                    free
-                                  )
-                                }
-                                onCommitPercentage={(perc) =>
-                                  handleSchemePercentageChange(
-                                    cartItem.inventoryItem.id,
-                                    perc
-                                  )
-                                }
-                                disabled={isUpdatingCart}
-                              />
-                            </div>
                           </div>
                         </div>
                         <div className={styles.itemActions}>
