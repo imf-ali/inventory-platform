@@ -24,8 +24,8 @@ export const eventsApi = {
       onInventoryLow(JSON.parse(messageEvent.data));
     });
 
-    es.onerror = () => {
-      es.close();
+    es.onerror = (e) => {
+      console.log('SSE error', e);
     };
 
     return es;
