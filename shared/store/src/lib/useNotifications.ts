@@ -105,7 +105,6 @@ export function useNotifications(shopId?: string) {
     setIsConnected(true);
 
     es.onerror = () => {
-      console.log('SSE error');
       setIsConnected(false);
     };
   }, [shopId]);
