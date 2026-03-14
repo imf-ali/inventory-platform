@@ -25,7 +25,7 @@ export const eventsApi = {
     });
 
     es.onerror = (e) => {
-      console.log('SSE error', e);
+      //nothing to do, just prevent the default logging of EventSource errors
     };
 
     return es;
