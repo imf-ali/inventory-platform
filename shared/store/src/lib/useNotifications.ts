@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { eventsApi } from '@inventory-platform/api';
 import type {
   ReminderDetail,
@@ -21,6 +21,8 @@ function loadFromStorage(): ReminderNotification[] {
 }
 
 export function useNotifications(shopId?: string) {
+  const esRef = useRef<EventSource | null>(null);
+
   // hydrate ONCE, before effects
   const [notifications, setNotifications] =
     useState<ReminderNotification[]>(loadFromStorage);
@@ -37,6 +39,8 @@ export function useNotifications(shopId?: string) {
   /* ---------- SSE SUBSCRIPTION ---------- */
   useEffect(() => {
     if (!shopId) return;
+
+    if (esRef.current) return;
 
     const es = eventsApi.subscribe(
       /* REMINDER_DUE */
@@ -96,15 +100,11 @@ export function useNotifications(shopId?: string) {
       }
     );
 
+    esRef.current = es;
+
     setIsConnected(true);
 
     es.onerror = () => {
-      setIsConnected(false);
-      es.close();
-    };
-
-    return () => {
-      es.close();
       setIsConnected(false);
     };
   }, [shopId]);

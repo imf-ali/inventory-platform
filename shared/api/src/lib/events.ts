@@ -24,8 +24,8 @@ export const eventsApi = {
       onInventoryLow(JSON.parse(messageEvent.data));
     });
 
-    es.onerror = () => {
-      es.close();
+    es.onerror = (e) => {
+      //nothing to do, just prevent the default logging of EventSource errors
     };
 
     return es;
