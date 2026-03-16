@@ -11,6 +11,8 @@ import type {
   OwnerShopSummary,
   ProcessJoinRequestDto,
   ProcessJoinRequestResponse,
+  ShopDetailResponse,
+  UpdateShopDto,
 } from '@inventory-platform/types';
 
 export const shopsApi = {
@@ -64,6 +66,24 @@ export const shopsApi = {
   ): Promise<ProcessJoinRequestResponse> => {
     const response = await apiClient.post<ApiResponse<ProcessJoinRequestResponse>>(
       API_ENDPOINTS.SHOPS.PROCESS_JOIN_REQUEST(requestId),
+      data
+    );
+    return response.data;
+  },
+
+  getShop: async (shopId: string): Promise<ShopDetailResponse> => {
+    const response = await apiClient.get<ApiResponse<ShopDetailResponse>>(
+      API_ENDPOINTS.SHOPS.BY_ID(shopId)
+    );
+    return response.data;
+  },
+
+  updateShop: async (
+    shopId: string,
+    data: UpdateShopDto
+  ): Promise<ShopDetailResponse> => {
+    const response = await apiClient.patch<ApiResponse<ShopDetailResponse>>(
+      API_ENDPOINTS.SHOPS.BY_ID(shopId),
       data
     );
     return response.data;

@@ -461,6 +461,18 @@ export interface RegisterShopResponse {
   status: string;
 }
 
+export interface ShopDetailResponse {
+  shopId: string;
+  name: string;
+  tagline?: string | null;
+  location?: Location | null;
+}
+
+export interface UpdateShopDto {
+  tagline?: string | null;
+  location?: Location | null;
+}
+
 export interface RequestJoinShopDto {
   ownerEmail: string;
   shopId: string;
