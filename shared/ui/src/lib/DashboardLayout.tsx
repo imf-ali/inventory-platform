@@ -36,21 +36,6 @@ const MENU_GROUPS: MenuGroup[] = [
     ],
   },
   {
-    id: 'profile',
-    label: 'Profile',
-    icon: '👤',
-    items: [{ path: '/dashboard/profile', label: 'View profile', icon: '👤' }],
-  },
-  {
-    id: 'contact',
-    label: 'Contact',
-    icon: '📇',
-    items: [
-      { path: '/dashboard/customers', label: 'Customer', icon: '👥' },
-      { path: '/dashboard/vendors', label: 'Vendor', icon: '🚚' },
-    ],
-  },
-  {
     id: 'products',
     label: 'Products & Sales',
     icon: '📦',
@@ -104,6 +89,21 @@ const MENU_GROUPS: MenuGroup[] = [
     items: [
       { path: '/dashboard/credit-ledger', label: 'Credit Ledger', icon: '📒' },
     ],
+  },
+  {
+    id: 'contact',
+    label: 'Contact',
+    icon: '📇',
+    items: [
+      { path: '/dashboard/customers', label: 'Customer', icon: '👥' },
+      { path: '/dashboard/vendors', label: 'Vendor', icon: '🚚' },
+    ],
+  },
+  {
+    id: 'profile',
+    label: 'Profile',
+    icon: '👤',
+    items: [{ path: '/dashboard/profile', label: 'View profile', icon: '👤' }],
   },
   {
     id: 'team',
