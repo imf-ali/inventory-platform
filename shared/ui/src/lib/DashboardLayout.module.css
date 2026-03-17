@@ -543,6 +543,9 @@
 /* Role + shop */
 .userMenuInfo {
   display: flex;
+  flex-direction: column; /* ADD */
+  align-items: flex-start; /* ADD */
+  gap: 4px; /* optional spacing */
   justify-content: space-between;
   align-items: center;
   font-size: 0.75rem;
