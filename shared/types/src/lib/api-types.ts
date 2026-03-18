@@ -127,6 +127,23 @@ export interface LogoutResponse {
   deviceId: string;
 }
 
+export interface ForgotPasswordDto {
+  email: string;
+}
+
+export interface ForgotPasswordResponse {
+  message: string;
+}
+
+export interface ResetPasswordDto {
+  token: string;
+  newPassword: string;
+}
+
+export interface ResetPasswordResponse {
+  message: string;
+}
+
 // Multi-shop API types
 export interface SetActiveShopRequest {
   shopId: string;
