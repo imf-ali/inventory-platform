@@ -68,18 +68,24 @@
 }
 
 .addBtn {
-  padding: 0.5rem 1rem;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #fff;
-  background: #3b82f6;
+  padding: 0.75rem 1.5rem;
   border: none;
   border-radius: 8px;
+  background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
   cursor: pointer;
+  transition: opacity 0.2s;
 }
 
 .addBtn:hover {
-  background: #2563eb;
+  opacity: 0.9;
+}
+
+.addBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .tableWrap {
