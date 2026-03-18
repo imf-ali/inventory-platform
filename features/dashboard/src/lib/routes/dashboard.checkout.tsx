@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router';
 import { cartApi } from '@inventory-platform/api';
-import type { CartResponse, UpdateCartStatusDto } from '@inventory-platform/types';
+import type {
+  CartResponse,
+  UpdateCartStatusDto,
+} from '@inventory-platform/types';
 import styles from './dashboard.checkout.module.css';
 import { useNotify } from '@inventory-platform/store';
 
@@ -13,7 +16,9 @@ function formatPaymentSummary(c: CartResponse): string {
   const m = c.paymentMethod;
   if (!m) return '—';
   const fmt = (x: number | null | undefined) =>
-    x != null && !Number.isNaN(Number(x)) ? `₹${round2(Number(x)).toFixed(2)}` : '';
+    x != null && !Number.isNaN(Number(x))
+      ? `₹${round2(Number(x)).toFixed(2)}`
+      : '';
   switch (m) {
     case 'CASH':
       return 'Cash';
@@ -29,7 +34,9 @@ function formatPaymentSummary(c: CartResponse): string {
       return parts.length ? `Split (${parts.join(' + ')})` : 'Split';
     }
     case 'MULTI':
-      return `Multi: Cash ${fmt(c.amountPaidCash)} + Online ${fmt(c.amountPaidOnline)}`;
+      return `Multi: Cash ${fmt(c.amountPaidCash)} + Online ${fmt(
+        c.amountPaidOnline
+      )}`;
     default:
       return m;
   }
@@ -53,7 +60,9 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string | null>(null);
   const [isPrinting, setIsPrinting] = useState(false);
   const cartLoadedRef = useRef(false);
-  const [paymentForm, setPaymentForm] = useState<null | 'SPLIT' | 'MULTI'>(null);
+  const [paymentForm, setPaymentForm] = useState<null | 'SPLIT' | 'MULTI'>(
+    null
+  );
   const [splitCreditInput, setSplitCreditInput] = useState('');
   const [splitPaidVia, setSplitPaidVia] = useState<'CASH' | 'ONLINE'>('CASH');
   const [multiCashInput, setMultiCashInput] = useState('');
@@ -144,7 +153,9 @@ export default function CheckoutPage() {
     );
   }
 
-  const completePurchase = async (payload: Omit<UpdateCartStatusDto, 'purchaseId' | 'status'>) => {
+  const completePurchase = async (
+    payload: Omit<UpdateCartStatusDto, 'purchaseId' | 'status'>
+  ) => {
     if (!checkoutData?.purchaseId) {
       notifyError('Purchase ID not found');
       return;
@@ -170,7 +181,9 @@ export default function CheckoutPage() {
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
     } catch (err) {
-      notifyError(err instanceof Error ? err.message : 'Failed to process payment');
+      notifyError(
+        err instanceof Error ? err.message : 'Failed to process payment'
+      );
     } finally {
       setIsProcessingPayment(false);
     }
@@ -198,7 +211,9 @@ export default function CheckoutPage() {
     const credit = round2(parseFloat(splitCreditInput.replace(/,/g, '')) || 0);
     const paid = round2(total - credit);
     if (credit <= 0 || paid <= 0) {
-      notifyError('Enter credit amount greater than 0 and less than grand total');
+      notifyError(
+        'Enter credit amount greater than 0 and less than grand total'
+      );
       return;
     }
     await completePurchase({
@@ -219,7 +234,9 @@ export default function CheckoutPage() {
       return;
     }
     if (round2(cash + online) !== total) {
-      notifyError(`Cash + Online must equal grand total (₹${total.toFixed(2)})`);
+      notifyError(
+        `Cash + Online must equal grand total (₹${total.toFixed(2)})`
+      );
       return;
     }
     await completePurchase({
@@ -307,7 +324,8 @@ export default function CheckoutPage() {
   };
 
   // Get SGST and CGST percentages from items if available, otherwise calculate from amounts
-  const billingMode = checkoutData.billingMode === 'BASIC' ? 'BASIC' : 'REGULAR';
+  const billingMode =
+    checkoutData.billingMode === 'BASIC' ? 'BASIC' : 'REGULAR';
   const firstItem = checkoutData.items[0];
   const sgstPercentage = firstItem?.sgst
     ? parseFloat(firstItem.sgst).toFixed(1)
@@ -544,7 +562,9 @@ export default function CheckoutPage() {
                       </td>
                       <td>
                         {item.schemePayFor != null || item.schemeFree != null
-                          ? `${item.schemePayFor ?? '—'} + ${item.schemeFree ?? '—'}`
+                          ? `${item.schemePayFor ?? '—'} + ${
+                              item.schemeFree ?? '—'
+                            }`
                           : '—'}
                       </td>
                       {billingMode === 'REGULAR' && (
@@ -647,10 +667,6 @@ export default function CheckoutPage() {
         {checkoutData.status !== 'COMPLETED' && (
           <div className={styles.paymentSection}>
             <h3 className={styles.sectionTitle}>Payment Options</h3>
-            <p className={styles.hintText}>
-              <strong>Split</strong>: part on credit + rest in cash or online.{' '}
-              <strong>Multi</strong>: pay using cash and online together.
-            </p>
             <div className={styles.paymentButtons}>
               <button
                 type="button"
@@ -751,8 +767,7 @@ export default function CheckoutPage() {
                       const r = round2(t - c);
                       return r >= 0 ? r.toFixed(2) : '—';
                     })()}{' '}
-                    via{' '}
-                    {splitPaidVia === 'CASH' ? 'cash' : 'online'}
+                    via {splitPaidVia === 'CASH' ? 'cash' : 'online'}
                   </span>
                 </div>
                 <div className={styles.paymentFormRow}>
