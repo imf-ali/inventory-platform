@@ -12,7 +12,6 @@ export function PurchaseCard({ purchase }: PurchaseCardProps) {
   const [isItemsExpanded, setIsItemsExpanded] = useState(false);
   const [isPriceExpanded, setIsPriceExpanded] = useState(false);
   const [showPrintModal, setShowPrintModal] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const { error: notifyError } = useNotify;
 
   const formatDate = (dateString: string) => {
@@ -96,8 +95,6 @@ export function PurchaseCard({ purchase }: PurchaseCardProps) {
           </div>
         </div>
       </div>
-
-      {error && <div className={styles.errorMessage}>{error}</div>}
 
       {purchase.items && purchase.items.length > 0 && (
         <div className={styles.itemsSection}>
