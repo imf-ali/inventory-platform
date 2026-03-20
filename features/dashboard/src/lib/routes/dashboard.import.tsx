@@ -39,11 +39,11 @@ export default function ImportPage() {
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
   const [vendorSearchQuery, setVendorSearchQuery] = useState('');
   const [vendorSearchResults, setVendorSearchResults] = useState<Vendor[]>([]);
-  const [isSearchingVendor, setIsSearchingVendor] = useState(false);
+  const [_isSearchingVendor, setIsSearchingVendor] = useState(false);
   const [showVendorDropdown, setShowVendorDropdown] = useState(false);
   const [lotId, setLotId] = useState('');
-  const [onCredit, setOnCredit] = useState(false);
-  const [selectedVendorShopId, setSelectedVendorShopId] = useState('');
+  const [onCredit, _setOnCredit] = useState(false);
+  const [selectedVendorShopId, _setSelectedVendorShopId] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { success: notifySuccess, error: notifyError } = useNotify;
 
