@@ -470,10 +470,19 @@ export default function CheckoutPage() {
                 <span>₹{checkoutData.taxTotal.toFixed(2)}</span>
               </div>
             )}
-            {checkoutData.additionalDiscountTotal > 0 && (
+            {checkoutData.additionalDiscountTotal !== 0 &&
+              checkoutData.additionalDiscountTotal != null && (
               <div className={styles.summaryRow}>
-                <span>Additional Discount:</span>
-                <span>-₹{checkoutData.additionalDiscountTotal.toFixed(2)}</span>
+                <span>
+                  {checkoutData.additionalDiscountTotal > 0
+                    ? 'Additional Discount:'
+                    : 'Additional (markup):'}
+                </span>
+                <span>
+                  {checkoutData.additionalDiscountTotal > 0
+                    ? `-₹${checkoutData.additionalDiscountTotal.toFixed(2)}`
+                    : `+₹${Math.abs(checkoutData.additionalDiscountTotal).toFixed(2)}`}
+                </span>
               </div>
             )}
             <div className={styles.summaryRowTotal}>

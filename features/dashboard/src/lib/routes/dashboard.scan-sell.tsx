@@ -213,7 +213,8 @@ function CartAdditionalDiscountInput({
       return;
     }
     const num = parseFloat(trimmed);
-    if (isNaN(num) || num < 0 || num > 100) {
+    // Allow -100 to 100: negative = markup (profit), positive = discount
+    if (isNaN(num) || num < -100 || num > 100) {
       setDraft(value !== null && value !== undefined ? value.toString() : '');
       return;
     }
@@ -227,7 +228,7 @@ function CartAdditionalDiscountInput({
       className={styles.itemAdditionalInput}
       value={draft}
       placeholder="0"
-      min={0}
+      min={-100}
       max={100}
       step={0.01}
       disabled={disabled}
@@ -2126,6 +2127,7 @@ export default function ScanSellPage() {
                                   <label
                                     className={styles.itemFieldLabel}
                                     htmlFor={`add-disc-${cartItem.inventoryItem.id}`}
+                                    title="Positive = discount, negative = markup (e.g. -2% increases price)"
                                   >
                                     Sale add. discount
                                   </label>
@@ -2537,11 +2539,17 @@ export default function ScanSellPage() {
                 {cartData &&
                   cartData.additionalDiscountTotal !== undefined &&
                   cartData.additionalDiscountTotal !== null &&
-                  cartData.additionalDiscountTotal > 0 && (
+                  cartData.additionalDiscountTotal !== 0 && (
                     <div className={styles.summaryRow}>
-                      <span>Additional Discount</span>
                       <span>
-                        -₹{cartData.additionalDiscountTotal.toFixed(2)}
+                        {cartData.additionalDiscountTotal > 0
+                          ? 'Additional Discount'
+                          : 'Additional (markup)'}
+                      </span>
+                      <span>
+                        {cartData.additionalDiscountTotal > 0
+                          ? `-₹${cartData.additionalDiscountTotal.toFixed(2)}`
+                          : `+₹${Math.abs(cartData.additionalDiscountTotal).toFixed(2)}`}
                       </span>
                     </div>
                   )}
