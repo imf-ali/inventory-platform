@@ -1,7 +1,12 @@
 import { useState, FormEvent, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { QRCodeSVG } from 'qrcode.react';
-import { inventoryApi, vendorsApi, uploadApi, usersApi } from '@inventory-platform/api';
+import {
+  inventoryApi,
+  vendorsApi,
+  uploadApi,
+  usersApi,
+} from '@inventory-platform/api';
 import type {
   CreateInventoryDto,
   CustomReminderInput,
@@ -70,7 +75,9 @@ export default function ProductRegistrationPage() {
   const [uploadUrl, setUploadUrl] = useState<string | null>(null);
   const [uploadStatus, setUploadStatus] = useState<UploadStatus | null>(null);
   const [isPolling, setIsPolling] = useState(false);
-  const [pollingInterval, setPollingInterval] = useState<ReturnType<typeof setInterval> | null>(null);
+  const [pollingInterval, setPollingInterval] = useState<ReturnType<
+    typeof setInterval
+  > | null>(null);
   const productsSectionRef = useRef<HTMLDivElement>(null);
   const [showReviewBanner, setShowReviewBanner] = useState(false);
   const [reviewBannerItemsCount, setReviewBannerItemsCount] = useState(0);
@@ -97,7 +104,9 @@ export default function ProductRegistrationPage() {
   // Link vendor to registered user
   const [linkedUser, setLinkedUser] = useState<LinkableUser | null>(null);
   const [isSearchingUser, setIsSearchingUser] = useState(false);
-  const [userSearchMessage, setUserSearchMessage] = useState<string | null>(null);
+  const [userSearchMessage, setUserSearchMessage] = useState<string | null>(
+    null
+  );
 
   const [lotId, setLotId] = useState('');
   const [lotIdSearchQuery, setLotIdSearchQuery] = useState('');
@@ -246,17 +255,29 @@ export default function ProductRegistrationPage() {
       sgst: billingMode === 'BASIC' ? '' : item.sgst || '',
       cgst: billingMode === 'BASIC' ? '' : item.cgst || '',
       additionalDiscount: item.additionalDiscount ?? null,
-      purchaseSchemeType: (item as { purchaseSchemeType?: SchemeType }).purchaseSchemeType ?? 'FIXED_UNITS',
-      purchaseSchemePayFor: (item as { purchaseSchemePayFor?: number | null }).purchaseSchemePayFor ?? null,
-      purchaseSchemeFree: (item as { purchaseSchemeFree?: number | null }).purchaseSchemeFree ?? null,
-      purchaseSchemePercentage: (item as { purchaseSchemePercentage?: number | null }).purchaseSchemePercentage ?? null,
-      purchaseAdditionalDiscount: (item as { purchaseAdditionalDiscount?: number | null }).purchaseAdditionalDiscount ?? null,
+      purchaseSchemeType:
+        (item as { purchaseSchemeType?: SchemeType }).purchaseSchemeType ??
+        'FIXED_UNITS',
+      purchaseSchemePayFor:
+        (item as { purchaseSchemePayFor?: number | null })
+          .purchaseSchemePayFor ?? null,
+      purchaseSchemeFree:
+        (item as { purchaseSchemeFree?: number | null }).purchaseSchemeFree ??
+        null,
+      purchaseSchemePercentage:
+        (item as { purchaseSchemePercentage?: number | null })
+          .purchaseSchemePercentage ?? null,
+      purchaseAdditionalDiscount:
+        (item as { purchaseAdditionalDiscount?: number | null })
+          .purchaseAdditionalDiscount ?? null,
       billingMode,
       itemType: item.itemType ?? 'NORMAL',
       itemTypeDegree: item.itemTypeDegree,
       discountApplicable: item.discountApplicable,
       purchaseDate: item.purchaseDate || undefined,
-      baseUnit: item.baseUnit?.trim() ? item.baseUnit.trim().toUpperCase() : 'BASE UNIT',
+      baseUnit: item.baseUnit?.trim()
+        ? item.baseUnit.trim().toUpperCase()
+        : 'BASE UNIT',
       conversionUnit: item.unitConversions?.unit?.trim()
         ? item.unitConversions.unit.trim().toUpperCase()
         : 'SALE UNIT',
@@ -436,7 +457,7 @@ export default function ProductRegistrationPage() {
       setUploadStatus('PENDING');
       setShowQrModal(true);
       setIsUploading(false);
-      
+
       // Start polling for status
       startPolling(response.token);
     } catch (err) {
@@ -460,12 +481,18 @@ export default function ProductRegistrationPage() {
           clearInterval(interval);
           setIsPolling(false);
           setPollingInterval(null);
-          
+
           // Fetch parsed items
           try {
             const parsedResponse = await uploadApi.getParsedItems(token);
-            if (parsedResponse && parsedResponse.items && parsedResponse.items.length > 0) {
-              const parsedProducts = parsedResponse.items.map(transformParsedItemToProduct);
+            if (
+              parsedResponse &&
+              parsedResponse.items &&
+              parsedResponse.items.length > 0
+            ) {
+              const parsedProducts = parsedResponse.items.map(
+                transformParsedItemToProduct
+              );
               setProducts(parsedProducts);
               notifySuccess(
                 `✅ Successfully parsed invoice! Found ${parsedResponse.totalItems} item(s).`
@@ -483,7 +510,10 @@ export default function ProductRegistrationPage() {
                 : 'Failed to retrieve parsed items.';
             notifyError(errorMessage);
           }
-        } else if (statusResponse.status === 'FAILED' || statusResponse.status === 'EXPIRED') {
+        } else if (
+          statusResponse.status === 'FAILED' ||
+          statusResponse.status === 'EXPIRED'
+        ) {
           clearInterval(interval);
           setIsPolling(false);
           setPollingInterval(null);
@@ -623,13 +653,16 @@ export default function ProductRegistrationPage() {
           return;
         }
 
-        const normalizedConversionFactor = Number(product.conversionFactor) || 0;
+        const normalizedConversionFactor =
+          Number(product.conversionFactor) || 0;
         if (
           normalizedConversionFactor < 0 ||
           !Number.isFinite(normalizedConversionFactor)
         ) {
           notifyError(
-            `Product "${product.name || 'Unnamed'}": packaging details must be a valid positive number`
+            `Product "${
+              product.name || 'Unnamed'
+            }": packaging details must be a valid positive number`
           );
           setIsLoading(false);
           return;
@@ -656,7 +689,9 @@ export default function ProductRegistrationPage() {
             (product.cgst && product.cgst.trim()))
         ) {
           notifyError(
-            `Product "${product.name || 'Unnamed'}": SGST/CGST must not be provided when billingMode is BASIC`
+            `Product "${
+              product.name || 'Unnamed'
+            }": SGST/CGST must not be provided when billingMode is BASIC`
           );
           setIsLoading(false);
           return;
@@ -665,18 +700,24 @@ export default function ProductRegistrationPage() {
         if (product.purchaseDate) {
           const purchase = new Date(product.purchaseDate);
           const now = new Date();
-          const daysPast = (now.getTime() - purchase.getTime()) / (1000 * 60 * 60 * 24);
-          const daysFuture = (purchase.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+          const daysPast =
+            (now.getTime() - purchase.getTime()) / (1000 * 60 * 60 * 24);
+          const daysFuture =
+            (purchase.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
           if (daysPast > 30) {
             notifyError(
-              `Product "${product.name || 'Unnamed'}": Purchase date must not be older than 30 days`
+              `Product "${
+                product.name || 'Unnamed'
+              }": Purchase date must not be older than 30 days`
             );
             setIsLoading(false);
             return;
           }
           if (daysFuture > 30) {
             notifyError(
-              `Product "${product.name || 'Unnamed'}": Purchase date must not be more than 30 days in the future`
+              `Product "${
+                product.name || 'Unnamed'
+              }": Purchase date must not be more than 30 days in the future`
             );
             setIsLoading(false);
             return;
@@ -783,7 +824,9 @@ export default function ProductRegistrationPage() {
             : null;
 
         return {
-          ...(product.barcode?.trim() ? { barcode: product.barcode.trim() } : {}),
+          ...(product.barcode?.trim()
+            ? { barcode: product.barcode.trim() }
+            : {}),
           name: product.name,
           description: product.description || undefined,
           companyName: product.companyName,
@@ -799,7 +842,8 @@ export default function ProductRegistrationPage() {
             factor: Number(product.conversionFactor) || 1,
           },
           expiryDate: product.expiryDate
-            ? product.expiryDate.includes('T') && product.expiryDate.includes('Z')
+            ? product.expiryDate.includes('T') &&
+              product.expiryDate.includes('Z')
               ? product.expiryDate
               : `${String(product.expiryDate).trim().slice(0, 10)}T00:00:00Z`
             : '',
@@ -813,25 +857,22 @@ export default function ProductRegistrationPage() {
                 schemePercentage: product.schemePercentage ?? null,
               }
             : product.schemePayFor != null || product.schemeFree != null
-              ? {
-                  schemeType: 'FIXED_UNITS' as const,
-                  schemePayFor: product.schemePayFor ?? null,
-                  schemeFree: product.schemeFree ?? null,
-                  scheme: null,
-                }
-              : {
-                  schemeType: (product.schemeType ?? 'FIXED_UNITS') as 'FIXED_UNITS',
-                  scheme: product.scheme ?? null,
-                }),
+            ? {
+                schemeType: 'FIXED_UNITS' as const,
+                schemePayFor: product.schemePayFor ?? null,
+                schemeFree: product.schemeFree ?? null,
+                scheme: null,
+              }
+            : {
+                schemeType: (product.schemeType ??
+                  'FIXED_UNITS') as 'FIXED_UNITS',
+                scheme: product.scheme ?? null,
+              }),
           billingMode: billingMode as BillingMode,
-          ...(billingMode !== 'BASIC' &&
-          product.sgst &&
-          product.sgst.trim()
+          ...(billingMode !== 'BASIC' && product.sgst && product.sgst.trim()
             ? { sgst: product.sgst.trim() }
             : {}),
-          ...(billingMode !== 'BASIC' &&
-          product.cgst &&
-          product.cgst.trim()
+          ...(billingMode !== 'BASIC' && product.cgst && product.cgst.trim()
             ? { cgst: product.cgst.trim() }
             : {}),
           ...(product.additionalDiscount !== null &&
@@ -860,8 +901,7 @@ export default function ProductRegistrationPage() {
           ...(product.purchaseAdditionalDiscount !== null &&
           product.purchaseAdditionalDiscount !== undefined
             ? {
-                purchaseAdditionalDiscount:
-                  product.purchaseAdditionalDiscount,
+                purchaseAdditionalDiscount: product.purchaseAdditionalDiscount,
               }
             : {}),
           ...(product.itemType != null ? { itemType: product.itemType } : {}),
@@ -879,7 +919,9 @@ export default function ProductRegistrationPage() {
                   product.purchaseDate.includes('T') &&
                   product.purchaseDate.includes('Z')
                     ? product.purchaseDate
-                    : `${String(product.purchaseDate).trim().slice(0, 10)}T00:00:00Z`,
+                    : `${String(product.purchaseDate)
+                        .trim()
+                        .slice(0, 10)}T00:00:00Z`,
               }
             : {}),
           ...(validRates.length > 0
@@ -1209,14 +1251,18 @@ export default function ProductRegistrationPage() {
         <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.uploadSection}>
             <div className={styles.uploadHeader}>
-              <h3 className={styles.sectionTitle}>Upload Invoice Image (Optional)</h3>
+              <h3 className={styles.sectionTitle}>
+                Upload Invoice Image (Optional)
+              </h3>
               <ul className={styles.helperText}>
                 <li>Upload invoice image to auto-parse product details</li>
                 <li>Review and edit parsed products before bulk save</li>
               </ul>
             </div>
             <div className={styles.uploadOptionsHeader}>
-              <span className={styles.uploadOptionsLabel}>Choose upload method:</span>
+              <span className={styles.uploadOptionsLabel}>
+                Choose upload method:
+              </span>
             </div>
             <div className={styles.uploadOptionsGrid}>
               <button
@@ -1226,11 +1272,15 @@ export default function ProductRegistrationPage() {
                 disabled={isUploading || isLoading || isPolling}
               >
                 <div className={styles.qrBtnIcon}>
-                  <span role="img" aria-label="QR Code icon">📱</span>
+                  <span role="img" aria-label="QR Code icon">
+                    📱
+                  </span>
                 </div>
                 <div className={styles.qrBtnContent}>
                   <span className={styles.qrBtnTitle}>Upload via QR Code</span>
-                  <span className={styles.qrBtnSubtitle}>Use mobile device to scan & upload</span>
+                  <span className={styles.qrBtnSubtitle}>
+                    Use mobile device to scan & upload
+                  </span>
                 </div>
               </button>
               <div className={styles.uploadOptionsOr}>
@@ -1240,88 +1290,94 @@ export default function ProductRegistrationPage() {
               </div>
               <div className={styles.uploadContainer}>
                 <div className={styles.uploadOptionLabel}>
-                  <span className={styles.uploadOptionTitle}>Upload from this device</span>
-                  <span className={styles.uploadOptionSubtitle}>Choose image file from computer</span>
+                  <span className={styles.uploadOptionTitle}>
+                    Upload from this device
+                  </span>
+                  <span className={styles.uploadOptionSubtitle}>
+                    Choose image file from computer
+                  </span>
                 </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileSelect}
-                className={styles.fileInput}
-                id="invoice-upload"
-                disabled={isUploading || isLoading}
-              />
-              <div className={styles.uploadControls}>
-                <label
-                  htmlFor="invoice-upload"
-                  className={styles.fileInputLabel}
-                >
-                  {selectedFile ? (
-                    <div className={styles.fileInfo}>
-                      <span
-                        className={styles.fileIcon}
-                        role="img"
-                        aria-label="File icon"
-                      >
-                        📄
-                      </span>
-                      <span className={styles.fileName}>
-                        {selectedFile.name}
-                      </span>
-                      <span className={styles.fileSize}>
-                        ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
-                      </span>
-                    </div>
-                  ) : (
-                    <div className={styles.uploadPlaceholder}>
-                      <span
-                        className={styles.uploadIcon}
-                        role="img"
-                        aria-label="Upload icon"
-                      >
-                        📤
-                      </span>
-                      <span>Click to browse files</span>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileSelect}
+                  className={styles.fileInput}
+                  id="invoice-upload"
+                  disabled={isUploading || isLoading}
+                />
+                <div className={styles.uploadControls}>
+                  <label
+                    htmlFor="invoice-upload"
+                    className={styles.fileInputLabel}
+                  >
+                    {selectedFile ? (
+                      <div className={styles.fileInfo}>
+                        <span
+                          className={styles.fileIcon}
+                          role="img"
+                          aria-label="File icon"
+                        >
+                          📄
+                        </span>
+                        <span className={styles.fileName}>
+                          {selectedFile.name}
+                        </span>
+                        <span className={styles.fileSize}>
+                          ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                        </span>
+                      </div>
+                    ) : (
+                      <div className={styles.uploadPlaceholder}>
+                        <span
+                          className={styles.uploadIcon}
+                          role="img"
+                          aria-label="Upload icon"
+                        >
+                          📤
+                        </span>
+                        <span>Click to browse files</span>
+                      </div>
+                    )}
+                  </label>
+
+                  {isUploading && (
+                    <div className={styles.uploadProgress}>
+                      <div className={styles.progressSpinner}></div>
+                      <div className={styles.progressText}>
+                        {uploadProgress}
+                      </div>
                     </div>
                   )}
-                </label>
 
-                {isUploading && (
-                  <div className={styles.uploadProgress}>
-                    <div className={styles.progressSpinner}></div>
-                    <div className={styles.progressText}>{uploadProgress}</div>
-                  </div>
-                )}
-
-                {selectedFile && !isUploading && (
-                  <div className={styles.uploadActions}>
-                    <button
-                      type="button"
-                      className={styles.uploadBtn}
-                      onClick={handleUploadInvoice}
-                      disabled={isLoading}
-                    >
-                      <span
-                        className={styles.btnIcon}
-                        role="img"
-                        aria-label="Rocket icon"
+                  {selectedFile && !isUploading && (
+                    <div className={styles.uploadActions}>
+                      <button
+                        type="button"
+                        className={styles.uploadBtn}
+                        onClick={handleUploadInvoice}
+                        disabled={isLoading}
                       >
-                        🚀
-                      </span>
-                      Parse Invoice
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.clearUploadBtn}
-                      onClick={handleClearUpload}
-                      disabled={isLoading}
-                    >
-                      Clear
-                    </button>
-                  </div>
-                )}
-              </div>
+                        <span
+                          className={styles.btnIcon}
+                          role="img"
+                          aria-label="Rocket icon"
+                        >
+                          🚀
+                        </span>
+                        Parse Invoice
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.clearUploadBtn}
+                        onClick={handleClearUpload}
+                        disabled={isLoading}
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -1330,7 +1386,9 @@ export default function ProductRegistrationPage() {
           <div className={styles.sharedSection}>
             <h3 className={styles.sectionTitle}>Shared Information</h3>
             <div className={styles.sharedTopRow}>
-              <span className={styles.sharedHint}>Applies to all products.</span>
+              <span className={styles.sharedHint}>
+                Applies to all products.
+              </span>
               <select
                 className={`${styles.input} ${styles.sharedModeSelect}`}
                 value={billingMode}
@@ -1399,7 +1457,9 @@ export default function ProductRegistrationPage() {
                             className={styles.dropdownItem}
                             onClick={() => handleSelectLotId(lot.lotId)}
                           >
-                            <div className={styles.dropdownItemTitle}>{lot.lotId}</div>
+                            <div className={styles.dropdownItemTitle}>
+                              {lot.lotId}
+                            </div>
                             <div className={styles.dropdownItemSub}>
                               {formatDate(lot.createdAt)}
                             </div>
@@ -1554,7 +1614,10 @@ export default function ProductRegistrationPage() {
                       </label>
                     </div>
                     {onCredit && selectedVendor.userId && (
-                      <div className={styles.formGroup} style={{ marginTop: 12 }}>
+                      <div
+                        className={styles.formGroup}
+                        style={{ marginTop: 12 }}
+                      >
                         <label className={styles.label}>
                           Assign credit to vendor&apos;s shop
                         </label>
@@ -1567,7 +1630,8 @@ export default function ProductRegistrationPage() {
                           disabled={isLoadingVendorShops || isLoading}
                         >
                           <option value="">
-                            — Not assigned (vendor won&apos;t see in their shop) —
+                            — Not assigned (vendor won&apos;t see in their shop)
+                            —
                           </option>
                           {vendorShops.map((s) => (
                             <option key={s.shopId} value={s.shopId}>
@@ -1575,8 +1639,15 @@ export default function ProductRegistrationPage() {
                             </option>
                           ))}
                         </select>
-                        <small style={{ color: 'var(--text-secondary)', marginTop: 4, display: 'block' }}>
-                          When assigned, the vendor can see this pending amount when they log into that shop.
+                        <small
+                          style={{
+                            color: 'var(--text-secondary)',
+                            marginTop: 4,
+                            display: 'block',
+                          }}
+                        >
+                          When assigned, the vendor can see this pending amount
+                          when they log into that shop.
                         </small>
                       </div>
                     )}
@@ -1611,8 +1682,16 @@ export default function ProductRegistrationPage() {
           <div className={styles.separator}>
             <div className={styles.separatorLine}></div>
             <div className={styles.separatorContent}>
-              <span className={styles.separatorIcon} role="img" aria-label="Sparkle icon">✨</span>
-              <span className={styles.separatorText}>Or manually add products below</span>
+              <span
+                className={styles.separatorIcon}
+                role="img"
+                aria-label="Sparkle icon"
+              >
+                ✨
+              </span>
+              <span className={styles.separatorText}>
+                Or manually add products below
+              </span>
             </div>
             <div className={styles.separatorLine}></div>
           </div>
@@ -1622,9 +1701,17 @@ export default function ProductRegistrationPage() {
             {showReviewBanner && (
               <div className={styles.reviewBanner}>
                 <div className={styles.reviewBannerContent}>
-                  <span className={styles.reviewBannerIcon} role="img" aria-label="Clipboard icon">📋</span>
+                  <span
+                    className={styles.reviewBannerIcon}
+                    role="img"
+                    aria-label="Clipboard icon"
+                  >
+                    📋
+                  </span>
                   <div className={styles.reviewBannerText}>
-                    <strong>Review Required:</strong> Please review the {reviewBannerItemsCount} item(s) below and fill in any missing information before submitting.
+                    <strong>Review Required:</strong> Please review the{' '}
+                    {reviewBannerItemsCount} item(s) below and fill in any
+                    missing information before submitting.
                   </div>
                   <button
                     type="button"
@@ -1790,9 +1877,7 @@ export default function ProductRegistrationPage() {
                 />
               </div>
               <div className={styles.formGroup}>
-                <label className={styles.label}>
-                  Link to registered user
-                </label>
+                <label className={styles.label}>Link to registered user</label>
                 <p
                   className={styles.helperText}
                   style={{ marginBottom: 8, fontSize: 13, color: '#666' }}
@@ -1952,10 +2037,7 @@ export default function ProductRegistrationPage() {
 
       {/* QR Code Upload Modal */}
       {showQrModal && (
-        <div
-          className={styles.modalOverlay}
-          onClick={handleCloseQrModal}
-        >
+        <div className={styles.modalOverlay} onClick={handleCloseQrModal}>
           <div
             className={styles.modalContent}
             onClick={(e) => e.stopPropagation()}
@@ -2124,7 +2206,13 @@ function ProductAccordion({
 
   useEffect(() => {
     if (!schemeFixedFocused) setSchemeFixedDraft(formatSchemeFixed(product));
-  }, [product.id, product.schemePayFor, product.schemeFree, product.scheme, schemeFixedFocused]);
+  }, [
+    product.id,
+    product.schemePayFor,
+    product.schemeFree,
+    product.scheme,
+    schemeFixedFocused,
+  ]);
 
   useEffect(() => {
     if (!purchaseSchemeFixedFocused)
@@ -2321,7 +2409,11 @@ function ProductAccordion({
                       : ''
                   }
                   onChange={(e) =>
-                    onDecimalChange(product.id, 'conversionFactor', e.target.value)
+                    onDecimalChange(
+                      product.id,
+                      'conversionFactor',
+                      e.target.value
+                    )
                   }
                   disabled={isLoading}
                 />
@@ -2345,7 +2437,8 @@ function ProductAccordion({
                 id={`expiryDate-${product.id}`}
                 className={styles.input}
                 value={
-                  product.expiryDate
+                  product.expiryDate &&
+                  !isNaN(new Date(product.expiryDate).getTime())
                     ? new Date(product.expiryDate).toISOString().split('T')[0]
                     : ''
                 }
@@ -2402,7 +2495,10 @@ function ProductAccordion({
                 />
               </div>
               <div className={styles.formGroup}>
-                <label htmlFor={`batchNo-${product.id}`} className={styles.label}>
+                <label
+                  htmlFor={`batchNo-${product.id}`}
+                  className={styles.label}
+                >
                   Batch Number
                 </label>
                 <input
@@ -2502,11 +2598,7 @@ function ProductAccordion({
                       onChange(product.id, 'schemePercentage', null);
                     } else {
                       const num = parseFloat(val);
-                      if (
-                        !isNaN(num) &&
-                        num > 0 &&
-                        num <= 100
-                      ) {
+                      if (!isNaN(num) && num > 0 && num <= 100) {
                         onChange(product.id, 'schemePercentage', num);
                       }
                     }
@@ -2676,7 +2768,11 @@ function ProductAccordion({
                   } else {
                     const numValue = parseFloat(value);
                     if (!isNaN(numValue) && numValue >= 0 && numValue <= 100) {
-                      onChange(product.id, 'purchaseAdditionalDiscount', numValue);
+                      onChange(
+                        product.id,
+                        'purchaseAdditionalDiscount',
+                        numValue
+                      );
                     }
                   }
                 }}
@@ -2742,11 +2838,7 @@ function ProductAccordion({
                         onChange(product.id, 'itemTypeDegree', undefined);
                       } else {
                         const num = parseInt(val, 10);
-                        if (
-                          !isNaN(num) &&
-                          num > 0 &&
-                          Number.isInteger(num)
-                        ) {
+                        if (!isNaN(num) && num > 0 && Number.isInteger(num)) {
                           onChange(product.id, 'itemTypeDegree', num);
                         }
                       }
@@ -2829,7 +2921,9 @@ function ProductAccordion({
                   </select>
                 </div>
                 <div className={styles.formGroup} aria-hidden="true">
-                  <span style={{ visibility: 'hidden', userSelect: 'none' }}>.</span>
+                  <span style={{ visibility: 'hidden', userSelect: 'none' }}>
+                    .
+                  </span>
                 </div>
               </div>
             </>
@@ -2866,7 +2960,6 @@ function ProductAccordion({
               </div>
               <div className={styles.formGroup}>
                 <label
-                
                   htmlFor={`purchaseDate-${product.id}`}
                   className={styles.label}
                 >
@@ -3047,8 +3140,8 @@ function ProductAccordion({
               </button>
             </div>
             <span className={styles.unitHint}>
-              Custom rate tiers (e.g. Rate-A, Rate-B). Default rate selects which
-              price to use for sales.
+              Custom rate tiers (e.g. Rate-A, Rate-B). Default rate selects
+              which price to use for sales.
             </span>
             {(product.rates ?? []).map((rate, i) => (
               <div key={i} className={styles.rateRow}>
@@ -3084,7 +3177,9 @@ function ProductAccordion({
                 <button
                   type="button"
                   onClick={() => {
-                    const next = (product.rates ?? []).filter((_, j) => j !== i);
+                    const next = (product.rates ?? []).filter(
+                      (_, j) => j !== i
+                    );
                     onChange(product.id, 'rates', next);
                   }}
                   className={styles.removeRateBtn}
