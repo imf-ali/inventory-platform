@@ -1365,7 +1365,7 @@ export default function ScanSellPage() {
     // Send only this item to API (id + additionalDiscount), like quantity update
     syncCartToAPI(cartItems, undefined, undefined, undefined, undefined, {
       inventoryId,
-      additionalDiscount: value,
+      saleAdditionalDiscount: value,
     });
   };
 
@@ -2536,20 +2536,22 @@ export default function ScanSellPage() {
                   <span>₹{calculateSubtotal().toFixed(2)}</span>
                 </div>
                 {cartData &&
-                  cartData.additionalDiscountTotal !== undefined &&
-                  cartData.additionalDiscountTotal !== null &&
-                  cartData.additionalDiscountTotal !== 0 && (
+                  cartData.saleAdditionalDiscountTotal !== undefined &&
+                  cartData.saleAdditionalDiscountTotal !== null &&
+                  cartData.saleAdditionalDiscountTotal !== 0 && (
                     <div className={styles.summaryRow}>
                       <span>
-                        {cartData.additionalDiscountTotal > 0
+                        {cartData.saleAdditionalDiscountTotal > 0
                           ? 'Additional Discount'
                           : 'Additional (markup)'}
                       </span>
                       <span>
-                        {cartData.additionalDiscountTotal > 0
-                          ? `-₹${cartData.additionalDiscountTotal.toFixed(2)}`
+                        {cartData.saleAdditionalDiscountTotal > 0
+                          ? `-₹${cartData.saleAdditionalDiscountTotal.toFixed(
+                              2
+                            )}`
                           : `+₹${Math.abs(
-                              cartData.additionalDiscountTotal
+                              cartData.saleAdditionalDiscountTotal
                             ).toFixed(2)}`}
                       </span>
                     </div>
