@@ -126,6 +126,22 @@ export default function ProductRegistrationPage() {
   // Multiple products state
   const [products, setProducts] = useState<ProductFormData[]>([]);
 
+  // Product view mode: list (accordion) or grid (Excel-style)
+  const [productViewMode, setProductViewMode] = useState<'list' | 'grid'>(
+    () => {
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('product-registration-view-mode');
+        if (stored === 'list' || stored === 'grid') return stored;
+      }
+      return 'list';
+    }
+  );
+
+  // Grid view: draft values for scheme fields (user can type "10+2" or "15%")
+  const [gridSchemeDrafts, setGridSchemeDrafts] = useState<
+    Record<string, { sale?: string; purchase?: string }>
+  >({});
+
   // Image upload state
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string>('');
@@ -552,6 +568,11 @@ export default function ProductRegistrationPage() {
 
   const handleRemoveProduct = (productId: string) => {
     setProducts(products.filter((p) => p.id !== productId));
+    setGridSchemeDrafts((prev) => {
+      const next = { ...prev };
+      delete next[productId];
+      return next;
+    });
   };
 
   const handleToggleProduct = (productId: string) => {
@@ -1726,14 +1747,65 @@ export default function ProductRegistrationPage() {
             )}
             <div className={styles.productsHeader}>
               <h3 className={styles.sectionTitle}>Products</h3>
-              <button
-                type="button"
-                className={styles.addProductBtn}
-                onClick={handleAddProduct}
-                disabled={isLoading}
-              >
-                + Add Product
-              </button>
+              <div className={styles.productsHeaderRight}>
+                {products.length > 0 && (
+                  <div className={styles.viewToggleWrap}>
+                    <span className={styles.viewToggleLabel}>View:</span>
+                    <div
+                      className={styles.viewToggleButtons}
+                      role="group"
+                      aria-label="Product view mode"
+                    >
+                      <button
+                        type="button"
+                        className={`${styles.viewToggleBtn} ${
+                          productViewMode === 'list'
+                            ? styles.viewToggleBtnActive
+                            : ''
+                        }`}
+                        onClick={() => {
+                          setProductViewMode('list');
+                          localStorage.setItem(
+                            'product-registration-view-mode',
+                            'list'
+                          );
+                        }}
+                        title="List view"
+                        aria-pressed={productViewMode === 'list'}
+                      >
+                        <span aria-hidden>☰</span> List
+                      </button>
+                      <button
+                        type="button"
+                        className={`${styles.viewToggleBtn} ${
+                          productViewMode === 'grid'
+                            ? styles.viewToggleBtnActive
+                            : ''
+                        }`}
+                        onClick={() => {
+                          setProductViewMode('grid');
+                          localStorage.setItem(
+                            'product-registration-view-mode',
+                            'grid'
+                          );
+                        }}
+                        title="Grid view"
+                        aria-pressed={productViewMode === 'grid'}
+                      >
+                        <span aria-hidden>⊞</span> Grid
+                      </button>
+                    </div>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  className={styles.addProductBtn}
+                  onClick={handleAddProduct}
+                  disabled={isLoading}
+                >
+                  + Add Product
+                </button>
+              </div>
             </div>
 
             {products.length === 0 ? (
@@ -1741,6 +1813,555 @@ export default function ProductRegistrationPage() {
                 <p>
                   No products added yet. Click "Add Product" to get started.
                 </p>
+              </div>
+            ) : productViewMode === 'grid' ? (
+              <div className={styles.excelTableWrap}>
+                <table className={styles.excelTable}>
+                  <thead>
+                    <tr>
+                      <th className={styles.excelTh}>#</th>
+                      <th className={styles.excelTh}>Product</th>
+                      <th className={styles.excelTh}>Company</th>
+                      <th className={styles.excelTh}>Count</th>
+                      <th className={styles.excelTh}>Factor</th>
+                      <th className={styles.excelTh}>Expiry</th>
+                      <th className={styles.excelTh}>Location</th>
+                      <th className={styles.excelTh}>Cost</th>
+                      <th className={styles.excelTh}>PTR</th>
+                      <th className={styles.excelTh}>MRP</th>
+                      <th className={styles.excelTh}>Sale scheme</th>
+                      <th className={styles.excelTh}>Sale disc %</th>
+                      <th className={styles.excelTh}>Purchase scheme</th>
+                      <th className={styles.excelTh}>Purchase disc %</th>
+                      <th className={styles.excelTh}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {products.map((product, idx) => (
+                      <tr key={product.id} className={styles.excelTr}>
+                        <td className={styles.excelTd}>{idx + 1}</td>
+                        <td className={styles.excelTd}>
+                          <input
+                            type="text"
+                            className={styles.excelInput}
+                            placeholder="Product name"
+                            value={product.name}
+                            onChange={(e) =>
+                              handleProductChange(
+                                product.id,
+                                'name',
+                                e.target.value
+                              )
+                            }
+                            disabled={isLoading}
+                          />
+                        </td>
+                        <td className={styles.excelTd}>
+                          <input
+                            type="text"
+                            className={styles.excelInput}
+                            placeholder="Company"
+                            value={product.companyName}
+                            onChange={(e) =>
+                              handleProductChange(
+                                product.id,
+                                'companyName',
+                                e.target.value
+                              )
+                            }
+                            disabled={isLoading}
+                          />
+                        </td>
+                        <td className={styles.excelTd}>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            className={styles.excelInputNarrow}
+                            placeholder="0"
+                            value={product.count === 0 ? '' : product.count}
+                            onChange={(e) =>
+                              handleIntegerChange(
+                                product.id,
+                                'count',
+                                e.target.value
+                              )
+                            }
+                            disabled={isLoading}
+                          />
+                        </td>
+                        <td className={styles.excelTd}>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            className={styles.excelInputNarrow}
+                            placeholder="—"
+                            value={
+                              product.conversionFactor &&
+                              product.conversionFactor > 0
+                                ? product.conversionFactor
+                                : ''
+                            }
+                            onChange={(e) =>
+                              handleDecimalChange(
+                                product.id,
+                                'conversionFactor',
+                                e.target.value
+                              )
+                            }
+                            disabled={isLoading}
+                          />
+                        </td>
+                        <td className={styles.excelTd}>
+                          <input
+                            type="date"
+                            className={styles.excelInputDate}
+                            value={
+                              product.expiryDate &&
+                              !isNaN(new Date(product.expiryDate).getTime())
+                                ? new Date(product.expiryDate)
+                                    .toISOString()
+                                    .split('T')[0]
+                                : ''
+                            }
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              handleProductChange(
+                                product.id,
+                                'expiryDate',
+                                v ? `${v}T00:00:00Z` : ''
+                              );
+                            }}
+                            disabled={isLoading}
+                          />
+                        </td>
+                        <td className={styles.excelTd}>
+                          <input
+                            type="text"
+                            className={styles.excelInput}
+                            placeholder="Location"
+                            value={product.location}
+                            onChange={(e) =>
+                              handleProductChange(
+                                product.id,
+                                'location',
+                                e.target.value
+                              )
+                            }
+                            disabled={isLoading}
+                          />
+                        </td>
+                        <td className={styles.excelTd}>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            className={styles.excelInputNarrow}
+                            placeholder="0"
+                            value={
+                              product.costPrice === 0 ? '' : product.costPrice
+                            }
+                            onChange={(e) =>
+                              handleDecimalChange(
+                                product.id,
+                                'costPrice',
+                                e.target.value
+                              )
+                            }
+                            disabled={isLoading}
+                          />
+                        </td>
+                        <td className={styles.excelTd}>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            className={styles.excelInputNarrow}
+                            placeholder="0"
+                            value={
+                              product.priceToRetail === 0
+                                ? ''
+                                : product.priceToRetail
+                            }
+                            onChange={(e) =>
+                              handleDecimalChange(
+                                product.id,
+                                'priceToRetail',
+                                e.target.value
+                              )
+                            }
+                            disabled={isLoading}
+                          />
+                        </td>
+                        <td className={styles.excelTd}>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            className={styles.excelInputNarrow}
+                            placeholder="0"
+                            value={
+                              product.maximumRetailPrice === 0
+                                ? ''
+                                : product.maximumRetailPrice
+                            }
+                            onChange={(e) =>
+                              handleDecimalChange(
+                                product.id,
+                                'maximumRetailPrice',
+                                e.target.value
+                              )
+                            }
+                            disabled={isLoading}
+                          />
+                        </td>
+                        <td className={styles.excelTd}>
+                          <input
+                            type="text"
+                            className={styles.excelInputNarrow}
+                            placeholder="e.g. 10+2"
+                            value={
+                              gridSchemeDrafts[product.id]?.sale ??
+                              ((product.schemeType ?? 'FIXED_UNITS') ===
+                              'PERCENTAGE'
+                                ? product.schemePercentage != null
+                                  ? `${product.schemePercentage}%`
+                                  : ''
+                                : product.schemePayFor != null ||
+                                  product.schemeFree != null
+                                ? `${product.schemePayFor ?? 0}+${
+                                    product.schemeFree ?? 0
+                                  }`
+                                : '')
+                            }
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              setGridSchemeDrafts((prev) => ({
+                                ...prev,
+                                [product.id]: {
+                                  ...prev[product.id],
+                                  sale: v,
+                                },
+                              }));
+                            }}
+                            onBlur={() => {
+                              const raw = (
+                                gridSchemeDrafts[product.id]?.sale ?? ''
+                              ).trim();
+                              setGridSchemeDrafts((prev) => {
+                                const next = { ...prev };
+                                const cur = next[product.id];
+                                if (cur) {
+                                  const { sale: _, ...rest } = cur;
+                                  if (Object.keys(rest).length) {
+                                    next[product.id] = rest;
+                                  } else {
+                                    delete next[product.id];
+                                  }
+                                }
+                                return next;
+                              });
+                              if (raw === '') {
+                                handleProductChange(
+                                  product.id,
+                                  'schemePayFor',
+                                  null
+                                );
+                                handleProductChange(
+                                  product.id,
+                                  'schemeFree',
+                                  null
+                                );
+                                handleProductChange(
+                                  product.id,
+                                  'schemePercentage',
+                                  null
+                                );
+                                return;
+                              }
+                              if (raw.endsWith('%')) {
+                                const num = parseFloat(raw.slice(0, -1));
+                                if (!isNaN(num) && num > 0 && num <= 100) {
+                                  handleProductChange(
+                                    product.id,
+                                    'schemeType',
+                                    'PERCENTAGE'
+                                  );
+                                  handleProductChange(
+                                    product.id,
+                                    'schemePercentage',
+                                    num
+                                  );
+                                  handleProductChange(
+                                    product.id,
+                                    'schemePayFor',
+                                    null
+                                  );
+                                  handleProductChange(
+                                    product.id,
+                                    'schemeFree',
+                                    null
+                                  );
+                                }
+                                return;
+                              }
+                              const plusIdx = raw.indexOf('+');
+                              if (plusIdx >= 0) {
+                                const left = parseInt(
+                                  raw.slice(0, plusIdx).trim(),
+                                  10
+                                );
+                                const right = parseInt(
+                                  raw.slice(plusIdx + 1).trim(),
+                                  10
+                                );
+                                if (
+                                  !isNaN(left) &&
+                                  !isNaN(right) &&
+                                  left >= 0 &&
+                                  right >= 0
+                                ) {
+                                  handleProductChange(
+                                    product.id,
+                                    'schemeType',
+                                    'FIXED_UNITS'
+                                  );
+                                  handleProductChange(
+                                    product.id,
+                                    'schemePayFor',
+                                    left
+                                  );
+                                  handleProductChange(
+                                    product.id,
+                                    'schemeFree',
+                                    right
+                                  );
+                                  handleProductChange(
+                                    product.id,
+                                    'schemePercentage',
+                                    null
+                                  );
+                                }
+                              }
+                            }}
+                            disabled={isLoading}
+                          />
+                        </td>
+                        <td className={styles.excelTd}>
+                          <input
+                            type="number"
+                            className={styles.excelInputNarrow}
+                            placeholder="—"
+                            step="0.01"
+                            min={0}
+                            max={100}
+                            value={
+                              product.saleAdditionalDiscount === null ||
+                              product.saleAdditionalDiscount === undefined
+                                ? ''
+                                : product.saleAdditionalDiscount
+                            }
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              if (v === '') {
+                                handleProductChange(
+                                  product.id,
+                                  'saleAdditionalDiscount',
+                                  null
+                                );
+                              } else {
+                                const n = parseFloat(v);
+                                if (!isNaN(n) && n >= 0 && n <= 100) {
+                                  handleProductChange(
+                                    product.id,
+                                    'saleAdditionalDiscount',
+                                    n
+                                  );
+                                }
+                              }
+                            }}
+                            disabled={isLoading}
+                          />
+                        </td>
+                        <td className={styles.excelTd}>
+                          <input
+                            type="text"
+                            className={styles.excelInputNarrow}
+                            placeholder="e.g. 10+2"
+                            value={
+                              gridSchemeDrafts[product.id]?.purchase ??
+                              ((product.purchaseSchemeType ?? 'FIXED_UNITS') ===
+                              'PERCENTAGE'
+                                ? product.purchaseSchemePercentage != null
+                                  ? `${product.purchaseSchemePercentage}%`
+                                  : ''
+                                : product.purchaseSchemePayFor != null ||
+                                  product.purchaseSchemeFree != null
+                                ? `${product.purchaseSchemePayFor ?? 0}+${
+                                    product.purchaseSchemeFree ?? 0
+                                  }`
+                                : '')
+                            }
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              setGridSchemeDrafts((prev) => ({
+                                ...prev,
+                                [product.id]: {
+                                  ...prev[product.id],
+                                  purchase: v,
+                                },
+                              }));
+                            }}
+                            onBlur={() => {
+                              const raw = (
+                                gridSchemeDrafts[product.id]?.purchase ?? ''
+                              ).trim();
+                              setGridSchemeDrafts((prev) => {
+                                const next = { ...prev };
+                                const cur = next[product.id];
+                                if (cur) {
+                                  const { purchase: _, ...rest } = cur;
+                                  if (Object.keys(rest).length) {
+                                    next[product.id] = rest;
+                                  } else {
+                                    delete next[product.id];
+                                  }
+                                }
+                                return next;
+                              });
+                              if (raw === '') {
+                                handleProductChange(
+                                  product.id,
+                                  'purchaseSchemePayFor',
+                                  null
+                                );
+                                handleProductChange(
+                                  product.id,
+                                  'purchaseSchemeFree',
+                                  null
+                                );
+                                handleProductChange(
+                                  product.id,
+                                  'purchaseSchemePercentage',
+                                  null
+                                );
+                                return;
+                              }
+                              if (raw.endsWith('%')) {
+                                const num = parseFloat(raw.slice(0, -1));
+                                if (!isNaN(num) && num >= 0 && num <= 100) {
+                                  handleProductChange(
+                                    product.id,
+                                    'purchaseSchemeType',
+                                    'PERCENTAGE'
+                                  );
+                                  handleProductChange(
+                                    product.id,
+                                    'purchaseSchemePercentage',
+                                    num
+                                  );
+                                  handleProductChange(
+                                    product.id,
+                                    'purchaseSchemePayFor',
+                                    null
+                                  );
+                                  handleProductChange(
+                                    product.id,
+                                    'purchaseSchemeFree',
+                                    null
+                                  );
+                                }
+                                return;
+                              }
+                              const plusIdx = raw.indexOf('+');
+                              if (plusIdx >= 0) {
+                                const left = parseInt(
+                                  raw.slice(0, plusIdx).trim(),
+                                  10
+                                );
+                                const right = parseInt(
+                                  raw.slice(plusIdx + 1).trim(),
+                                  10
+                                );
+                                if (
+                                  !isNaN(left) &&
+                                  !isNaN(right) &&
+                                  left >= 0 &&
+                                  right >= 0
+                                ) {
+                                  handleProductChange(
+                                    product.id,
+                                    'purchaseSchemeType',
+                                    'FIXED_UNITS'
+                                  );
+                                  handleProductChange(
+                                    product.id,
+                                    'purchaseSchemePayFor',
+                                    left
+                                  );
+                                  handleProductChange(
+                                    product.id,
+                                    'purchaseSchemeFree',
+                                    right
+                                  );
+                                  handleProductChange(
+                                    product.id,
+                                    'purchaseSchemePercentage',
+                                    null
+                                  );
+                                }
+                              }
+                            }}
+                            disabled={isLoading}
+                          />
+                        </td>
+                        <td className={styles.excelTd}>
+                          <input
+                            type="number"
+                            className={styles.excelInputNarrow}
+                            placeholder="—"
+                            step="0.01"
+                            min={0}
+                            max={100}
+                            value={
+                              product.purchaseAdditionalDiscount === null ||
+                              product.purchaseAdditionalDiscount === undefined
+                                ? ''
+                                : product.purchaseAdditionalDiscount
+                            }
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              if (v === '') {
+                                handleProductChange(
+                                  product.id,
+                                  'purchaseAdditionalDiscount',
+                                  null
+                                );
+                              } else {
+                                const n = parseFloat(v);
+                                if (!isNaN(n) && n >= 0 && n <= 100) {
+                                  handleProductChange(
+                                    product.id,
+                                    'purchaseAdditionalDiscount',
+                                    n
+                                  );
+                                }
+                              }
+                            }}
+                            disabled={isLoading}
+                          />
+                        </td>
+                        <td className={styles.excelTd}>
+                          <button
+                            type="button"
+                            className={styles.excelRemoveBtn}
+                            onClick={() => handleRemoveProduct(product.id)}
+                            disabled={isLoading}
+                            aria-label="Remove product"
+                          >
+                            ×
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             ) : (
               <div className={styles.productsList}>
