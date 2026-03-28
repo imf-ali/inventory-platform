@@ -196,6 +196,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           e.preventDefault();
           navigate(fav.path);
         }
+      } else {
+        const fav = favoritesNav.find(
+          (f) =>
+            f.binding.kind === 'fn' && favoriteShortcutMatches(e, f)
+        );
+        if (fav) {
+          e.preventDefault();
+          navigate(fav.path);
+        }
       }
     };
     document.addEventListener('keydown', onKeyDown, true);

@@ -5,7 +5,7 @@ import type { FavoritePageShortcut } from './favoritePageShortcuts';
 import {
   addOrUpdateFavoritePageShortcut,
   formatFavoriteShortcutDisplay,
-  parseRecordedFavoriteKey,
+  parseRecordedFavoriteBinding,
   removeFavoritePageShortcut,
 } from './favoritePageShortcuts';
 import styles from './KeyboardShortcutsModal.module.css';
@@ -71,10 +71,10 @@ export function KeyboardShortcutsModal({
 
       e.preventDefault();
       e.stopPropagation();
-      const keyChar = parseRecordedFavoriteKey(e);
-      if (!keyChar) {
+      const binding = parseRecordedFavoriteBinding(e);
+      if (!binding) {
         setFormError(
-          `Use ${modLabel}+Shift and a letter or number (e.g. ${modLabel}+Shift+S).`
+          `Try a single F1–F12 key, or two keys together such as ${modLabel}+G, Alt+G, ${modLabel}+Shift+S, or ${modLabel}+F5.`
         );
         return;
       }
@@ -84,7 +84,7 @@ export function KeyboardShortcutsModal({
         favorites,
         row.path,
         row.label,
-        keyChar
+        binding
       );
       if (!result.ok) {
         setFormError(result.message);
@@ -194,9 +194,12 @@ export function KeyboardShortcutsModal({
           <h3 className={styles.sectionTitle}>My page shortcuts</h3>
           <p className={styles.sectionIntro}>
             Jump straight to a screen you use often. Pick a page below, click{' '}
-            <strong>Assign shortcut</strong>, then press{' '}
-            <kbd>{modLabel}</kbd> + <kbd>Shift</kbd> + a <strong>letter</strong>{' '}
-            or <strong>number</strong>. Keys are saved on this device only.
+            <strong>Assign shortcut</strong>, then press one of: a{' '}
+            <strong>function key</strong> alone (<kbd>F1</kbd>–<kbd>F12</kbd>
+            ), or a <strong>two-part</strong> shortcut such as{' '}
+            <kbd>{modLabel}</kbd> + <kbd>G</kbd>, <kbd>Alt</kbd> + <kbd>G</kbd>,{' '}
+            or <kbd>{modLabel}</kbd> + <kbd>Shift</kbd> + <kbd>S</kbd>. Saved on
+            this device only.
           </p>
 
           <div className={styles.favoriteToolbar}>
@@ -238,8 +241,9 @@ export function KeyboardShortcutsModal({
 
           {recordingPath ? (
             <p className={styles.recordingHint} role="status">
-              Press your shortcut now —{' '}
-              <kbd>{modLabel}</kbd> + <kbd>Shift</kbd> + key.{' '}
+              Press your shortcut — e.g. <kbd>F7</kbd>,{' '}
+              <kbd>{modLabel}</kbd> + <kbd>R</kbd>, or <kbd>Alt</kbd> +{' '}
+              <kbd>2</kbd>.{' '}
               <span className={styles.recordingMuted}>
                 Esc cancels recording.
               </span>
