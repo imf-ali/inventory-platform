@@ -24,7 +24,12 @@ import type {
   BillingMode,
   ShopMembership,
 } from '@inventory-platform/types';
-import { CustomRemindersSection } from '@inventory-platform/ui';
+import {
+  CustomRemindersSection,
+  KEYBOARD_NAV_GRID,
+  runFormKeyboardNavigation,
+  shouldSkipNestedFormKeyboardNav,
+} from '@inventory-platform/ui';
 import { useNotify } from '@inventory-platform/store';
 import styles from './dashboard.product-registration.module.css';
 
@@ -1808,6 +1813,21 @@ export default function ProductRegistrationPage() {
               </div>
             </div>
 
+            {products.length > 0 && (
+              <p className={styles.keyboardNavHint}>
+                <span className={styles.keyboardNavHintLabel}>Keyboard:</span>{' '}
+                <kbd className={styles.kbdInline}>Enter</kbd> next field ·{' '}
+                <kbd className={styles.kbdInline}>↑</kbd>
+                <kbd className={styles.kbdInline}>↓</kbd>{' '}
+                {productViewMode === 'grid'
+                  ? 'same column'
+                  : 'previous / next'}
+                {' · '}
+                <kbd className={styles.kbdInline}>Shift</kbd>+
+                <kbd className={styles.kbdInline}>Enter</kbd> back
+              </p>
+            )}
+
             {products.length === 0 ? (
               <div className={styles.emptyState}>
                 <p>
@@ -1815,7 +1835,16 @@ export default function ProductRegistrationPage() {
                 </p>
               </div>
             ) : productViewMode === 'grid' ? (
-              <div className={styles.excelTableWrap}>
+              <div
+                className={styles.excelTableWrap}
+                {...{ 'data-keyboard-nav': KEYBOARD_NAV_GRID }}
+                onKeyDownCapture={(e) => {
+                  if (shouldSkipNestedFormKeyboardNav(document.activeElement)) {
+                    return;
+                  }
+                  runFormKeyboardNavigation(e, e.currentTarget, 'grid');
+                }}
+              >
                 <table className={styles.excelTable}>
                   <thead>
                     <tr>
@@ -1823,14 +1852,16 @@ export default function ProductRegistrationPage() {
                       <th className={styles.excelTh}>Product</th>
                       <th className={styles.excelTh}>Company</th>
                       <th className={styles.excelTh}>Count</th>
-                      <th className={styles.excelTh}>Factor</th>
+                      <th className={styles.excelTh}>Packaging</th>
                       <th className={styles.excelTh}>Expiry</th>
                       <th className={styles.excelTh}>Location</th>
                       <th className={styles.excelTh}>Cost</th>
                       <th className={styles.excelTh}>PTR</th>
                       <th className={styles.excelTh}>MRP</th>
+                      <th className={styles.excelTh}>Sale deal type</th>
                       <th className={styles.excelTh}>Sale scheme</th>
                       <th className={styles.excelTh}>Sale disc %</th>
+                      <th className={styles.excelTh}>Purchase deal type</th>
                       <th className={styles.excelTh}>Purchase scheme</th>
                       <th className={styles.excelTh}>Purchase disc %</th>
                       <th className={styles.excelTh}>Actions</th>
@@ -1894,7 +1925,7 @@ export default function ProductRegistrationPage() {
                             type="text"
                             inputMode="decimal"
                             className={styles.excelInputNarrow}
-                            placeholder="—"
+                            placeholder="1 x _"
                             value={
                               product.conversionFactor &&
                               product.conversionFactor > 0
@@ -2010,6 +2041,33 @@ export default function ProductRegistrationPage() {
                             }
                             disabled={isLoading}
                           />
+                        </td>
+                        <td className={styles.excelTd}>
+                          <label className={styles.srOnly} htmlFor={`grid-scheme-type-${product.id}`}>
+                            Sale scheme deal type
+                          </label>
+                          <select
+                            id={`grid-scheme-type-${product.id}`}
+                            className={styles.excelSelect}
+                            value={product.schemeType ?? 'FIXED_UNITS'}
+                            onChange={(e) => {
+                              const val = e.target.value as SchemeType;
+                              handleProductChange(product.id, 'schemeType', val);
+                              if (val === 'PERCENTAGE') {
+                                handleProductChange(product.id, 'scheme', null);
+                              } else {
+                                handleProductChange(
+                                  product.id,
+                                  'schemePercentage',
+                                  null
+                                );
+                              }
+                            }}
+                            disabled={isLoading}
+                          >
+                            <option value="FIXED_UNITS">Free units</option>
+                            <option value="PERCENTAGE">Percentage</option>
+                          </select>
                         </td>
                         <td className={styles.excelTd}>
                           <input
@@ -2178,6 +2236,49 @@ export default function ProductRegistrationPage() {
                             }}
                             disabled={isLoading}
                           />
+                        </td>
+                        <td className={styles.excelTd}>
+                          <label
+                            className={styles.srOnly}
+                            htmlFor={`grid-purchase-scheme-type-${product.id}`}
+                          >
+                            Purchase scheme deal type
+                          </label>
+                          <select
+                            id={`grid-purchase-scheme-type-${product.id}`}
+                            className={styles.excelSelect}
+                            value={product.purchaseSchemeType ?? 'FIXED_UNITS'}
+                            onChange={(e) => {
+                              const val = e.target.value as SchemeType;
+                              handleProductChange(
+                                product.id,
+                                'purchaseSchemeType',
+                                val
+                              );
+                              if (val === 'PERCENTAGE') {
+                                handleProductChange(
+                                  product.id,
+                                  'purchaseSchemePayFor',
+                                  null
+                                );
+                                handleProductChange(
+                                  product.id,
+                                  'purchaseSchemeFree',
+                                  null
+                                );
+                              } else {
+                                handleProductChange(
+                                  product.id,
+                                  'purchaseSchemePercentage',
+                                  null
+                                );
+                              }
+                            }}
+                            disabled={isLoading}
+                          >
+                            <option value="FIXED_UNITS">Free units</option>
+                            <option value="PERCENTAGE">Percentage</option>
+                          </select>
                         </td>
                         <td className={styles.excelTd}>
                           <input
