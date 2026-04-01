@@ -448,6 +448,13 @@ export default function ScanSellPage() {
   const [additionalDiscountOverrides, setAdditionalDiscountOverrides] =
     useState<Record<string, number | null>>({});
   const [detailModalItem, setDetailModalItem] = useState<CartItem | null>(null);
+  const [detailModalFullItem, setDetailModalFullItem] =
+    useState<InventoryItem | null>(null);
+  const [detailModalFullItemLoading, setDetailModalFullItemLoading] =
+    useState(false);
+  const [detailModalFullItemError, setDetailModalFullItemError] = useState<
+    string | null
+  >(null);
   const [cartViewMode, setCartViewMode] = useState<'list' | 'grid'>(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('scan-sell-view-mode');
@@ -470,6 +477,40 @@ export default function ScanSellPage() {
   );
   const searchWrapperRef = useRef<HTMLDivElement>(null);
   const { error: notifyError } = useNotify;
+
+  useEffect(() => {
+    if (!detailModalItem) {
+      setDetailModalFullItem(null);
+      setDetailModalFullItemLoading(false);
+      setDetailModalFullItemError(null);
+      return;
+    }
+
+    let cancelled = false;
+    setDetailModalFullItemLoading(true);
+    setDetailModalFullItemError(null);
+    inventoryApi
+      .getById(detailModalItem.inventoryItem.id)
+      .then((inv) => {
+        if (cancelled) return;
+        setDetailModalFullItem(inv);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setDetailModalFullItem(null);
+        setDetailModalFullItemError(
+          err instanceof Error ? err.message : 'Failed to load product details'
+        );
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setDetailModalFullItemLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [detailModalItem]);
 
   const [inventoryToPricingId, setInventoryToPricingId] = useState<
     Record<string, string>
@@ -2064,10 +2105,10 @@ export default function ScanSellPage() {
                         <th className={styles.excelTh}>Company</th>
                         <th className={styles.excelTh}>Qty</th>
                         <th className={styles.excelTh}>Unit</th>
+                        <th className={styles.excelTh}>Amount</th>
                         <th className={styles.excelTh}>Price</th>
                         <th className={styles.excelTh}>Discount</th>
                         <th className={styles.excelTh}>Scheme</th>
-                        <th className={styles.excelTh}>Total</th>
                         <th className={styles.excelTh}>Actions</th>
                       </tr>
                     </thead>
@@ -2172,6 +2213,9 @@ export default function ScanSellPage() {
                                   </option>
                                 ))}
                               </select>
+                            </td>
+                            <td className={styles.excelTd}>
+                              {formatPrice(lineTotal)}
                             </td>
                             <td className={styles.excelTd}>
                               <div className={styles.excelPriceCell}>
@@ -2292,9 +2336,6 @@ export default function ScanSellPage() {
                               </div>
                             </td>
                             <td className={styles.excelTd}>
-                              {formatPrice(lineTotal)}
-                            </td>
-                            <td className={styles.excelTd}>
                               <button
                                 type="button"
                                 className={styles.excelRemoveBtn}
@@ -2351,11 +2392,14 @@ export default function ScanSellPage() {
                                 {cartItem.inventoryItem.companyName}
                               </span>
                             )}
-                            <span className={styles.itemUnitMeta}>
-                              {cartItem.baseQuantity}{' '}
-                              {cartItem.inventoryItem.baseUnit ?? 'base units'}{' '}
-                              ({cartItem.quantity} {cartItem.unit})
-                            </span>
+                            <div className={styles.itemMetaRow}>
+                              <span className={styles.itemUnitMeta}>
+                                {cartItem.baseQuantity}{' '}
+                                {cartItem.inventoryItem.baseUnit ??
+                                  'base units'}{' '}
+                                ({cartItem.quantity} {cartItem.unit})
+                              </span>
+                            </div>
                             {cartItem.inventoryItem.maximumRetailPrice >
                               cartItem.price && (
                               <span className={styles.itemDiscount}>
@@ -2788,63 +2832,72 @@ export default function ScanSellPage() {
                                     ))}
                                   </select>
                                 </div>
+
                               </div>
                             </div>
                             <div className={styles.itemActions}>
-                              <div className={styles.qtyStepper}>
-                                <button
-                                  className={styles.qtyBtn}
-                                  onClick={() =>
-                                    handleUpdateQuantity(
-                                      cartItem.inventoryItem.id,
-                                      -1,
-                                      isBaseUnitSelected
-                                    )
-                                  }
-                                  disabled={isUpdatingCart}
-                                  aria-label="Decrease quantity"
-                                >
-                                  −
-                                </button>
-                                <CartQuantityInput
-                                  value={quantityInputValue}
-                                  disabled={isUpdatingCart}
-                                  onCommit={async (newQty) => {
-                                    const delta = newQty - quantityInputValue;
-                                    if (delta !== 0) {
-                                      await handleUpdateQuantity(
+                              <div className={styles.itemActionTopRow}>
+                                <div className={styles.qtyStepper}>
+                                  <button
+                                    className={styles.qtyBtn}
+                                    onClick={() =>
+                                      handleUpdateQuantity(
                                         cartItem.inventoryItem.id,
-                                        delta,
+                                        -1,
                                         isBaseUnitSelected
-                                      );
+                                      )
                                     }
-                                  }}
-                                />
+                                    disabled={isUpdatingCart}
+                                    aria-label="Decrease quantity"
+                                  >
+                                    −
+                                  </button>
+                                  <CartQuantityInput
+                                    value={quantityInputValue}
+                                    disabled={isUpdatingCart}
+                                    onCommit={async (newQty) => {
+                                      const delta = newQty - quantityInputValue;
+                                      if (delta !== 0) {
+                                        await handleUpdateQuantity(
+                                          cartItem.inventoryItem.id,
+                                          delta,
+                                          isBaseUnitSelected
+                                        );
+                                      }
+                                    }}
+                                  />
+                                  <button
+                                    className={styles.qtyBtn}
+                                    onClick={() =>
+                                      handleUpdateQuantity(
+                                        cartItem.inventoryItem.id,
+                                        1,
+                                        isBaseUnitSelected
+                                      )
+                                    }
+                                    disabled={isUpdatingCart}
+                                    aria-label="Increase quantity"
+                                  >
+                                    +
+                                  </button>
+                                </div>
                                 <button
-                                  className={styles.qtyBtn}
+                                  type="button"
+                                  className={styles.removeBtn}
                                   onClick={() =>
-                                    handleUpdateQuantity(
-                                      cartItem.inventoryItem.id,
-                                      1,
-                                      isBaseUnitSelected
-                                    )
+                                    handleRemoveItem(cartItem.inventoryItem.id)
                                   }
                                   disabled={isUpdatingCart}
-                                  aria-label="Increase quantity"
                                 >
-                                  +
+                                  Remove
                                 </button>
                               </div>
-                              <button
-                                type="button"
-                                className={styles.removeBtn}
-                                onClick={() =>
-                                  handleRemoveItem(cartItem.inventoryItem.id)
-                                }
-                                disabled={isUpdatingCart}
-                              >
-                                Remove
-                              </button>
+                              <div className={styles.itemActionAmount}>
+                                ₹
+                                {(cartItem.price * cartItem.quantity).toFixed(
+                                  2
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -3221,7 +3274,8 @@ export default function ScanSellPage() {
             (i: CheckoutItemResponse) =>
               i.inventoryId === detailModalItem.inventoryItem.id
           );
-          const mrp = detailModalItem.inventoryItem.maximumRetailPrice;
+          const inv = detailModalFullItem ?? detailModalItem.inventoryItem;
+          const mrp = inv.maximumRetailPrice;
           const price = detailModalItem.price;
           const qty = detailModalItem.quantity;
           const addDisc = getEffectiveAdditionalDiscount(
@@ -3260,11 +3314,11 @@ export default function ScanSellPage() {
                         id="cart-detail-modal-title"
                         className={styles.detailModalTitle}
                       >
-                        {detailModalItem.inventoryItem.name || 'Product'}
+                        {inv.name || 'Product'}
                       </h3>
-                      {detailModalItem.inventoryItem.companyName && (
+                      {inv.companyName && (
                         <p className={styles.detailModalSubtitle}>
-                          {detailModalItem.inventoryItem.companyName}
+                          {inv.companyName}
                         </p>
                       )}
                     </div>
@@ -3292,6 +3346,32 @@ export default function ScanSellPage() {
                       </h4>
                     </div>
                     <div className={styles.detailModalDetailsGrid}>
+                      {detailModalFullItemLoading && (
+                        <div className={styles.detailModalDetailCard}>
+                          <div className={styles.detailModalDetailIcon}>⏳</div>
+                          <div className={styles.detailModalDetailContent}>
+                            <span className={styles.detailModalDetailLabel}>
+                              Loading full details
+                            </span>
+                            <span className={styles.detailModalDetailValue}>
+                              …
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                      {detailModalFullItemError && (
+                        <div className={styles.detailModalDetailCard}>
+                          <div className={styles.detailModalDetailIcon}>⚠️</div>
+                          <div className={styles.detailModalDetailContent}>
+                            <span className={styles.detailModalDetailLabel}>
+                              Details
+                            </span>
+                            <span className={styles.detailModalDetailValue}>
+                              {detailModalFullItemError}
+                            </span>
+                          </div>
+                        </div>
+                      )}
                       <div className={styles.detailModalDetailCard}>
                         <div className={styles.detailModalDetailIcon}>🏷️</div>
                         <div className={styles.detailModalDetailContent}>
@@ -3299,11 +3379,11 @@ export default function ScanSellPage() {
                             Product name
                           </span>
                           <span className={styles.detailModalDetailValue}>
-                            {detailModalItem.inventoryItem.name || '—'}
+                            {inv.name || '—'}
                           </span>
                         </div>
                       </div>
-                      {detailModalItem.inventoryItem.companyName && (
+                      {inv.companyName && (
                         <div className={styles.detailModalDetailCard}>
                           <div className={styles.detailModalDetailIcon}>🏢</div>
                           <div className={styles.detailModalDetailContent}>
@@ -3311,7 +3391,72 @@ export default function ScanSellPage() {
                               Company
                             </span>
                             <span className={styles.detailModalDetailValue}>
-                              {detailModalItem.inventoryItem.companyName}
+                              {inv.companyName}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                      {inv.barcode && (
+                        <div className={styles.detailModalDetailCard}>
+                          <div className={styles.detailModalDetailIcon}>🏷️</div>
+                          <div className={styles.detailModalDetailContent}>
+                            <span className={styles.detailModalDetailLabel}>
+                              Barcode
+                            </span>
+                            <span className={styles.detailModalDetailValue}>
+                              {inv.barcode}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                      {inv.location && (
+                        <div className={styles.detailModalDetailCard}>
+                          <div className={styles.detailModalDetailIcon}>📍</div>
+                          <div className={styles.detailModalDetailContent}>
+                            <span className={styles.detailModalDetailLabel}>
+                              Location
+                            </span>
+                            <span className={styles.detailModalDetailValue}>
+                              {inv.location}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                      {(inv.hsn || inv.batchNo) && (
+                        <div className={styles.detailModalDetailCard}>
+                          <div className={styles.detailModalDetailIcon}>🧾</div>
+                          <div className={styles.detailModalDetailContent}>
+                            <span className={styles.detailModalDetailLabel}>
+                              HSN / Batch
+                            </span>
+                            <span className={styles.detailModalDetailValue}>
+                              {[inv.hsn, inv.batchNo].filter(Boolean).join(' / ')}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                      {inv.expiryDate && (
+                        <div className={styles.detailModalDetailCard}>
+                          <div className={styles.detailModalDetailIcon}>📅</div>
+                          <div className={styles.detailModalDetailContent}>
+                            <span className={styles.detailModalDetailLabel}>
+                              Expiry
+                            </span>
+                            <span className={styles.detailModalDetailValue}>
+                              {new Date(inv.expiryDate).toISOString().split('T')[0]}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                      {(inv.currentCount != null || inv.currentBaseCount != null) && (
+                        <div className={styles.detailModalDetailCard}>
+                          <div className={styles.detailModalDetailIcon}>📦</div>
+                          <div className={styles.detailModalDetailContent}>
+                            <span className={styles.detailModalDetailLabel}>
+                              Stock (current)
+                            </span>
+                            <span className={styles.detailModalDetailValue}>
+                              {inv.currentCount ?? inv.currentBaseCount ?? '—'}
                             </span>
                           </div>
                         </div>
@@ -3335,7 +3480,7 @@ export default function ScanSellPage() {
                           </span>
                           <span className={styles.detailModalDetailValue}>
                             {normalizeBillingMode(
-                              detailModalItem.inventoryItem.billingMode
+                              inv.billingMode
                             )}
                           </span>
                         </div>

@@ -1186,6 +1186,41 @@
   color: var(--text-tertiary);
 }
 
+.itemMetaRow {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.itemLineTotal {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.itemAmountValue {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-secondary, #f8fafc);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.itemActionAmount {
+  margin-top: 0.35rem;
+  margin-bottom: 0.2rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  text-align: center;
+}
+
 .modeBadge {
   display: inline-block;
   width: fit-content;
@@ -1408,8 +1443,15 @@
 
 .itemActions {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 0.5rem;
+}
+
+.itemActionTopRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
 }
 
 /* Quantity stepper - unified control */
@@ -1487,7 +1529,7 @@
 
 .removeBtn {
   padding: 0.5rem 0.85rem;
-  margin-left: 0.25rem;
+  margin-left: 0;
   border: 1px solid transparent;
   border-radius: 8px;
   background: transparent;
