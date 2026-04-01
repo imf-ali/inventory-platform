@@ -1,5 +1,12 @@
-import { useState, useEffect, useRef, useCallback, ChangeEvent } from 'react';
-import { useNavigate, Link } from 'react-router';
+import {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useCallback,
+  ChangeEvent,
+} from 'react';
+import { useNavigate, useLocation, Link } from 'react-router';
 import {
   inventoryApi,
   cartApi,
@@ -14,6 +21,7 @@ import type {
   CartResponse,
   CheckoutItemResponse,
   PricingResponse,
+  CustomerResponse,
 } from '@inventory-platform/types';
 import styles from './dashboard.scan-sell.module.css';
 import { useNotify } from '@inventory-platform/store';
@@ -398,6 +406,9 @@ function CartSchemeInput({
 
 export default function ScanSellPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const scanSellCustomerPrefillRef = useRef<CustomerResponse | null>(null);
+  const scanSellCustomerPrefillConsumedRef = useRef(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<InventoryItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -541,6 +552,19 @@ export default function ScanSellPage() {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
+
+  useEffect(() => {
+    scanSellCustomerPrefillConsumedRef.current = false;
+  }, [location.key]);
+
+  useLayoutEffect(() => {
+    const raw = (
+      location.state as { prefillCustomer?: CustomerResponse } | null | undefined
+    )?.prefillCustomer;
+    if (!raw?.customerId) return;
+    scanSellCustomerPrefillRef.current = raw;
+    navigate(location.pathname, { replace: true, state: {} });
+  }, [location.state, location.pathname, navigate]);
 
   const normalizeBillingMode = useCallback(
     (mode?: BillingMode | null): BillingMode =>
@@ -713,6 +737,7 @@ export default function ScanSellPage() {
       // Only handle CREATED and PENDING statuses
       // If status is PENDING, redirect to checkout page
       if (cart.status === 'PENDING') {
+        scanSellCustomerPrefillRef.current = null;
         navigate('/dashboard/checkout');
         return;
       }
@@ -758,6 +783,43 @@ export default function ScanSellPage() {
       setIsLoadingCart(false);
     }
   };
+
+  useEffect(() => {
+    if (isLoadingCart) return;
+    const c = scanSellCustomerPrefillRef.current;
+    if (!c || scanSellCustomerPrefillConsumedRef.current) return;
+    scanSellCustomerPrefillConsumedRef.current = true;
+    scanSellCustomerPrefillRef.current = null;
+    setCustomerName(c.name ?? '');
+    setCustomerPhone(c.phone ?? '');
+    setCustomerEmail(c.email ?? '');
+    setCustomerAddress(c.address ?? '');
+    const gstin = c.gstin ?? '';
+    const dl = c.dlNo ?? '';
+    const pan = c.pan ?? c.panNo ?? '';
+    if (gstin || dl || pan) {
+      setIsRetailer(true);
+      setCustomerGstin(gstin);
+      setCustomerDlNo(dl);
+      setCustomerPan(pan);
+    } else {
+      setIsRetailer(false);
+      setCustomerGstin('');
+      setCustomerDlNo('');
+      setCustomerPan('');
+    }
+    if (c.userId && c.email) {
+      setLinkedUser({
+        userId: c.userId,
+        email: c.email,
+        name: c.name ?? '',
+      });
+    } else {
+      setLinkedUser(null);
+    }
+    setUserSearchMessage(null);
+    setCustomerSectionOpen(true);
+  }, [isLoadingCart]);
 
   /** Build CartItem[] from cart response, reusing existing inventoryItem when possible (no API calls). */
   const mergeCartResponseToItems = useCallback(

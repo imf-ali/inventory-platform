@@ -1,5 +1,5 @@
-import { useState, FormEvent, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router';
+import { useState, FormEvent, useRef, useEffect, useLayoutEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   inventoryApi,
@@ -12,6 +12,7 @@ import type {
   CustomReminderInput,
   LinkableUser,
   Vendor,
+  VendorResponse,
   CreateVendorDto,
   VendorBusinessType,
   BulkCreateInventoryDto,
@@ -70,6 +71,8 @@ interface ProductFormData
 
 export default function ProductRegistrationPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const vendorPrefillConsumedRef = useRef(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -1115,6 +1118,34 @@ export default function ProductRegistrationPage() {
         .finally(() => setIsLoadingVendorShops(false));
     }
   };
+
+  useEffect(() => {
+    vendorPrefillConsumedRef.current = false;
+  }, [location.key]);
+
+  useLayoutEffect(() => {
+    if (vendorPrefillConsumedRef.current) return;
+    const raw = (
+      location.state as { prefillVendor?: VendorResponse } | null | undefined
+    )?.prefillVendor;
+    if (!raw?.vendorId) return;
+    vendorPrefillConsumedRef.current = true;
+    const vendor: Vendor = {
+      vendorId: raw.vendorId,
+      name: raw.name,
+      contactEmail: raw.contactEmail ?? '',
+      contactPhone: raw.contactPhone ?? '',
+      address: raw.address ?? '',
+      companyName: raw.companyName ?? '',
+      businessType: raw.businessType,
+      gstinUin: raw.gstinUin,
+      userId: raw.userId,
+      createdAt: raw.createdAt,
+      updatedAt: raw.updatedAt,
+    };
+    handleSelectVendor(vendor);
+    navigate(location.pathname, { replace: true, state: {} });
+  }, [location.state, location.pathname, navigate]);
 
   const handleCloseVendorModal = () => {
     setShowVendorModal(false);
