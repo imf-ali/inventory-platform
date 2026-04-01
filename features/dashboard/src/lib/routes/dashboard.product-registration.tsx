@@ -696,13 +696,44 @@ export default function ProductRegistrationPage() {
         const normalizedConversionFactor =
           Number(product.conversionFactor) || 0;
         if (
-          normalizedConversionFactor < 0 ||
-          !Number.isFinite(normalizedConversionFactor)
+          !Number.isFinite(normalizedConversionFactor) ||
+          normalizedConversionFactor <= 0
         ) {
           notifyError(
             `Product "${
               product.name || 'Unnamed'
-            }": packaging details must be a valid positive number`
+            }": packaging factor is required and must be greater than 0`
+          );
+          setIsLoading(false);
+          return;
+        }
+
+        const ptr = Number(product.priceToRetail);
+        const cost = Number(product.costPrice);
+        const mrp = Number(product.maximumRetailPrice);
+        if (!Number.isFinite(ptr) || ptr <= 0) {
+          notifyError(
+            `Product "${
+              product.name || 'Unnamed'
+            }": PTR (price to retail) is required and must be greater than 0`
+          );
+          setIsLoading(false);
+          return;
+        }
+        if (!Number.isFinite(cost) || cost <= 0) {
+          notifyError(
+            `Product "${
+              product.name || 'Unnamed'
+            }": cost (PTS) is required and must be greater than 0`
+          );
+          setIsLoading(false);
+          return;
+        }
+        if (!Number.isFinite(mrp) || mrp <= 0) {
+          notifyError(
+            `Product "${
+              product.name || 'Unnamed'
+            }": MRP is required and must be greater than 0`
           );
           setIsLoading(false);
           return;

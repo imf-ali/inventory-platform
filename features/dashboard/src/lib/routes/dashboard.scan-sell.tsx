@@ -600,7 +600,10 @@ export default function ScanSellPage() {
 
   useLayoutEffect(() => {
     const raw = (
-      location.state as { prefillCustomer?: CustomerResponse } | null | undefined
+      location.state as
+        | { prefillCustomer?: CustomerResponse }
+        | null
+        | undefined
     )?.prefillCustomer;
     if (!raw?.customerId) return;
     scanSellCustomerPrefillRef.current = raw;
@@ -2525,197 +2528,6 @@ export default function ScanSellPage() {
                                   </span>
                                 </div>
                               </div>
-                              {/* {cartViewMode === 'list' ? (
-                                <div className={styles.itemPurchaseRow}>
-                                  <div className={styles.itemFieldGroup}>
-                                    <label
-                                      className={styles.itemFieldLabel}
-                                      title="From product registration"
-                                    >
-                                      Purchase add. discount
-                                    </label>
-                                    <div className={styles.itemFieldInputWrap}>
-                                      <span
-                                        className={styles.itemFieldReadOnly}
-                                        aria-readonly="true"
-                                      >
-                                        {(() => {
-                                          const v =
-                                            getPurchaseAdditionalDiscount(
-                                              cartItem.inventoryItem
-                                            );
-                                          return v != null ? `${v}%` : '—';
-                                        })()}
-                                      </span>
-                                    </div>
-                                  </div>
-                                  <div className={styles.itemFieldGroup}>
-                                    <label
-                                      className={styles.itemFieldLabel}
-                                      title="From product registration"
-                                    >
-                                      Purchase scheme/deal
-                                    </label>
-                                    <div className={styles.itemFieldInputWrap}>
-                                      <span
-                                        className={styles.itemFieldReadOnly}
-                                        aria-readonly="true"
-                                      >
-                                        {formatPurchaseSchemeLabel(
-                                          cartItem.inventoryItem
-                                        )}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                              ) : (
-                                <div
-                                  className={styles.itemPurchaseHoverWrap}
-                                  title="Hover to see purchase details"
-                                >
-                                  <span
-                                    className={styles.itemPurchaseHoverTrigger}
-                                  >
-                                    ℹ Purchase details
-                                  </span>
-                                  <div
-                                    className={styles.itemPurchaseHoverPopup}
-                                  >
-                                    <div
-                                      className={styles.itemPurchaseHoverRow}
-                                    >
-                                      <span>Purchase add. discount:</span>
-                                      <span>
-                                        {(() => {
-                                          const v =
-                                            getPurchaseAdditionalDiscount(
-                                              cartItem.inventoryItem
-                                            );
-                                          return v != null ? `${v}%` : '—';
-                                        })()}
-                                      </span>
-                                    </div>
-                                    <div
-                                      className={styles.itemPurchaseHoverRow}
-                                    >
-                                      <span>Purchase scheme/deal:</span>
-                                      <span>
-                                        {formatPurchaseSchemeLabel(
-                                          cartItem.inventoryItem
-                                        )}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                              )} */}
-                              {/* <div className={styles.itemSaleRow}>
-                                <div className={styles.itemFieldGroup}>
-                                  <label className={styles.itemFieldLabel}>
-                                    Discount
-                                  </label>
-
-                                  <div className={styles.compareCell}>
-                                    <div className={styles.compareTop}>
-                                      {(() => {
-                                        const v = getPurchaseAdditionalDiscount(
-                                          cartItem.inventoryItem
-                                        );
-                                        return v != null ? `${v}%` : '—';
-                                      })()}
-                                    </div>
-
-                                    <div className={styles.compareBottom}>
-                                      <CartAdditionalDiscountInput
-                                        value={getEffectiveAdditionalDiscount(
-                                          cartItem.inventoryItem.id,
-                                          cartItem
-                                        )}
-                                        onCommit={(num) =>
-                                          handleAdditionalDiscountChange(
-                                            cartItem.inventoryItem.id,
-                                            num
-                                          )
-                                        }
-                                        disabled={isUpdatingCart}
-                                      />
-                                      <span className={styles.itemFieldUnit}>
-                                        %
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className={styles.itemFieldGroup}>
-                                  <label className={styles.itemFieldLabel}>
-                                    Scheme
-                                  </label>
-
-                                  <div className={styles.compareCell}>
-                                    <div className={styles.compareTop}>
-                                      {formatPurchaseSchemeLabel(
-                                        cartItem.inventoryItem
-                                      )}
-                                    </div>
-
-                                    <div className={styles.compareBottom}>
-                                      <CartSchemeInput
-                                        schemeType={cartItem.schemeType ?? null}
-                                        payFor={cartItem.schemePayFor ?? null}
-                                        free={cartItem.schemeFree ?? null}
-                                        percentage={
-                                          cartItem.schemePercentage ?? null
-                                        }
-                                        onCommitUnits={(pf, f) =>
-                                          handleSchemeChange(
-                                            cartItem.inventoryItem.id,
-                                            pf,
-                                            f
-                                          )
-                                        }
-                                        onCommitPercentage={(p) =>
-                                          handleSchemePercentageChange(
-                                            cartItem.inventoryItem.id,
-                                            p
-                                          )
-                                        }
-                                        disabled={isUpdatingCart}
-                                      />
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                              <div className={styles.itemFieldGroup}>
-                                <label
-                                  className={styles.itemFieldLabel}
-                                  htmlFor={`unit-${cartItem.inventoryItem.id}`}
-                                >
-                                  Unit
-                                </label>
-                                <select
-                                  id={`unit-${cartItem.inventoryItem.id}`}
-                                  className={styles.itemUnitSelect}
-                                  value={cartItem.unit}
-                                  onChange={(e) =>
-                                    handleUnitChange(
-                                      cartItem.inventoryItem.id,
-                                      e.currentTarget.value
-                                    )
-                                  }
-                                  disabled={isUpdatingCart}
-                                >
-                                  {(cartItem.availableUnits.length > 0
-                                    ? cartItem.availableUnits
-                                    : [{ unit: cartItem.unit, baseUnit: false }]
-                                  ).map((unitOption) => (
-                                    <option
-                                      key={`${unitOption.unit}-${unitOption.baseUnit}`}
-                                      value={unitOption.unit}
-                                    >
-                                      {unitOption.unit}
-                                      {unitOption.baseUnit ? ' (base)' : ''}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div> */}
                               <div className={styles.itemSaleRowInline}>
                                 {/* Discount */}
                                 <div className={styles.itemFieldGroup}>
@@ -2832,7 +2644,6 @@ export default function ScanSellPage() {
                                     ))}
                                   </select>
                                 </div>
-
                               </div>
                             </div>
                             <div className={styles.itemActions}>
@@ -3430,7 +3241,9 @@ export default function ScanSellPage() {
                               HSN / Batch
                             </span>
                             <span className={styles.detailModalDetailValue}>
-                              {[inv.hsn, inv.batchNo].filter(Boolean).join(' / ')}
+                              {[inv.hsn, inv.batchNo]
+                                .filter(Boolean)
+                                .join(' / ')}
                             </span>
                           </div>
                         </div>
@@ -3443,12 +3256,17 @@ export default function ScanSellPage() {
                               Expiry
                             </span>
                             <span className={styles.detailModalDetailValue}>
-                              {new Date(inv.expiryDate).toISOString().split('T')[0]}
+                              {
+                                new Date(inv.expiryDate)
+                                  .toISOString()
+                                  .split('T')[0]
+                              }
                             </span>
                           </div>
                         </div>
                       )}
-                      {(inv.currentCount != null || inv.currentBaseCount != null) && (
+                      {(inv.currentCount != null ||
+                        inv.currentBaseCount != null) && (
                         <div className={styles.detailModalDetailCard}>
                           <div className={styles.detailModalDetailIcon}>📦</div>
                           <div className={styles.detailModalDetailContent}>
@@ -3479,9 +3297,7 @@ export default function ScanSellPage() {
                             Billing mode
                           </span>
                           <span className={styles.detailModalDetailValue}>
-                            {normalizeBillingMode(
-                              inv.billingMode
-                            )}
+                            {normalizeBillingMode(inv.billingMode)}
                           </span>
                         </div>
                       </div>
